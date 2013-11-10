@@ -1,0 +1,128 @@
+
+@(%define-primitive (car x)
+  (%type-check x '(cons)
+    (%c-code "return CAR(x)")
+  )
+)
+@(%define-primitive (set-string! s i c)
+  (%type-check s '(string)
+  (%type-check i '(fixnum)
+  (%type-check c '(character)
+    (%c-code "if ( FIXNUM(i) )")
+    (%c-code "STRING(s)[FIXNUM(i)] = CHARACTER(c); return UNSPECIFIED")
+  )
+)
+ ->
+
+static __inline__ ss_value _ss_f_car(ss_value x)
+{
+  static const char _ss_name_f[] = "car";
+  if ( TYPE(x) == cons_type ) {
+    return CAR(x);
+  } else {
+    _ss_typecheck(_ss_name_f, "x", "(cons)");
+  }
+}
+static __inline__ ss_value _ss_f_set_stringE(ss_value s, ss_value i, ss_value c)
+{
+  static const char _ss_name_f[] = "set-string!";
+  if ( TYPE(s) == ss_t_string ) {
+  if ( TYPE(i) == ss_t_fixnum ) {
+  if ( TYPE(c) == ss_t_character ) {
+    return CAR(x);
+  } else {
+    _ss_typecheck(_ss_name_f, "c", "(character)");
+  }
+  } else {
+    _ss_typecheck(_ss_name_f, "i", "(fixnum)");
+  }
+  } else {
+    _ss_typecheck(_ss_name_f, "x", "(cons)");
+  }
+  return UNSPECFIED;
+}
+
+
+constant folding:
+
+(<f> <args> ...)
+
+if
+<f> is a constant expression.
+and <args> ... are constant expressions.
+and <f> is a non-side-effecting function.
+then (<f> <args> ...) is a constant expression.
+
+(if <pred> <true> <false>?)
+if <pred> is a constant expression
+(if <pred> <true> <false>?) can be rewritten as
+<true> or <false> depending if <pred> is true or false.
+
+Typecheck elideing:
+
+Two primitives are understood by the compiler:
+
+(%type-check <x> <type> ...)
+(%type-is <x> <type> ...)
+
+%type-check validates that the value <x> is one of (<type> ...).  It returns the value <x>
+
+%type-is returns the value <x>.  It is used by the compiler to mark all expression results.
+
+When the compiler finds a constant function application, it looks up the function's return type(s) and creates a %type-is clause it and remaps the function application to a another name.
+
+When a primitive function application is found, the arguments are wrapped with %type-check clauses and the application is renamed to the actual primitive.
+
+These transformations should occur after macro expansion.
+
+Example:
+
+(cons <x> <y>) =>
+  (%type-is (%cons <x> <y>) 'cons)
+
+(car <x>) =>
+  (%car (%type-check <x> 'cons))
+(cdr <x>) =>
+  (%cdr (%type-check <x> 'cons))
+(set-car! <x> <y>) =>
+  (%set-car! (%type-check <x> 'cons) <y>)
+(set-cdr! <x> <y>) =>
+  (%set-cdr (%type-check <x> 'cons) <y>)
+
+(+ <x> <y>) =>
+  (%type-if (<x> 'fixnum)
+    (%type-if (<y> 'fixnum)
+      (%type-is (%+-fixnum <x> <y>) 'integer))
+    (%type-if (<y> 'flonum)
+      (%type-is (%+-flonum (%fixnum->flonum <x>) <y>) 'flonum))
+    (%type-if (<x> 'flonum)
+      (%type-is (%+-flonum <x> <y>) 'flonum)))
+ 
+The expression:
+
+(car (cons x y))
+  =>
+(%car (%type-check (%type-is (%cons <x> <y>) 'cons) 'cons))
+  =>
+(%cons <x> <y>)
+
+(%car (%cons <x> <y>))
+
+Branches induce moving typechecking from the branches out.
+
+(if <test> <true> <false>)
+
+Example:
+(if (number? x)
+  (+ x y)
+  (cons x y))
+  =>
+(if (number? x)
+  (%type-is (%+ (%type-check x 'number) (%type-check y 'number)) 'number)
+  (%type-is (%cons x y) 'cons))
+  =>
+(%type-is
+  (%if (number? x)
+    (%+ (%type-check x 'number) (%type-check y 'number))
+    (%cons x y))
+  'cons 'number)
