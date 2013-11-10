@@ -12,7 +12,7 @@
 #define ss_malloc(X) malloc(X)
 
 typedef enum ss_type {
-  ss_t_UNDEF,
+  ss_t_UNDEF = 0,
   ss_t_LITERAL_MIN,
   ss_t_undef = ss_t_LITERAL_MIN,
   ss_t_unspec,
@@ -23,7 +23,9 @@ typedef enum ss_type {
   ss_t_boolean,
   ss_t_syntax,
   ss_t_prim,
+  ss_t_closure,
   ss_t_quote,
+  ss_t_eos,
   ss_t_LITERAL_MAX = ss_t_quote,
   
   ss_t_cons,
@@ -31,20 +33,18 @@ typedef enum ss_type {
   ss_t_vector,
   ss_t_symbol,
 
-  ss_t_eos,
   ss_t_port,
   
-  ss_t_closure,
   ss_t_environment,
 
   ss_t_LAST
 } ss_type;
 
-typedef ss_type *ss_value;
+typedef void *ss_value;
 #define ss_EQ(X,Y)((X)==(Y))
 #define ss_NE(X,Y)!ss_EQ(X,Y)
 
-#define ss_type_(X) (*(ss_value)(X))
+#define ss_type_(X) (*(ss_type*)(X))
 #define ss_type(X) (((ss_integer_t) (X)) & 1 ? ss_t_integer : (X) <= ss_BOX_char(255) ? ss_t_char : ss_type_(X))
 #define ss_REF(X)((void*)(X))
 #define ss_BOX_REF(X)((ss_value)(X))
@@ -118,11 +118,12 @@ ss_value ss_strn(size_t l);
 typedef struct ss_s_symbol {
   ss_type _type;
   ss_value _str;
-  ss_value *_value;
+  ss_value _value;
+  const char *_docstring;
   short _const;
 } ss_s_symbol;
 #define ss_UNBOX_symbol(X)*((ss_s_symbol*)ss_REF(X))
-#define ss_symbol_value(X)*(((ss_s_symbol*)ss_REF(X))->_value)
+#define ss_symbol_value(X)(((ss_s_symbol*)ss_REF(X))->_value)
 #define ss_symbol_const(X)(((ss_s_symbol*)ss_REF(X))->_const)
 
 typedef struct ss_s_environment {
@@ -135,6 +136,7 @@ typedef struct ss_s_prim {
   ss_type _type;
   const char *_name;
   ss_PROC_DECL((*_func));
+  const char *_docstring;
 } ss_s_prim;
 typedef ss_s_prim ss_s_syntax;
 #define ss_UNBOX_prim(X)((ss_s_prim*)ss_REF(X))
@@ -143,7 +145,7 @@ typedef ss_s_prim ss_s_syntax;
 #ifndef _ss_prim
 #define _ss_prim(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)      \
   static ss_PROC_DECL(ss_PASTE2(_ss_f_prim_,NAME)); \
-  ss_s_prim ss_PASTE2(_ss_prim_,NAME) = { TYPE, #NAME, ss_PASTE2(_ss_f_prim_,NAME) } ; \
+  ss_s_prim ss_PASTE2(_ss_prim_,NAME) = { TYPE, #NAME, ss_PASTE2(_ss_f_prim_,NAME), DOCSTRING } ; \
 static ss_PROC_DECL(ss_PASTE2(_ss_f_prim_,NAME)) { \
   if ( MINARGS >= 0 ) { \
     if ( ss_argc < MINARGS ) \
@@ -186,6 +188,12 @@ extern ss_type ss_undef[], ss_unspec[], ss_nil[], ss_t[], ss_f[];
 #ifndef ss_sym
 #define ss_sym(X)ss_PASTE2(_ss_sym_,X)
 #endif
+
+#ifndef _ss_prim
+#define _ss_prim(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) ss_sym(NAME)
+#include "prim.def"
+#endif
+
 extern ss_value _ss_syms
 #define ss_sym_def(X),ss_PASTE2(_ss_sym_,X)
 #include "sym.def"

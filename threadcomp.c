@@ -71,31 +71,33 @@ ss_value ss_string_TO_number(ss_value s, int radix)
 {
   char *endp = 0;
   long long n = strtoll(ss_string_v(s), &endp, radix);
-  return ss_box(integer, n);
+  return *endp ? ss_f : ss_box(integer, n);
 }
 
-static ss_value symbols = ss_nil;
+static ss_value ss_symbols = ss_nil;
 ss_value ss_box_symbol(const char *name)
 {
-  ss_s_symbol *self;
-  ss_value l;
-
-  for ( l = symbols; l != ss_nil; l = ss_cdr(l) ) {
-    ss_value e = ss_car(l);
-    ss_value n = ss_car(e);
-    if ( strcmp(name, ss_string_v(n)) == 0 )
-      return ss_cdr(e);
+  ss_s_symbol *sym;
+  {
+    ss_value l;
+    for ( l = ss_symbols; l != ss_nil; l = ss_cdr(l) ) {
+      sym = (ss_s_symbol*) ss_car(l);
+      if ( strcmp(name, ss_string_v(sym->_str)) == 0 )
+        goto rtn;
+    }
   }
 
-  self = ss_malloc(sizeof(*self));
-  ss_type_(self) = ss_t_symbol;
-  self->_str = ss_strnv(strlen(name), name);
-  self->_value = 0;
-  self->_const = 0;
+  sym = ss_malloc(sizeof(*sym));
+  ss_type_(sym) = ss_t_symbol;
+  sym->_str = ss_strnv(strlen(name), name);
+  sym->_value = ss_undef;
+  sym->_const = 0;
 
-  symbols = ss_cons(ss_cons(self->_str, ss_BOX_REF(self)), symbols);
+  ss_symbols = ss_cons(ss_BOX_REF(sym), ss_symbols);
 
-  return ss_BOX_REF(self);
+ rtn:
+  fprintf(stderr, "  symbol(%s) => %p\n", name, sym);
+  return ss_BOX_REF(sym);
 }
 
 void ss_init_symbol()
@@ -103,10 +105,10 @@ void ss_init_symbol()
 #define ss_sym_def(X) ss_PASTE2(_ss_sym_, X) = ss_box_symbol(#X);
 #include "sym.def"
   ss_sym(ADD) = ss_box_symbol("+");
+  ss_sym(SUB) = ss_box_symbol("-");
   ss_sym(DOT) = ss_box_symbol(".");
   ss_sym(unquote_splicing) = ss_box_symbol("unquote-splicing");
 }
-
 
 ss_value ss_box_quote(ss_value v)
 {
@@ -169,15 +171,15 @@ ss_value ss_list_to_vector(ss_value x)
   ss_value v = ss_vecn(ss_list_length(x));
   again:
   switch ( ss_type(x) ) {
-    case ss_t_cons:
-      ss_vector_v(v)[l ++] = ss_CAR(x);
-      x = ss_CDR(x);
-      goto again;
-    case ss_t_null:
-      return x;
-    case ss_t_vector:
-      memcpy(ss_vector_v(v) + l, ss_vector_v(x), sizeof(ss_vector_v(v)[0]) * ss_vector_l(x));
-      return v;
+  case ss_t_cons:
+    ss_vector_v(v)[l ++] = ss_CAR(x);
+    x = ss_CDR(x);
+    goto again;
+  case ss_t_null:
+    return v;
+  case ss_t_vector:
+    memcpy(ss_vector_v(v) + l, ss_vector_v(x), sizeof(ss_vector_v(v)[0]) * ss_vector_l(x));
+    return v;
   default: abort();
   }
   return v;
@@ -270,12 +272,12 @@ ss_value _ss_exec(ss_s_environment *ss_env, ss_value *_ss_expr);
 #define ss_exec(X) _ss_exec(ss_env, &(X))
 #define ss_constantExprQ ss_env->constantExprQ
 
-ss_syntax(quote,1,1,0,"(quote <value>)")
+ss_syntax(quote,1,1,0,"quote value")
   ss_constantExprQ = 1;
   ss_return(ss_box(quote,ss_argv[0]));
 ss_end
 
-ss_syntax(if,2,3,0,"(if <pred> <true> ?<false>?)")
+ss_syntax(if,2,3,0,"if pred true ?false?")
   ss_value x;
   x = ss_exec(ss_argv[0]);
   
@@ -287,16 +289,16 @@ ss_syntax(if,2,3,0,"(if <pred> <true> ?<false>?)")
   }
 ss_end
 
-ss_prim(_if,-1,-1,0,"(if <pred> <true> ?<false>?)")
+ss_prim(_if,-1,-1,0,"if pred true ?false?")
   ss_value x = ss_exec(ss_argv[0]);
   ss_return(ss_NE(x,ss_f) ? ss_exec(ss_argv[1]) : ss_exec(ss_argv[2]));
 ss_end
 
-ss_syntax(lambda,2,-1,0,"(lambda formals . body)")
+ss_syntax(lambda,2,-1,0,"lambda formals body...")
   ss_return(ss_vec(3, ss_sym(_lambda), ss_box(quote, ss_argv[0]), ss_box(quote, ss_vecnv(ss_argc - 1, ss_argv + 1))));
 ss_end
 
-ss_syntax(car,1,1,1,"(car <pair>)")
+ss_syntax(car,1,1,1,"car <pair>")
   if ( ss_constantExprQ ) {
     ss_constantExprQ = 1;
     ss_return(ss_box(quote,ss_car(ss_argv[0])));
@@ -306,12 +308,12 @@ ss_syntax(car,1,1,1,"(car <pair>)")
   }
 ss_end
 
-ss_prim(_car,-1,-1,1,"(car <pair>)")
+ss_prim(_car,-1,-1,1,"car <pair>")
   ss_typecheck(ss_t_cons,ss_argv[0]);
   ss_return(ss_CAR(ss_argv[0]));
 ss_end
 
-ss_syntax(cdr,2,2,1,"(cdr <pair>)")
+ss_syntax(cdr,2,2,1,"cdr <pair>")
   if ( ss_constantExprQ ) {
     ss_constantExprQ = 1;
     ss_return(ss_box(quote,ss_cdr(ss_argv[0])));
@@ -321,22 +323,9 @@ ss_syntax(cdr,2,2,1,"(cdr <pair>)")
   }
 ss_end
 
-ss_prim(_cdr,-1,-1,1,"(cdr <pair>)")
+ss_prim(_cdr,-1,-1,1,"cdr <pair>")
   ss_typecheck(ss_t_cons,ss_argv[0]);
   ss_return(ss_CDR(ss_argv[0]));
-ss_end
-
-ss_syntax(ADD,0,-1,1,"(+ <z>...)")
-  switch ( ss_argc ) {
-  case 0:
-    ss_return(ss_box(integer,0));
-  case 1:
-    ss_return(ss_argv[0]);
-  case 2:
-    ss_return(ss_vec3(ss_sym(_add), ss_argv[0], ss_argv[1]));
-  default:
-    ss_return(ss_vec3(ss_sym(_add), ss_argv[1], ss_cons(ss_sym(ADD), ss_vec(ss_argc - 1, ss_argv + 1))));
-  }
 ss_end
 
 static
@@ -366,7 +355,20 @@ void ss_number_coerce_2(ss_value *argv)
   }
 }
 
-ss_prim(_add,-1,-1,1,"(+ <z>...)")
+ss_syntax(ADD,0,-1,1,"+ <z>...")
+  switch ( ss_argc ) {
+  case 0:
+    ss_return(ss_box(integer,0));
+  case 1:
+    ss_return(ss_argv[0]);
+  case 2:
+    ss_return(ss_vec3(ss_sym(_add), ss_argv[0], ss_argv[1]));
+  default:
+    ss_return(ss_vec3(ss_sym(_add), ss_argv[1], ss_cons(ss_sym(ADD), ss_vec(ss_argc - 1, ss_argv + 1))));
+  }
+ss_end
+
+ss_prim(_add,-1,-1,1,"+ <z>...")
   ss_number_coerce_2(ss_argv);
   switch ( ss_type(ss_argv[0]) ) {
   case ss_t_integer:
@@ -377,8 +379,7 @@ ss_prim(_add,-1,-1,1,"(+ <z>...)")
   }
 ss_end
 
-
-ss_syntax(SUB,0,-1,1,"(- <z>...)")
+ss_syntax(SUB,0,-1,1,"- <z>...")
   switch ( ss_argc ) {
   case 0:
     ss_return(ss_box(integer,0));
@@ -391,7 +392,7 @@ ss_syntax(SUB,0,-1,1,"(- <z>...)")
   }
 ss_end
 
-ss_prim(_sub,-1,-1,1,"(- <z>...)")
+ss_prim(_sub,-1,-1,1,"- <z>...")
   ss_number_coerce_2(ss_argv);
   switch ( ss_type(ss_argv[0]) ) {
   case ss_t_integer:
@@ -402,7 +403,7 @@ ss_prim(_sub,-1,-1,1,"(- <z>...)")
   }
 ss_end
 
-ss_prim(_neg,-1,-1,1,"(- <z>)")
+ss_prim(_neg,-1,-1,1,"- <z>")
   switch ( ss_type(ss_argv[0]) ) {
   case ss_t_integer:
     ss_return(ss_box(integer, - ss_UNBOX(integer,ss_argv[0])));
@@ -418,68 +419,78 @@ ss_value _ss_exec(ss_s_environment *ss_env, ss_value *_ss_expr)
 {
   again:
   switch ( ss_type(ss_expr) ) {
-  case ss_t_integer:
-  case ss_t_real:
-  case ss_t_undef:
-  case ss_t_boolean:
-  case ss_t_string:
-  case ss_t_syntax:
-  case ss_t_prim:
-    ss_constantExprQ = 1;
-    ss_return(ss_expr);
-    
   case ss_t_quote:
     ss_constantExprQ = 1;
     ss_return(ss_UNBOX(quote,ss_expr));
-  
   case ss_t_symbol: {
     ss_value v = ss_symbol_value(ss_expr);
-    if ( (ss_constantExprQ = ss_symbol_const(ss_expr)) ) {
+    if ( (ss_constantExprQ = ss_symbol_const(ss_expr)) )
       ss_expr = ss_box(quote,v);
-    }
     ss_return(v);
   }
-    
   case ss_t_cons:
     ss_expr = ss_list_to_vector(ss_expr);
     /* FALL THROUGH */
-    
   case ss_t_vector: {
-    ss_value op = ss_exec(ss_vector_v(ss_expr)[0]);
-    if ( ss_constantExprQ ) {
+    ss_value op;
+    if ( ss_vector_l(ss_expr) < 1 ) ss_return(ss_error("apply empty-vector"));
+    op = ss_exec(ss_vector_v(ss_expr)[0]);
+    if ( ss_constantExprQ )
       ss_vector_v(ss_expr)[0] = op;
-    }
     switch ( ss_type(op) ) {
     case ss_t_syntax:
-      ss_expr = (ss_UNBOX(syntax,op)->_func)(ss_env, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1);
+      ss_expr = (ss_UNBOX(prim,op)->_func)(ss_env, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1);
       goto again;
-      
     case ss_t_prim:
       ss_return((ss_UNBOX(prim,op)->_func)(ss_env, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1));
-      
     default:
-      ss_error("apply cannot-apply ~S", op);
+      ss_return(ss_error("apply cannot apply type=%d", (int) ss_type(op)));
     }
   }
   default:
-    ss_error("eval cannot-eval ~S", ss_expr);
+    ss_constantExprQ = 1;
   }
   ss_return(ss_expr);
+}
+
+ss_value ss_read(ss_value port);
+ss_prim(_read,1,1,1,"_read port")
+{
+  ss_return(ss_read(ss_argv[0]));
+}
+ss_end
+
+void ss_init_prim()
+{
+  ss_value sym;
+#define ss_prim_def(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) sym = ss_sym(NAME); ss_symbol_value(sym) = ss_BOX_REF(&ss_PASTE2(_ss_prim_,NAME));
+#include "prim.def"
+}
+
+ss_value ss_prompt()
+{
+  fprintf(stderr, " ss> ");
+  return ss_read(&stdin);
+}
+
+void ss_repl()
+{
+  ss_s_environment _env, *ss_env = &_env;
+  ss_value expr, value = ss_undef;
+  ss_constantExprQ = 0;
+  while ( (expr = ss_prompt()) != ss_eos ) {
+    value = ss_exec(expr);
+    printf("%lld (%p)\n", (long long) ss_unbox(integer, value), (void*) value);
+  }
 }
 
 int main(int argc, char **argv)
 {
   ss_init_symbol();
+  ss_init_prim();
+  ss_repl();
   return 0;
 }
-
-ss_value ss_read(ss_value port);
-
-ss_prim(_read,1,1,1,"(_read <port>)")
-{
-  ss_return(ss_read(ss_argv[0]));
-}
-ss_end
 
 #define VALUE ss_value
 #define READ_DECL ss_value ss_read(ss_value stream)

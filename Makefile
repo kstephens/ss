@@ -1,3 +1,4 @@
+CFLAGS = -g
 
 CFILES = \
   threadcomp.c
@@ -9,7 +10,7 @@ HFILES = \
 
 all : ss
 
-sym.def : Makefile symdef.pl $(CFILES)
+sym.def : Makefile symdef.pl $(CFILES) prim.def
 	$(CC) -E -Dss_sym=ss_sym $(CFILES) | perl symdef.pl > $@
 #	open $@
 
@@ -17,5 +18,5 @@ prim.def : Makefile primdef.pl $(CFILES)
 	$(CC) -E -D_ss_prim=_ss_prim $(CFILES) | perl primdef.pl > $@
 
 ss : $(CFILES) $(HFILES)
-	cc -o $@ $(CFILES)
+	$(CC) $(CFLAGS) -o $@ $(CFILES)
 
