@@ -81,7 +81,7 @@ ss ss_write(ss v)
   case ss_t_null:    fprintf(out, "()"); break;
   case ss_t_closure:
     fprintf(out, "#<closure ");
-    ss_write(ss_UNBOX(closure, v).params);
+    ss_write(ss_UNBOX(closure, v).formals);
     fprintf(out, ">");
     break;
   default:           fprintf(out, "#<??? %d @%p>", ss_type(v), (void*) v); break;
@@ -224,6 +224,7 @@ void ss_init_symbol(ss_s_environment *ss_env)
 #include "cops.def"
   ss_sym(DOT) = ss_box_symbol(".");
   ss_sym(setE) = ss_box_symbol("set!");
+  ss_sym(_rest) = ss_box_symbol("&rest");
   ss_sym(unquote_splicing) = ss_box_symbol("unquote-splicing");
 }
 
@@ -236,12 +237,6 @@ ss ss_box_quote(ss v)
     self->_value = v;
     return self;
   }
-}
-
-ss ss_unbox_quote(ss v)
-{
-  ss_typecheck(ss_t_quote,v);
-  return ss_UNBOX_quote(v);
 }
 
 ss ss_cons(ss a, ss d)
@@ -276,7 +271,8 @@ size_t ss_list_length(ss x)
     return l;
   case ss_t_vector:
     return l + ss_vector_l(x);
-  default: abort();
+  default:
+    return l + 1;
   }
 }
 
@@ -291,11 +287,13 @@ ss ss_list_to_vector(ss x)
     x = ss_CDR(x);
     goto again;
   case ss_t_null:
-    return v;
+    break;
   case ss_t_vector:
     memcpy(ss_vector_v(v) + l, ss_vector_v(x), sizeof(ss_vector_v(v)[0]) * ss_vector_l(x));
-    return v;
-  default: abort();
+    break;
+  default:
+    ss_vector_v(v)[l] = ss_cons(ss_sym(_rest), x);
+    break;
   }
   return v;
 }
@@ -448,12 +446,21 @@ ss_prim(_if,3,3,0,"if pred true ?false?")
   ss_return(ss_NE(x, ss_f) ? ss_exec(ss_argv[1]) : ss_exec(ss_argv[2]));
 ss_end
 
-ss_syntax(lambda,1,-1,0,"lambda formals body...")
+ss_syntax(lambda,1,-1,0,"lambda formals body...") {
+  ss rest;
   ss_s_closure *self = ss_alloc(ss_t_closure, sizeof(*self));
+  self->formals = ss_argv[0];
   self->params = ss_list_to_vector(ss_argv[0]);
+  self->rest = ss_f;
+  if ( ss_vector_l(self->params) > 1 ) {
+    rest = ss_vector_v(self->params)[ss_vector_l(self->params) - 1];
+    if ( ss_type(rest) == ss_t_cons && ss_car(rest) == ss_sym(_rest) ) {
+      ss_vector_v(self->params)[ss_vector_l(self->params) - 1] = self->rest = ss_car(rest);
+    }
+  }
   self->body = ss_vecnv(ss_argc - 1, ss_argv + 1);
   ss_return(self);
-ss_end
+  } ss_end
 
 ss_syntax(let,1,-1,0,"let bindings body...") {
   ss params = ss_nil, *pp = &params;

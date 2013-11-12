@@ -197,9 +197,11 @@ _ss_rtn:                                                             \
 
 typedef struct ss_s_closure {
   ss_PROC_DECL((*_func));
+  ss formals;
   ss params;
   ss body;
   ss_s_environment *env;
+  ss rest;
 } ss_s_closure;
 #define ss_UNBOX_closure(X) (*(ss_s_closure*)(X))
 
