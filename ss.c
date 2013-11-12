@@ -28,13 +28,15 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_exec(X) _ss_exec(ss_env, &(X))
 #define ss_constantExprQ ss_env->constantExprQ
 #define ss_rewrite_verbose 1
-#define ss_exec_verbose 0
+#define ss_exec_verbose 1
 static inline
-void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON)
+void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, int line)
 {
   if ( ss_rewrite_verbose ) {
-    fprintf(*ss_stderr, ";; rewrite: ");
+    fprintf(*ss_stderr, "\n;; rewrite: ");
     ss_write(ss_expr, ss_stderr);
+    fprintf(*ss_stderr, "\n;;      at: @%p", _ss_expr);
+    fprintf(*ss_stderr, "\n;;      in: %s line:%d", func, line);
     fprintf(*ss_stderr, "\n;;  reason: %s\n", (REASON));
   }
   ss_expr = X;
@@ -47,7 +49,7 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON)
 #if ss_rewrite_verbose == 0
 #define ss_rewrite_expr(X,REASON) (ss_expr = (X))
 #else
-#define ss_rewrite_expr(X,REASON) _ss_rewrite_expr(&ss_expr, X, REASON)
+#define ss_rewrite_expr(X,REASON) _ss_rewrite_expr(&ss_expr, (X), REASON, __FUNCTION__, __LINE__)
 #endif
 
 ss ss_alloc(ss_e_type type, size_t size)
@@ -472,19 +474,20 @@ ss ss_define(ss_s_environment *env, ss sym, ss val)
   return sym;
 }
 
-ss* ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
+ss* ss_bind(ss_s_environment *ss_env, ss *_ss_expr, ss var, int set)
 {
+  ss_s_environment *env = ss_env;
   int up, over;
-  ss *ref;
+  ss sym, *ref;
+  ss_constantExprQ = 0;
   switch ( ss_type(var) ) {
   case ss_t_symbol:
+    sym = var;
     up = 0;
     while ( env ) {
       for ( over = 0; over < env->argc; ++ over ) {
-        // fprintf(*ss_stderr, ";; bind "); ss_write(var, ss_stdout); fprintf(*ss_stderr, " = "); ss_write(env->symv[over], ss_stdout); fprintf(*ss_stderr, "\n");
         if ( ss_EQ(var, env->symv[over]) ) {
           ss_rewrite_expr(ss_m_var(var, up, over), "var binding is known");
-          ref = &env->argv[over];
           goto rtn;
         }
       }
@@ -493,36 +496,42 @@ ss* ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
     }
     break;
   case ss_t_var:
+    sym  = ss_UNBOX(var, var).name;
     up   = ss_UNBOX(var, var).up;
     over = ss_UNBOX(var, var).over;
     while ( up -- > 0 ) env = env->parent;
     assert(env);
-    ref = &env->argv[over];
     goto rtn;
   default: break;
   }
   return(ss_error("unbound", var));
 
  rtn:
+  ref = &env->argv[over];
   if ( ss_type(*ref) == ss_t_global ) {
+    sym = ((ss_s_global*) *ref)->name;
     ss_rewrite_expr(*ref, "global binding is known");
     ref = &ss_UNBOX(global, *ref);
   }
+  if ( ss_UNBOX(symbol, sym).is_const && env->parent == 0) {
+    if ( set ) return(ss_error("constant-variable", sym));
+    ss_constantExprQ = 1;
+    ss_rewrite_expr(ss_box_quote(*ref), "variable constant in top-level");
+  }
+
   return ref;
 }
 
-ss ss_set(ss *_ss_expr, ss_s_environment *env, ss var, ss val)
+ss ss_set(void *env, ss *_ss_expr, ss var, ss val)
 {
-  *ss_bind(_ss_expr, env, var) = val;
+  *ss_bind(env, _ss_expr, var, 1) = val;
   return var;
 }
 
-ss ss_get(ss *_ss_expr, ss_s_environment *env, ss var)
+ss ss_get(void *env, ss *_ss_expr, ss var)
 {
-  return *ss_bind(_ss_expr, env, var);
+  return *ss_bind(env, _ss_expr, var, 0);
 }
-
-#define ss_symbol_value(X) ss_get(&ss_expr, ss_env, (X))
 
 void _ss_min_args_error(ss op, const char *DOCSTRING, int ss_argc, int MINARGS)
 {
@@ -555,7 +564,7 @@ ss_prim(_define,2,2,0,"define name value") {
 } ss_end
 
 ss_prim(setE,2,2,0,"set! name value") {
-  ss_return(ss_set(&ss_argv[0], ss_env, ss_argv[0], ss_exec(ss_argv[1])));
+  ss_return(ss_set(ss_env, &ss_argv[0], ss_argv[0], ss_exec(ss_argv[1])));
 } ss_end
 
 ss ss_read(ss port);
@@ -790,6 +799,11 @@ ss_prim(apply,2,2,1,"apply func args") {
   ss_return(ss_apply(ss_env, ss_argv[0], ss_argv[1]));
 } ss_end
 
+ss ss_break_at()
+{
+  return ss_f;
+}
+
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
 {
   ss rtn, expr, var;
@@ -1017,7 +1031,7 @@ int main(int argc, char **argv)
   ss_init_port(ss_env);
   ss_init_prim(ss_env);
   ss_init_cfunc(ss_env);
-  {
+  if ( 1 ) {
     FILE *fp = fopen("boot.scm", "r");
     ss_repl(ss_env, &fp);
     fclose(fp);
