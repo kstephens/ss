@@ -3,7 +3,7 @@ CFLAGS = -g -I/opt/local/include
 LIBS = -L/opt/local/lib -lgc
 
 CFILES = \
-  threadcomp.c
+  ss.c
 
 HFILES = \
   ss.h \
