@@ -6,7 +6,7 @@
 
 ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 
-ss_value _ss_exec(ss_s_environment *ss_env, ss_value *_ss_expr);
+ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
 #define ss_constantExprQ ss_env->constantExprQ
@@ -21,7 +21,7 @@ ss_value _ss_exec(ss_s_environment *ss_env, ss_value *_ss_expr);
   fprintf(stdout, "\n");                                 \
   } while ( 0 )
 
-ss_value ss_alloc(ss_e_type type, size_t size)
+ss ss_alloc(ss_e_type type, size_t size)
 {
   void *ptr = ss_malloc(sizeof(ss_integer_t) + size);
   *((ss_integer_t*) ptr) = type;
@@ -29,14 +29,14 @@ ss_value ss_alloc(ss_e_type type, size_t size)
   return ptr;
 }
 
-ss_value ss_alloc_copy(ss_e_type type, size_t size, void *ptr)
+ss ss_alloc_copy(ss_e_type type, size_t size, void *ptr)
 {
   void *self = ss_alloc(type, size);
   memcpy(self, ptr, size);
   return self;
 }
 
-ss_value ss_error(const char *format, ...)
+ss ss_error(const char *format, ...)
 {
   va_list vap;
   va_start(vap, format);
@@ -48,7 +48,7 @@ ss_value ss_error(const char *format, ...)
   return 0;
 }
 
-ss_value ss_write(ss_value v)
+ss ss_write(ss v)
 {
   FILE *out = stdout;
   switch ( ss_type(v) ) {
@@ -110,46 +110,46 @@ ss_value ss_write(ss_value v)
   return ss_undef;
 }
 
-#define ss_sym_def(X) ss_value ss_PASTE2(_ss_sym_,X);
+#define ss_sym_def(X) ss ss_PASTE2(_ss_sym_,X);
 #include "sym.def"
 
 #define ss_typecheck(T,V)((void)0)
 
-ss_value ss_box_integer(ss_integer_t v)
+ss ss_box_integer(ss_integer_t v)
 {
   return ss_BOX_integer(v);
 }
 
-ss_integer_t ss_unbox_integer(ss_value v)
+ss_integer_t ss_unbox_integer(ss v)
 {
   ss_typecheck(ss_t_integer,v);
   return ss_UNBOX_integer(v);
 }
 
-ss_value ss_box_real(ss_real_t v)
+ss ss_box_real(ss_real_t v)
 {
   ss_s_real *self = ss_alloc(ss_t_real, sizeof(*self));
   self->_v = v;
   return self;
 }
 
-ss_real_t ss_unbox_real(ss_value v)
+ss_real_t ss_unbox_real(ss v)
 {
   ss_typecheck(ss_t_real, v);
   return ss_UNBOX_real(v);
 }
 
-ss_value ss_box_char(int _v)
+ss ss_box_char(int _v)
 {
   return ss_BOX_char(_v);
 }
-int      ss_unbox_char(ss_value v)
+int      ss_unbox_char(ss v)
 {
   ss_typecheck(ss_t_char, v);
   return ((int) ss_UNBOX_char(v)) & 0xff;
 }
 
-ss_value ss_strn(size_t l)
+ss ss_strn(size_t l)
 {
   ss_s_string *self = ss_alloc(ss_t_string, sizeof(*self));
   self->_v = ss_malloc(sizeof(self->_v[0]) * (l + 1));
@@ -157,27 +157,27 @@ ss_value ss_strn(size_t l)
   return self;
 }
 
-ss_value ss_strnv(size_t l, const char *v)
+ss ss_strnv(size_t l, const char *v)
 {
-  ss_value self = ss_strn(l);
+  ss self = ss_strn(l);
   memcpy(ss_string_v(self), v, sizeof(ss_string_v(self)[0]) * l);
   ss_string_v(self)[l] = 0;
   return self;
 }
 
-ss_value ss_string_TO_number(ss_value s, int radix)
+ss ss_string_TO_number(ss s, int radix)
 {
   char *endp = 0;
   long long n = strtoll(ss_string_v(s), &endp, radix);
   return *endp ? ss_f : ss_box(integer, n);
 }
 
-static ss_value ss_symbols;
-ss_value ss_box_symbol(const char *name)
+static ss ss_symbols;
+ss ss_box_symbol(const char *name)
 {
   ss_s_symbol *sym;
   {
-    ss_value l;
+    ss l;
     for ( l = ss_symbols; l != ss_nil; l = ss_cdr(l) ) {
       sym = (ss_s_symbol*) ss_car(l);
       if ( strcmp(name, ss_string_v(sym->_str)) == 0 )
@@ -207,7 +207,7 @@ void ss_init_symbol(ss_s_environment *ss_env)
   ss_sym(unquote_splicing) = ss_box_symbol("unquote-splicing");
 }
 
-ss_value ss_box_quote(ss_value v)
+ss ss_box_quote(ss v)
 {
   if ( ss_literalQ(v) ) {
     return(v);
@@ -218,31 +218,31 @@ ss_value ss_box_quote(ss_value v)
   }
 }
 
-ss_value ss_unbox_quote(ss_value v)
+ss ss_unbox_quote(ss v)
 {
   ss_typecheck(ss_t_quote,v);
   return ss_UNBOX_quote(v);
 }
 
-ss_value ss_cons(ss_value a, ss_value d)
+ss ss_cons(ss a, ss d)
 {
   ss_s_cons *self = ss_alloc(ss_t_cons, sizeof(*self));
   self->_car = a;
   self->_cdr = d;
   return self;
 }
-ss_value* _ss_car(ss_value a)
+ss* _ss_car(ss a)
 {
   ss_typecheck(ss_t_cons,a);
   return &ss_CAR(a);
 }
-ss_value* _ss_cdr(ss_value a)
+ss* _ss_cdr(ss a)
 {
   ss_typecheck(ss_t_cons,a);
   return &ss_CDR(a);
 }
 
-size_t ss_list_length(ss_value x)
+size_t ss_list_length(ss x)
 {
   size_t l = 0;
   
@@ -260,10 +260,10 @@ size_t ss_list_length(ss_value x)
   }
 }
 
-ss_value ss_list_to_vector(ss_value x)
+ss ss_list_to_vector(ss x)
 {
   size_t l = 0;
-  ss_value v = ss_vecn(ss_list_length(x));
+  ss v = ss_vecn(ss_list_length(x));
   again:
   switch ( ss_type(x) ) {
   case ss_t_cons:
@@ -280,7 +280,7 @@ ss_value ss_list_to_vector(ss_value x)
   return v;
 }
 
-ss_value ss_vecn(size_t l)
+ss ss_vecn(size_t l)
 {
   ss_s_vector *self = ss_alloc(ss_t_vector, sizeof(*self));
   self->_v = ss_malloc(sizeof(self->_v[0]) * l);
@@ -288,58 +288,58 @@ ss_value ss_vecn(size_t l)
   return self;
 }
 
-ss_value ss_vecnv(size_t l, const ss_value *v)
+ss ss_vecnv(size_t l, const ss *v)
 {
-  ss_value self = ss_vecn(l);
+  ss self = ss_vecn(l);
   memcpy(ss_vector_v(self), v, sizeof(ss_vector_v(self)[0]) * l);
   return self;
 }
 
-ss_value ss_vec1(ss_value _0)
+ss ss_vec1(ss _0)
 {
-  ss_value x = ss_vecn(1);
+  ss x = ss_vecn(1);
   ss_vector_v(x)[0] = _0;
   return x;
 }
-ss_value ss_vec2(ss_value _0, ss_value _1)
+ss ss_vec2(ss _0, ss _1)
 {
-  ss_value x = ss_vecn(2);
+  ss x = ss_vecn(2);
   ss_vector_v(x)[0] = _0;
   ss_vector_v(x)[1] = _1;
   return x;
 }
-ss_value ss_vec3(ss_value _0, ss_value _1, ss_value _2)
+ss ss_vec3(ss _0, ss _1, ss _2)
 {
-  ss_value x = ss_vecn(3);
+  ss x = ss_vecn(3);
   ss_vector_v(x)[0] = _0;
   ss_vector_v(x)[1] = _1;
   ss_vector_v(x)[2] = _2;
   return x;
 }
-ss_value ss_vec4(ss_value _0, ss_value _1, ss_value _2, ss_value _3)
+ss ss_vec4(ss _0, ss _1, ss _2, ss _3)
 {
-  ss_value x = ss_vecn(4);
+  ss x = ss_vecn(4);
   ss_vector_v(x)[0] = _0;
   ss_vector_v(x)[1] = _1;
   ss_vector_v(x)[2] = _2;
   ss_vector_v(x)[3] = _3;
   return x;
 }
-ss_value ss_vec(int n, ...)
+ss ss_vec(int n, ...)
 {
-  ss_value x = ss_vecn(n);
+  ss x = ss_vecn(n);
   int i;
   va_list vap;
   va_start(vap,n);
   
   for ( i = 0; i < n; i ++ ) {
-    ss_vector_v(x)[i] = va_arg(vap, ss_value);
+    ss_vector_v(x)[i] = va_arg(vap, ss);
   }
   va_end(vap);
   return x;
 }
 
-ss_value ss_m_environment(ss_s_environment *parent)
+ss ss_m_environment(ss_s_environment *parent)
 {
   ss_s_environment *env = ss_alloc(ss_t_environment, sizeof(*env));
   env->constantExprQ = 0;
@@ -350,7 +350,7 @@ ss_value ss_m_environment(ss_s_environment *parent)
   return env;
 }
 
-ss_value ss_m_var_ref(ss_value sym, int up, int over)
+ss ss_m_var_ref(ss sym, int up, int over)
 {
   ss_s_var_ref *self = ss_alloc(ss_t_var_ref, sizeof(*self));
   self->_name = sym;
@@ -359,7 +359,7 @@ ss_value ss_m_var_ref(ss_value sym, int up, int over)
   return self;
 }
 
-ss_value ss_define(ss_s_environment *env, ss_value sym, ss_value val)
+ss ss_define(ss_s_environment *env, ss sym, ss val)
 {
   int i;
   for ( i = 0; i < env->argc; ++ i )
@@ -375,7 +375,7 @@ ss_value ss_define(ss_s_environment *env, ss_value sym, ss_value val)
   return sym;
 }
 
-ss_value *ss_bind(ss_value *_ss_expr, ss_s_environment *env, ss_value var)
+ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
 {
   int up, over;
   switch ( ss_type(var) ) {
@@ -404,13 +404,13 @@ ss_value *ss_bind(ss_value *_ss_expr, ss_s_environment *env, ss_value var)
   }
 }
 
-ss_value ss_set(ss_value *_ss_expr, ss_s_environment *env, ss_value var, ss_value val)
+ss ss_set(ss *_ss_expr, ss_s_environment *env, ss var, ss val)
 {
   *ss_bind(_ss_expr, env, var) = val;
   return var;
 }
 
-ss_value ss_get(ss_value *_ss_expr, ss_s_environment *env, ss_value var)
+ss ss_get(ss *_ss_expr, ss_s_environment *env, ss var)
 {
   return *ss_bind(_ss_expr, env, var);
 }
@@ -453,7 +453,7 @@ ss_syntax(if,2,3,1,"if pred true ?false?")
 ss_end
 
 ss_prim(_if,-1,-1,0,"if pred true ?false?")
-  ss_value x = ss_exec(ss_argv[0]);
+  ss x = ss_exec(ss_argv[0]);
   if ( ss_constantExprQ ) {
     ss_rewrite_expr(ss_NE(x, ss_f) ? ss_argv[1] : ss_argv[2]);
     ss_return(ss_exec(ss_expr));
@@ -483,7 +483,7 @@ ss_prim(cdr,1,1,1,"cdr pair")
 ss_end
 
 static
-void ss_number_coerce_2(ss_value *argv)
+void ss_number_coerce_2(ss *argv)
 {
   switch ( ss_type(argv[0]) ) {
   case ss_t_integer:
@@ -570,9 +570,9 @@ ss_prim(_neg,1,1,1,"- <z>")
   }
 ss_end
 
-ss_value _ss_exec(ss_s_environment *ss_env, ss_value *_ss_expr)
+ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
 {
-  ss_value var ,rtn;
+  ss var ,rtn;
 #define return(X) do { rtn = (X); goto _return; } while(0)
   again:
   ss_constantExprQ = 0;
@@ -605,7 +605,7 @@ ss_value _ss_exec(ss_s_environment *ss_env, ss_value *_ss_expr)
     ss_rewrite_expr(ss_list_to_vector(ss_expr));
     /* FALL THROUGH */
   case ss_t_vector: {
-    ss_value op;
+    ss op;
     if ( ss_vector_l(ss_expr) < 1 ) return(ss_error("apply empty-vector"));
     op = ss_exec(ss_vector_v(ss_expr)[0]);
     if ( ss_constantExprQ )
@@ -657,7 +657,7 @@ ss_value _ss_exec(ss_s_environment *ss_env, ss_value *_ss_expr)
   return rtn;
 }
 
-ss_value ss_read(ss_value port);
+ss ss_read(ss port);
 ss_prim(_read,1,1,1,"_read port")
 {
   ss_return(ss_read(ss_argv[0]));
@@ -678,14 +678,14 @@ void ss_init_const(ss_s_environment *ss_env)
 
 void ss_init_prim(ss_s_environment *ss_env)
 {
-  ss_value sym;
+  ss sym;
 #define ss_prim_def(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
   sym = ss_sym(NAME); \
   ss_define(ss_env, sym, ss_alloc_copy(TYPE, sizeof(ss_s_prim), &ss_PASTE2(_ss_p_,NAME)));
 #include "prim.def"
 }
 
-ss_value ss_prompt()
+ss ss_prompt()
 {
   fprintf(stderr, " ss> ");
   return ss_read(&stdin);
@@ -693,7 +693,7 @@ ss_value ss_prompt()
 
 void ss_repl(ss_s_environment *ss_env)
 {
-  ss_value expr, value = ss_undef;
+  ss expr, value = ss_undef;
   ss_constantExprQ = 0;
   while ( (expr = ss_prompt()) != ss_eos ) {
     value = ss_exec(expr);
@@ -716,8 +716,8 @@ int main(int argc, char **argv)
   return 0;
 }
 
-#define VALUE ss_value
-#define READ_DECL ss_value ss_read(ss_value stream)
+#define VALUE ss
+#define READ_DECL ss ss_read(ss stream)
 #define READ_CALL() ss_read(stream)
 #define FP(stream) (*(FILE**)stream)
 #define GETC(stream) getc(FP(stream))
