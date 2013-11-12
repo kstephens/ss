@@ -531,7 +531,16 @@ void _ss_max_args_error(ss op, const char *DOCSTRING, int ss_argc, int MAXARGS)
   ss_error("apply too-many-args (%s) got %d expected %d", op, DOCSTRING, ss_argc, MAXARGS);
 }
 
-ss_prim(define,2,2,0,"define name value") {
+ss_syntax(define,1,-1,0,"define name value") {
+  ss name = ss_argv[0];
+  if ( ss_type(name) == ss_t_pair ) {
+    ss_return(ss_cons(ss_sym(define), ss_cons(ss_car(name), ss_cons(ss_cons(ss_sym(lambda), ss_cons(ss_cdr(name), ss_listnv(ss_argc - 1, ss_argv + 1))), ss_nil))));
+  } else {
+    ss_return(ss_cons(ss_sym(_define), ss_cons(name, ss_cons(ss_argv[1], ss_nil))));
+  }
+} ss_end
+
+ss_prim(_define,2,2,0,"define name value") {
   ss_return(ss_define(ss_env->top_level, ss_argv[0], ss_exec(ss_argv[1])));
 } ss_end
 
