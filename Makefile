@@ -23,6 +23,10 @@ prim.def : Makefile primdef.pl $(CFILES)
 ss : $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -o $@ $(CFILES) $(LIBS)
 
+ss.s : $(CFILES) $(HFILES)
+	$(CC) $(CFLAGS) -S -o $@.tmp $(CFILES) $(LIBS)
+	tool/asm-source $@.tmp > $@
+
 clean:
 	rm -f ss *.o sym.def prim.def
 
