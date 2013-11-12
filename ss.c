@@ -692,6 +692,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
           env->argv[i] = ss_exec(ss_argv[i]);
         if ( self->rest_i >= 0 )
           env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
+        ss_constantExprQ = 0;
         fprintf(stdout, ";; apply closure "); ss_write(self->params); ss_write(ss_expr); fprintf(stdout, "\n");
         rtn = ss_unspec;
         for ( i = 0; i < ss_vector_l(self->body) - 1; ++ i ) {
