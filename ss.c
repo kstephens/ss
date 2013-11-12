@@ -659,8 +659,11 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
   }
   case ss_t_if: {
     ss_s_if *self = ss_expr;
+    ss *expr;
     rtn = ss_exec(self->_test);
-    _ss_expr = rtn != ss_f ? &self->_true : &self->_false;
+    expr = rtn != ss_f ? &self->_true : &self->_false;
+    if ( ss_constantExprQ ) ss_rewrite_expr(*expr, rtn != ss_f ? "constant test is true" : "constant test is false");
+    _ss_expr = expr;
     goto again;
   }
   case ss_t_closure:
