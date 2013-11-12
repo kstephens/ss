@@ -72,7 +72,7 @@ ss ss_write(ss v)
   case ss_t_prim:    fprintf(out, "#<prim %s>",   ss_UNBOX(prim, v)->_name); break;
   case ss_t_symbol:  fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v)._str)); break;
   case ss_t_var_ref:
-    fprintf(out, "#<var_ref ");
+    fprintf(out, "#<v ");
     ss_write(ss_UNBOX(var_ref, v)._name);
     fprintf(out, " %d %d>", ss_UNBOX(var_ref, v)._up, ss_UNBOX(var_ref, v)._over);
     break;
@@ -701,6 +701,7 @@ void ss_repl(ss_s_environment *ss_env)
   ss_constantExprQ = 0;
   while ( (expr = ss_prompt()) != ss_eos ) {
     value = ss_exec(expr);
+    printf(";; => "); ss_write(expr); printf("\n");
     if ( value != ss_undef ) {
       ss_write(value); fprintf(stdout, "\n");
       printf(";; %lld (%p)\n", (long long) ss_unbox(integer, value), (void*) value);
