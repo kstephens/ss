@@ -664,7 +664,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     if ( ss_vector_l(ss_expr) < 1 ) return(ss_error("apply empty-vector"));
     op = ss_exec(ss_vector_v(ss_expr)[0]);
     if ( ss_constantExprQ )
-      ss_vector_v(ss_expr)[0] = op;
+      ss_vector_v(ss_expr)[0] = ss_box_quote(op);
     switch ( ss_type(op) ) {
     case ss_t_syntax:
       ss_rewrite_expr((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1), "syntax");
