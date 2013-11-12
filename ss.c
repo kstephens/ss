@@ -27,7 +27,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
 #define ss_constantExprQ ss_env->constantExprQ
-#define ss_rewrite_verbose 0
+#define ss_rewrite_verbose 1
 #define ss_exec_verbose 0
 static inline
 void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON)
@@ -131,6 +131,8 @@ ss ss_write(ss v, ss port)
   case ss_t_closure:
     fprintf(out, "#<closure ");
     ss_write(ss_UNBOX(closure, v).formals, port);
+    fprintf(out, " ");
+    ss_write(ss_UNBOX(closure, v).body, port);
     fprintf(out, ">");
     break;
   case ss_t_port:
@@ -964,7 +966,6 @@ void ss_repl(ss_s_environment *ss_env, ss input)
       fprintf(*ss_stderr, ";; %llu bytes %llu objects\n",
              (unsigned long long) ss_malloc_bytes,
              (unsigned long long) ss_malloc_objects);
-
     }
   }
 }

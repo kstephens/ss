@@ -1,5 +1,8 @@
-CFLAGS = -g -I/opt/local/include
+CFLAGS = -g
 CFLAGS += -O3
+CFLAGS += -I.
+CFLAGS += -Iboot
+CFLAGS += -I/opt/local/include
 
 LIBS = -L/opt/local/lib -lgc
 
@@ -32,6 +35,9 @@ ss.s : $(CFILES) $(HFILES)
 	tool/asm-source $@.tmp > $@
 	rm $@.tmp
 
+ss.i : $(CFILES) $(HFILES)
+	$(CC) $(CFLAGS) -E -o $@ $(CFILES) $(LIBS)
+
 clean:
-	rm -f ss *.o *.s *.tmp sym.def prim.def cfunc.def
+	rm -f ss *.o *.s *.i *.tmp sym.def prim.def cfunc.def
 
