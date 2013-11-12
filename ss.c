@@ -460,7 +460,7 @@ ss_syntax(lambda,1,-1,0,"lambda formals body...") {
   }
   self->body = ss_vecnv(ss_argc - 1, ss_argv + 1);
   ss_return(self);
-  } ss_end
+} ss_end
 
 ss_syntax(let,1,-1,0,"let bindings body...") {
   ss params = ss_nil, *pp = &params;
