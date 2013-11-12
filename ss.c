@@ -684,7 +684,8 @@ void ss_init_prim(ss_s_environment *ss_env)
   ss sym;
 #define ss_prim_def(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
   sym = ss_sym(NAME); \
-  ss_define(ss_env, sym, ss_alloc_copy(TYPE, sizeof(ss_s_prim), &ss_PASTE2(_ss_p_,NAME)));
+  ss_define(ss_env, sym, ss_alloc_copy(TYPE, sizeof(ss_s_prim), &ss_PASTE2(_ss_p_,NAME))); \
+  ss_UNBOX(symbol, sym)._const = 1;
 #include "prim.def"
 }
 
