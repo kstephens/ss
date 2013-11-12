@@ -26,7 +26,8 @@ ss : $(CFILES) $(HFILES)
 ss.s : $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -S -o $@.tmp $(CFILES) $(LIBS)
 	tool/asm-source $@.tmp > $@
+	rm $@.tmp
 
 clean:
-	rm -f ss *.o sym.def prim.def
+	rm -f ss *.o *.s sym.def prim.def
 
