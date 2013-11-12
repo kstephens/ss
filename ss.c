@@ -14,7 +14,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
   do {                                                   \
   fprintf(stdout, ";; rewrite: ");                       \
   ss_write(ss_expr);                                     \
-  fprintf(stdout, "\n;; because of %s\n", (REASON));     \
+  fprintf(stdout, "\n;;  reason: %s\n", (REASON));       \
   ss_expr = (X);                                         \
   fprintf(stdout, ";;      as: ");                       \
   ss_write(ss_expr);                                     \
@@ -393,7 +393,7 @@ ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
       for ( over = 0; over < env->argc; ++ over ) {
         // fprintf(stdout, ";; bind "); ss_write(var); fprintf(stdout, " = "); ss_write(env->symv[over]); fprintf(stdout, "\n");
         if ( ss_EQ(var, env->symv[over]) ) {
-          ss_rewrite_expr(ss_m_var_ref(var, up, over), "var_ref binding");
+          ss_rewrite_expr(ss_m_var_ref(var, up, over), "var_ref binding is known");
           return &env->argv[over];
         }
       }
@@ -658,7 +658,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     rtn = ss_get(&ss_expr, ss_env, var);
     rewrite_const_var:
     if ( (ss_constantExprQ = ss_symbol_const(var)) )
-      ss_rewrite_expr(ss_box_quote(rtn), "constant variable");
+      ss_rewrite_expr(ss_box_quote(rtn), "variable is constant");
     return(rtn);
   }
   case ss_t_var_ref: {
@@ -679,7 +679,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       return(self);
     }
   case ss_t_pair:
-    ss_rewrite_expr(ss_list_to_vector(ss_expr), "convert pair to vector");
+    ss_rewrite_expr(ss_list_to_vector(ss_expr), "application pair should be a vector");
     /* FALL THROUGH */
   case ss_t_vector: {
     ss op;
@@ -689,7 +689,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       ss_vector_v(ss_expr)[0] = ss_box_quote(op);
     switch ( ss_type(op) ) {
     case ss_t_syntax:
-      ss_rewrite_expr((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1), "syntax");
+      ss_rewrite_expr((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1), "syntax rewrite");
       goto again;
     case ss_t_prim:
       return((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1));
