@@ -66,7 +66,7 @@ ss ss_error(const char *format, ...)
 void ss_write_real(ss v, FILE *out)
 {
   char buf[64];
-  snprintf(buf, 63, "%g", ss_unbox(real, v));
+  snprintf(buf, 63, "%.22g", ss_unbox(real, v));
   if ( ! (strchr(buf, 'e') || strchr(buf, '.')) ) {
     strcat(buf, ".0");
   }
