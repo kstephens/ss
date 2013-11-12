@@ -105,14 +105,10 @@ typedef struct ss_s_vector {
   ss *_v;
   size_t _l;
 } ss_s_vector;
-#define ss_UNBOX_vector(X)*((ss_s_vector*)(X))
-#define ss_vector_v(X)((ss_s_vector*)(X))->_v
-#define ss_vector_l(X)((ss_s_vector*)(X))->_l
+#define ss_UNBOX_vector(X) (*(ss_s_vector*)(X))
+#define ss_vector_v(X) ((ss_s_vector*)(X))->_v
+#define ss_vector_l(X) ((ss_s_vector*)(X))->_l
 ss ss_vecn(size_t l);
-ss ss_vec1(ss _0);
-ss ss_vec2(ss _0, ss _1);
-ss ss_vec3(ss _0, ss _1, ss _2);
-ss ss_vec4(ss _0, ss _1, ss _2, ss _3);
 ss ss_vec(int n, ...);
 
 typedef char ss_string_t;

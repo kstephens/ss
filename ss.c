@@ -295,36 +295,6 @@ ss ss_vecnv(size_t l, const ss *v)
   return self;
 }
 
-ss ss_vec1(ss _0)
-{
-  ss x = ss_vecn(1);
-  ss_vector_v(x)[0] = _0;
-  return x;
-}
-ss ss_vec2(ss _0, ss _1)
-{
-  ss x = ss_vecn(2);
-  ss_vector_v(x)[0] = _0;
-  ss_vector_v(x)[1] = _1;
-  return x;
-}
-ss ss_vec3(ss _0, ss _1, ss _2)
-{
-  ss x = ss_vecn(3);
-  ss_vector_v(x)[0] = _0;
-  ss_vector_v(x)[1] = _1;
-  ss_vector_v(x)[2] = _2;
-  return x;
-}
-ss ss_vec4(ss _0, ss _1, ss _2, ss _3)
-{
-  ss x = ss_vecn(4);
-  ss_vector_v(x)[0] = _0;
-  ss_vector_v(x)[1] = _1;
-  ss_vector_v(x)[2] = _2;
-  ss_vector_v(x)[3] = _3;
-  return x;
-}
 ss ss_vec(int n, ...)
 {
   ss x = ss_vecn(n);
@@ -428,7 +398,7 @@ void _ss_max_args_error(const char *DOCSTRING, int ss_argc, int MAXARGS)
 }
 
 ss_syntax(define,2,2,0,"define name value") {
-  ss_return(ss_vec3(ss_sym(_define), ss_box(quote, ss_argv[0]), ss_argv[1]));
+  ss_return(ss_vec(3, ss_sym(_define), ss_box(quote, ss_argv[0]), ss_argv[1]));
 } ss_end
 
 ss_prim(_define,2,2,1,"define name value") {
@@ -449,7 +419,7 @@ ss_syntax(quote,1,1,0,"quote value")
 ss_end
 
 ss_syntax(if,2,3,1,"if pred true ?false?")
-  ss_return(ss_vec4(ss_sym(_if), ss_argv[0], ss_argv[1], (ss_argc == 3 ? ss_exec(ss_argv[2]) : ss_undef)));
+  ss_return(ss_vec(4, ss_sym(_if), ss_argv[0], ss_argv[1], (ss_argc == 3 ? ss_exec(ss_argv[2]) : ss_undef)));
 ss_end
 
 ss_prim(_if,-1,-1,0,"if pred true ?false?")
@@ -516,9 +486,9 @@ ss_syntax(ADD,0,-1,0,"+ <z>...")
   case 1:
     ss_return(ss_argv[0]);
   case 2:
-    ss_return(ss_vec3(ss_sym(_add), ss_argv[0], ss_argv[1]));
+    ss_return(ss_vec(3, ss_sym(_add), ss_argv[0], ss_argv[1]));
   default:
-    ss_return(ss_vec3(ss_sym(_add), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+    ss_return(ss_vec(3, ss_sym(_add), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
@@ -539,11 +509,11 @@ ss_syntax(SUB,0,-1,0,"- <z>...")
   case 0:
     ss_return(ss_box(integer,0));
   case 1:
-    ss_return(ss_vec2(ss_sym(_neg), ss_argv[0]));
+    ss_return(ss_vec(2, ss_sym(_neg), ss_argv[0]));
   case 2:
-    ss_return(ss_vec3(ss_sym(_sub), ss_argv[0], ss_argv[1]));
+    ss_return(ss_vec(3, ss_sym(_sub), ss_argv[0], ss_argv[1]));
   default:
-    ss_return(ss_vec3(ss_sym(_sub), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+    ss_return(ss_vec(3, ss_sym(_sub), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
