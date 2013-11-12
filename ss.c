@@ -205,7 +205,6 @@ ss ss_box_symbol(const char *name)
 
   sym = ss_alloc(ss_t_symbol, sizeof(*sym));
   sym->_str = ss_strnv(strlen(name), name);
-  sym->_value = ss_undef;
   sym->_const = 0;
 
   ss_symbols = ss_cons(sym, ss_symbols);

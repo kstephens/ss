@@ -123,7 +123,6 @@ ss ss_strn(size_t l);
 
 typedef struct ss_s_symbol {
   ss _str;
-  ss _value;
   const char *_docstring;
   short _const;
 } ss_s_symbol;
