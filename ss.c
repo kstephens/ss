@@ -533,6 +533,13 @@ void _ss_max_args_error(ss op, const char *DOCSTRING, int ss_argc, int MAXARGS)
   ss_error("apply too-many-args (%s) got %d expected %d", op, DOCSTRING, ss_argc, MAXARGS);
 }
 
+ss ss_make_constant(ss sym)
+{
+  ss_typecheck(ss_t_symbol, sym);
+  ss_UNBOX(symbol, sym).is_const = 1;
+  return sym;
+}
+
 ss_syntax(define,1,-1,0,"define name value") {
   ss name = ss_argv[0];
   if ( ss_type(name) == ss_t_pair ) {
