@@ -16,6 +16,11 @@ void* ss_malloc(size_t s)
   return GC_malloc(s);
 }
 
+ss ss_eqQ(ss a, ss b)
+{
+  return a == b ? ss_t : ss_f;
+}
+
 ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
