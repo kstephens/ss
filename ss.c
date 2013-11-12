@@ -100,7 +100,6 @@ ss ss_write(ss v, ss port)
   case ss_t_string:  fprintf(out, "\"%s\"", ss_string_v(v)); break;
   case ss_t_char:    fprintf(out, "#\\%c",  ss_unbox(char, v)); break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
-  case ss_t_syntax:  fprintf(out, "#<syntax %s>", ss_UNBOX(syntax, v)->name); break;
   case ss_t_prim:    fprintf(out, "#<prim %s>",   ss_UNBOX(prim, v)->name); break;
   case ss_t_symbol:  fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v).name)); break;
   case ss_t_if:
@@ -295,6 +294,8 @@ ss ss_box_symbol(const char *name)
 
   sym = ss_alloc(ss_t_symbol, sizeof(*sym));
   sym->name = ss_strnv(strlen(name), name);
+  sym->docstring = ss_f;
+  sym->syntax = ss_f;
   sym->is_const = 0;
 
   ss_symbols = ss_cons(sym, ss_symbols);
@@ -322,7 +323,7 @@ void ss_init_symbol(ss_s_environment *ss_env)
 
 ss ss_box_quote(ss v)
 {
-  if ( ss_literalQ(v) ) {
+  if ( ss_literalQ(v) && ss_type(v) != ss_t_quote ) {
     return(v);
   } else {
     ss_s_quote *self = ss_alloc(ss_t_quote, sizeof(*self));
@@ -540,7 +541,7 @@ ss ss_make_constant(ss sym)
   return sym;
 }
 
-ss_syntax(define,1,-1,0,"define name value") {
+ss_syntax(define,1,-1,1,"define name value") {
   ss name = ss_argv[0];
   if ( ss_type(name) == ss_t_pair ) {
     ss_return(ss_cons(ss_sym(define), ss_cons(ss_car(name), ss_cons(ss_cons(ss_sym(lambda), ss_cons(ss_cdr(name), ss_listnv(ss_argc - 1, ss_argv + 1))), ss_nil))));
@@ -573,11 +574,11 @@ ss_prim(newline,0,1,1,"newline")
   fprintf(*out, "\n");
 ss_end
 
-ss_syntax(quote,1,1,0,"quote value")
+ss_syntax(quote,1,1,1,"quote value")
   ss_return(ss_box_quote(ss_argv[0]));
 ss_end
 
-ss_syntax(if,2,3,0,"if pred true ?false?") {
+ss_syntax(if,2,3,1,"if pred true ?false?") {
   ss_s_if *self = ss_alloc(ss_t_if, sizeof(*self));
   self->t = ss_argv[0];
   self->a = ss_argv[1];
@@ -585,7 +586,7 @@ ss_syntax(if,2,3,0,"if pred true ?false?") {
   ss_return(self);
 } ss_end
 
-ss_syntax(lambda,1,-1,0,"lambda formals body...") {
+ss_syntax(lambda,1,-1,1,"lambda formals body...") {
   ss rest; int rest_i;
   ss_s_closure *self = ss_alloc(ss_t_closure, sizeof(*self));
   self->formals = ss_argv[0];
@@ -604,10 +605,10 @@ ss_syntax(lambda,1,-1,0,"lambda formals body...") {
   ss_return(self);
 } ss_end
 
-ss_syntax(let,1,-1,0,"let bindings body...") {
+ss_syntax(let,1,-1,1,"let bindings body...") {
   ss params = ss_nil, *pp = &params;
   ss args = ss_nil, *ap = &args;
-  ss body = ss_vecnv(ss_argc - 1, ss_argv + 1);
+  ss body = ss_listnv(ss_argc - 1, ss_argv + 1);
   ss bindings = ss_argv[0];
   while ( bindings != ss_nil ) {
     ss binding = ss_car(bindings);
@@ -663,7 +664,7 @@ void ss_number_coerce_2(ss *argv)
   }
 }
 
-ss_syntax(ADD,0,-1,0,"+ z...")
+ss_syntax(ADD,0,-1,1,"+ z...")
   switch ( ss_argc ) {
   case 0:
     ss_return(ss_box(integer,0));
@@ -672,22 +673,22 @@ ss_syntax(ADD,0,-1,0,"+ z...")
   case 2:
     ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0], ss_argv[1]));
   default:
-    ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+    ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
-ss_syntax(SUB,1,-1,0,"- z...")
+ss_syntax(SUB,1,-1,1,"- z...")
   switch ( ss_argc ) {
   case 1:
     ss_return(ss_vec(2, ss_sym(_NEG), ss_argv[0]));
   case 2:
     ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[0], ss_argv[1]));
   default:
-    ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+    ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[0], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
-ss_syntax(MUL,0,-1,0,"* z...")
+ss_syntax(MUL,0,-1,1,"* z...")
   switch ( ss_argc ) {
   case 0:
     ss_return(ss_box(integer,1));
@@ -696,18 +697,18 @@ ss_syntax(MUL,0,-1,0,"* z...")
   case 2:
     ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0], ss_argv[1]));
   default:
-    ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[1], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+    ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
-ss_syntax(DIV,1,-1,0,"/ z...")
+ss_syntax(DIV,1,-1,1,"/ z...")
   switch ( ss_argc ) {
   case 1:
     ss_return(ss_vec(2, ss_sym(_DIV), ss_box(real, 1.0), ss_argv[0]));
   case 2:
     ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_argv[1]));
   default:
-    ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[1], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+    ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
@@ -791,41 +792,35 @@ ss_prim(apply,2,2,1,"apply func args") {
 
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
 {
-  ss rtn, var;
+  ss rtn, expr, var;
 #define return(X) do { rtn = (X); goto _return; } while(0)
+  expr = ss_expr;
   again:
   ss_constantExprQ = 0;
-  rtn = ss_expr;
   if ( ss_exec_verbose ) {
-    fprintf(*ss_stderr, ";; exec: "); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, ";; exec: @%p ", _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
-  switch ( ss_type(ss_expr) ) {
+  if ( expr == ss_sym(my_op) ) ss_break_at();
+  switch ( ss_type(expr) ) {
   case ss_t_quote:
     ss_constantExprQ = 1;
-    return(ss_UNBOX(quote,ss_expr));
-  case ss_t_symbol: {
-    var = ss_expr;
-    rtn = ss_get(&ss_expr, ss_env, var);
-    rewrite_const_var:
-    if ( (ss_constantExprQ = ss_UNBOX(symbol, var).is_const) )
-      ss_rewrite_expr(ss_box_quote(rtn), "variable is constant");
-    return(rtn);
-  }
-  case ss_t_var: {
-    var = ss_UNBOX(var, ss_expr).name;
-    rtn = ss_get(&ss_expr, ss_env, ss_expr);
-    goto rewrite_const_var;
-  }
-  case ss_t_global: {
-    return(ss_UNBOX(global, ss_expr));
-  }
+    return(ss_UNBOX(quote, expr));
+  case ss_t_symbol:
+  case ss_t_var:
+    return(ss_get(ss_env, _ss_expr, expr));
+  case ss_t_global:
+    return(ss_UNBOX(global, expr));
   case ss_t_if: {
     ss_s_if *self = ss_expr;
-    ss *expr;
+    ss *subexpr;
     rtn = ss_exec(self->t);
-    expr = rtn != ss_f ? &self->a : &self->b;
-    if ( ss_constantExprQ ) ss_rewrite_expr(*expr, rtn != ss_f ? "constant test is true" : "constant test is false");
-    _ss_expr = expr;
+    subexpr = rtn != ss_f ? &self->a : &self->b;
+    if ( ss_constantExprQ ) {
+      ss_rewrite_expr(*subexpr, rtn != ss_f ? "constant test is true" : "constant test is false");
+    } else {
+      _ss_expr = subexpr;
+    }
+    expr = *subexpr;
     goto again;
   }
   case ss_t_closure:
@@ -835,24 +830,26 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       return(self);
     }
   case ss_t_pair:
-    ss_rewrite_expr(ss_list_to_vector(ss_expr), "application pair should be a vector");
+    var = ss_car(expr);
+    if ( ss_type(var) == ss_t_symbol && (var = ss_UNBOX(symbol, var).syntax) != ss_f ) {
+      expr = ss_apply(ss_env, var, ss_cdr(expr));
+      ss_rewrite_expr(expr, "syntax rewrite");
+      goto again;
+    }
+    expr = ss_list_to_vector(expr);
+    ss_rewrite_expr(expr, "application vector");
     /* FALL THROUGH */
   case ss_t_vector: {
-    ss op;
-    if ( ss_vector_l(ss_expr) < 1 ) return(ss_error("apply empty-vector", ss_expr));
-    op = ss_vector_v(ss_expr)[0];
-    op = ss_exec(op);
-    switch ( ss_type(op) ) {
-    case ss_t_syntax:
-      ss_rewrite_expr((ss_UNBOX(prim,op)->func)(ss_env, &ss_expr, op, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1), "syntax rewrite");
-      goto again;
+    if ( ss_vector_l(expr) < 1 ) return(ss_error("apply empty-vector", expr));
+    var = ss_exec(ss_vector_v(expr)[0]);
+    switch ( ss_type(var) ) {
     case ss_t_prim:
-      return((ss_UNBOX(prim,op)->func)(ss_env, &ss_expr, op, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1));
+      return((ss_UNBOX(prim,var)->func)(ss_env, _ss_expr, var, ss_vector_l(expr) - 1, ss_vector_v(expr) + 1));
     case ss_t_closure:
       {
-        ss_s_closure *self = (ss_s_closure*) op;
-        size_t i, ss_argc = ss_vector_l(ss_expr) - 1;
-        ss *ss_argv = ss_vector_v(ss_expr) + 1;
+        ss_s_closure *self = (ss_s_closure*) var;
+        size_t i, ss_argc = ss_vector_l(expr) - 1;
+        ss *ss_argv = ss_vector_v(expr) + 1;
         ss_s_environment *env;
         if ( self->rest_i >= 0 ) {
           if ( ss_argc < self->rest_i )
@@ -871,7 +868,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
           env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
         ss_constantExprQ = 0;
         if ( ss_exec_verbose ) {
-          fprintf(*ss_stderr, ";; apply closure "); ss_write(self->params, ss_stderr); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
+          fprintf(*ss_stderr, ";; apply closure "); ss_write(self->params, ss_stderr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
         }
         rtn = ss_unspec;
         for ( i = 0; i < ss_vector_l(self->body) - 1; ++ i ) {
@@ -880,16 +877,18 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
         if ( i < ss_vector_l(self->body) ) {
           ss_env = env;
           _ss_expr = &ss_vector_v(self->body)[i];
+          expr = *_ss_expr;
           goto again; // tail recursion.
         }
       }
       break;
     default:
-      return(ss_error("apply cannot apply type=%d", op, (int) ss_type(op)));
+      return(ss_error("apply cannot apply type=%d", var, (int) ss_type(var)));
     }
   }
   default:
-    ss_constantExprQ = 1;
+    rtn = expr;
+    ss_constantExprQ = ss_literalQ(expr);
   }
 #undef return
   _return:
@@ -951,11 +950,18 @@ void ss_init_const(ss_s_environment *ss_env)
 void ss_init_prim(ss_s_environment *ss_env)
 {
   ss sym;
-#define ss_prim_def(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
-  sym = ss_sym(NAME); \
-  ss_define(ss_env, sym, ss_alloc_copy(TYPE, sizeof(ss_s_prim), &ss_PASTE2(_ss_p_,NAME))); \
+#define ss_prim_def(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)               \
+  sym = ss_sym(NAME);                                                   \
+  ss_PASTE2(ss_p_,NAME) =                                               \
+    ss_alloc_copy(ss_t_prim, sizeof(ss_s_prim), &ss_PASTE2(_ss_p_,NAME)); \
+  ss_define(ss_env, sym, ss_PASTE2(ss_p_,NAME));                        \
   ss_UNBOX(symbol, sym).is_const = 1;
 #include "prim.def"
+
+#define ss_syntax_def(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)     \
+  sym = ss_sym(NAME);                                           \
+  ss_UNBOX(symbol, sym).syntax = ss_PASTE2(ss_p_ss_syn_,NAME);
+#include "syntax.def"
 }
 void ss_init_cfunc(ss_s_environment *ss_env);
 

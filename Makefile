@@ -12,16 +12,21 @@ CFILES = \
 HFILES = \
   ss.h \
   sym.def \
-  prim.def
+  prim.def \
+  cfunc.def \
+  syntax.def
 
 all : ss
 
-sym.def : Makefile symdef.pl $(CFILES) prim.def cfunc.def
+sym.def : Makefile symdef.pl $(CFILES) prim.def syntax.def cfunc.def
 	$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | perl symdef.pl > $@
 #	open $@
 
 prim.def : Makefile primdef.pl $(CFILES)
 	$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) | perl primdef.pl > $@
+
+syntax.def : Makefile syntax.def.pl $(CFILES)
+	$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) | perl $@.pl > $@
 
 cfunc.def : Makefile cfunc.def.pl $(CFILES)
 	$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | perl $@.pl > $@

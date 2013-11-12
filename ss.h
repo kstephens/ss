@@ -22,7 +22,6 @@ typedef enum ss_e_type {
   ss_t_string,
   ss_t_char,
   ss_t_boolean,
-  ss_t_syntax,
   ss_t_prim,
   ss_t_closure,
   ss_t_quote,
@@ -141,7 +140,8 @@ ss ss_strn(size_t l);
 
 typedef struct ss_s_symbol {
   ss name;
-  const char *docstring;
+  ss docstring;
+  ss syntax;
   ss_integer_t is_const;
 } ss_s_symbol;
 #define ss_UNBOX_symbol(X) (*((ss_s_symbol*)(X)))
@@ -162,18 +162,17 @@ typedef struct ss_s_prim {
   const char *docstring;
   void *c_func;
 } ss_s_prim;
-typedef ss_s_prim ss_s_syntax;
 #define ss_UNBOX_prim(X)((ss_s_prim*)(X))
-#define ss_UNBOX_syntax(X)ss_UNBOX_prim(X)
 
 #ifndef _ss_prim
-#define _ss_prim(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)             \
+#define _ss_prim(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)                  \
+  ss ss_p_##NAME;                                                       \
   static ss_PROC_DECL(ss_PASTE2(_ss_pf_,NAME));                         \
   ss_s_prim ss_PASTE2(_ss_p_,NAME) = { ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, EVALQ, DOCSTRING } ; \
   static ss_PROC_DECL(ss_PASTE2(_ss_pf_,NAME)) {                        \
   ss ss_rtn = ss_undef;                                                 \
   int ss_constantFold = 0;                                              \
-  int ss_constantExprQAll = 1;                                          \
+  int ss_constantExprQAll = ss_constantExprQ;                           \
   if ( MINARGS >= 0 ) {                                                 \
     if ( ss_argc < MINARGS )                                            \
       _ss_min_args_error(ss_prim, DOCSTRING, ss_argc, MINARGS);         \
@@ -204,9 +203,12 @@ _ss_rtn:                                                             \
  return(ss_rtn);                                                     \
  }
 #define ss_prim(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
-  _ss_prim(ss_t_prim,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
+  _ss_prim(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
+#endif
+
+#ifndef ss_syntax
 #define ss_syntax(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
-  _ss_prim(ss_t_syntax,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
+  _ss_prim(ss_syn_##NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
 #endif
 
 typedef struct ss_s_closure {
