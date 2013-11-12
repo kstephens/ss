@@ -218,12 +218,11 @@ void ss_init_symbol(ss_s_environment *ss_env)
 {
 #define ss_sym_def(X) ss_PASTE2(_ss_sym_, X) = ss_box_symbol(#X);
 #include "sym.def"
-  ss_sym(ADD) = ss_box_symbol("+");
-  ss_sym(SUB) = ss_box_symbol("-");
-  ss_sym(MUL) = ss_box_symbol("*");
-  ss_sym(DIV) = ss_box_symbol("/");
+#define BOP(NAME,OP) ss_sym(NAME) = ss_box_symbol(#OP);
+#define UOP(NAME,OP) BOP(NAME,OP)
+#define ROP(NAME,OP) BOP(NAME,OP)
+#include "cops.def"
   ss_sym(DOT) = ss_box_symbol(".");
-  ss_sym(NOT) = ss_box_symbol("!");
   ss_sym(setE) = ss_box_symbol("set!");
   ss_sym(unquote_splicing) = ss_box_symbol("unquote-splicing");
 }
@@ -585,6 +584,20 @@ ss_end
       ss_return(ss_box(integer, OP ss_UNBOX(integer,ss_argv[0])));      \
     case ss_t_real:                                                     \
       ss_return(ss_box(real, OP ss_UNBOX(real,ss_argv[0])));            \
+    default: abort();                                                   \
+    }                                                                   \
+  }                                                                     \
+  ss_end
+#define ROP(NAME,OP)                                                    \
+  ss_prim(NAME,2,2,1,#OP " x y")                                        \
+  {                                                                     \
+    ss_constantFold = 1;                                                \
+    ss_number_coerce_2(ss_argv);                                        \
+    switch ( ss_type(ss_argv[0]) ) {                                    \
+    case ss_t_integer:                                                  \
+      ss_return(ss_BOX(boolean, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
+    case ss_t_real:                                                     \
+      ss_return(ss_BOX(boolean, ss_UNBOX(real,ss_argv[0])    OP ss_UNBOX(real,ss_argv[1]))); \
     default: abort();                                                   \
     }                                                                   \
   }                                                                     \
