@@ -545,8 +545,9 @@ ss_prim(write,1,2,1,"write object")
   ss_write(ss_argv[0], ss_argc > 1 ? ss_argv[1] : ss_stdout);
 ss_end
 
-ss_prim(newline,0,0,0,"newline")
-  fprintf(*ss_stdout, "\n");
+ss_prim(newline,0,1,1,"newline")
+  FILE **out = ss_argc > 0 ? ss_argv[0] : ss_stdin;
+  fprintf(*out, "\n");
 ss_end
 
 ss_syntax(quote,1,1,0,"quote value")
