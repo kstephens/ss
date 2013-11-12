@@ -11,6 +11,90 @@ ss_type ss_t[] = { ss_t_boolean };
 ss_type ss_f[] = { ss_t_boolean };
 ss_type ss_eos[] = { ss_t_eos };
 
+ss_value _ss_exec(ss_s_environment *ss_env, ss_value *_ss_expr);
+#define ss_expr (*_ss_expr)
+#define ss_exec(X) _ss_exec(ss_env, &(X))
+#define ss_constantExprQ ss_env->constantExprQ
+#define ss_rewrite_expr(X)                               \
+  do {                                                   \
+  fprintf(stdout, ";; rewrite: ");                       \
+  ss_write(ss_expr);                                     \
+  fprintf(stdout, "\n");                                 \
+  ss_expr = (X);                                         \
+  fprintf(stdout, ";;      as: ");                       \
+  ss_write(ss_expr);                                     \
+  fprintf(stdout, "\n");                                 \
+  } while ( 0 )
+
+ss_value ss_error(const char *format, ...)
+{
+  va_list vap;
+  va_start(vap, format);
+  fprintf(stderr, "error ");
+  vfprintf(stderr, format, vap);
+  fprintf(stderr, "\n");
+  va_end(vap);
+  abort();
+  return 0;
+}
+
+ss_value ss_write(ss_value v)
+{
+  FILE *out = stdout;
+  switch ( ss_type(v) ) {
+  case ss_t_undef:   fprintf(out, "#<undef>"); break;
+  case ss_t_integer: fprintf(out, "%lld",   (long long) ss_unbox(integer, v)); break;
+  case ss_t_real:    fprintf(out, "%g",     ss_unbox(real, v)); break;
+  case ss_t_string:  fprintf(out, "\"%s\"", ss_string_v(v)); break;
+  case ss_t_char:    fprintf(out, "#\\%c",  ss_unbox(char, v)); break;
+  case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
+  case ss_t_syntax:  fprintf(out, "#<syntax %s>", ss_UNBOX(syntax, v)->_name); break;
+  case ss_t_prim:    fprintf(out, "#<prim %s>",   ss_UNBOX(prim, v)->_name); break;
+  case ss_t_symbol:  fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v)._str)); break;
+  case ss_t_var_ref:
+    fprintf(out, "#<var_ref ");
+    ss_write(ss_UNBOX(var_ref, v)._name);
+    fprintf(out, " %d %d>", ss_UNBOX(var_ref, v)._up, ss_UNBOX(var_ref, v)._over);
+    break;
+  case ss_t_quote:   fprintf(out, "'"); ss_write(ss_UNBOX(quote, v)); break;
+  case ss_t_eos:     fprintf(out, "#<eos>"); break;
+  case ss_t_null:    fprintf(out, "()"); break;
+  default:           fprintf(out, "#<??? %d @%p>", ss_type(v), (void*) v); break;
+  case ss_t_cons:
+    fprintf(out, "(");
+    while ( v != ss_nil ) {
+      switch ( ss_type(v) ) {
+      case ss_t_cons:
+        ss_write(ss_car(v));
+        v = ss_cdr(v);
+        if ( v != ss_nil )
+          fprintf(out, " ");
+        break;
+      default:
+        fprintf(out, " . ");
+        ss_write(v);
+        v = ss_nil;
+        break;
+      }
+    }
+    fprintf(out, ")");
+    break;
+  case ss_t_vector:
+    {
+      size_t i = 0;
+      fprintf(out, "#(");
+      while ( i < ss_vector_l(v) ) {
+        ss_write(ss_vector_v(v)[i]);
+        if ( ++ i < ss_vector_l(v) )
+          fprintf(out, " ");
+      }
+      fprintf(out, ")");
+    }
+    break;
+  }
+  return ss_undef;
+}
+
 #define ss_sym_def(X) ss_value ss_PASTE2(_ss_sym_,X);
 #include "sym.def"
 
@@ -101,7 +185,7 @@ ss_value ss_box_symbol(const char *name)
   return ss_BOX_REF(sym);
 }
 
-void ss_init_symbol()
+void ss_init_symbol(ss_s_environment *ss_env)
 {
 #define ss_sym_def(X) ss_PASTE2(_ss_sym_, X) = ss_box_symbol(#X);
 #include "sym.def"
@@ -336,62 +420,54 @@ void _ss_max_args_error(const char *DOCSTRING, int ss_argc, int MAXARGS)
   ss_error("apply too-many-args %s got %d expected %d", DOCSTRING, ss_argc, MAXARGS);
 }
 
-ss_value _ss_exec(ss_s_environment *ss_env, ss_value *_ss_expr);
-#define ss_exec(X) _ss_exec(ss_env, &(X))
-#define ss_constantExprQ ss_env->constantExprQ
+ss_syntax(define,2,2,0,"define name value") {
+  ss_return(ss_vec3(ss_sym(_define), ss_box(quote, ss_argv[0]), ss_argv[1]));
+} ss_end
+
+ss_prim(_define,2,2,1,"define name value") {
+  ss_return(ss_define(ss_env->top_level, ss_argv[0], ss_argv[1]));
+} ss_end
+
+ss_prim(write,1,1,1,"write object")
+  ss_write(ss_argv[0]);
+ss_end
+
+ss_prim(newline,0,0,0,"newline")
+  fprintf(stdout, "\n");
+ss_end
 
 ss_syntax(quote,1,1,0,"quote value")
   ss_constantExprQ = 1;
   ss_return(ss_box(quote,ss_argv[0]));
 ss_end
 
-ss_syntax(if,2,3,0,"if pred true ?false?")
-  ss_value x;
-  x = ss_exec(ss_argv[0]);
-  
-  if ( ss_constantExprQ ) {
-    ss_return(ss_NE(x,ss_f) ? ss_exec(ss_argv[1]) : (ss_argc == 3 ? ss_exec(ss_argv[2]) : (ss_constantExprQ = 1, ss_undef)) );
-  } else {
-    ss_constantExprQ = 0;
-    ss_return(ss_vec4(ss_sym(_if), x, ss_exec(ss_argv[1]), (ss_argc == 3 ? ss_exec(ss_argv[2]) : ss_undef)));
-  }
+ss_syntax(if,2,3,1,"if pred true ?false?")
+  ss_return(ss_vec4(ss_sym(_if), ss_argv[0], ss_argv[1], (ss_argc == 3 ? ss_exec(ss_argv[2]) : ss_undef)));
 ss_end
 
 ss_prim(_if,-1,-1,0,"if pred true ?false?")
   ss_value x = ss_exec(ss_argv[0]);
-  ss_return(ss_NE(x,ss_f) ? ss_exec(ss_argv[1]) : ss_exec(ss_argv[2]));
+  if ( ss_constantExprQ ) {
+    ss_rewrite_expr(ss_NE(x, ss_f) ? ss_argv[1] : ss_argv[2]);
+    ss_return(ss_exec(ss_expr));
+  }
+  ss_return(ss_NE(x, ss_f) ? ss_exec(ss_argv[1]) : ss_exec(ss_argv[2]));
 ss_end
 
 ss_syntax(lambda,2,-1,0,"lambda formals body...")
   ss_return(ss_vec(3, ss_sym(_lambda), ss_box(quote, ss_argv[0]), ss_box(quote, ss_vecnv(ss_argc - 1, ss_argv + 1))));
 ss_end
 
-ss_syntax(car,1,1,1,"car <pair>")
-  if ( ss_constantExprQ ) {
-    ss_constantExprQ = 1;
-    ss_return(ss_box(quote,ss_car(ss_argv[0])));
-  } else {
-    ss_constantExprQ = 0;
-    ss_return(ss_vec2(ss_sym(_car), ss_argv[0]));
-  }
+ss_prim(cons,2,2,1,"cons car cdr")
+  ss_return(ss_cons(ss_argv[0], ss_argv[1]));
 ss_end
 
-ss_prim(_car,-1,-1,1,"car <pair>")
+ss_prim(car,1,1,1,"car pair")
   ss_typecheck(ss_t_cons,ss_argv[0]);
   ss_return(ss_CAR(ss_argv[0]));
 ss_end
 
-ss_syntax(cdr,2,2,1,"cdr <pair>")
-  if ( ss_constantExprQ ) {
-    ss_constantExprQ = 1;
-    ss_return(ss_box(quote,ss_cdr(ss_argv[0])));
-  } else {
-    ss_constantExprQ = 0;
-    ss_return(ss_vec2(ss_sym(_cdr), ss_argv[0]));
-  }
-ss_end
-
-ss_prim(_cdr,-1,-1,1,"cdr <pair>")
+ss_prim(cdr,1,1,1,"cdr pair")
   ss_typecheck(ss_t_cons,ss_argv[0]);
   ss_return(ss_CDR(ss_argv[0]));
 ss_end
@@ -423,7 +499,7 @@ void ss_number_coerce_2(ss_value *argv)
   }
 }
 
-ss_syntax(ADD,0,-1,1,"+ <z>...")
+ss_syntax(ADD,0,-1,0,"+ <z>...")
   switch ( ss_argc ) {
   case 0:
     ss_return(ss_box(integer,0));
@@ -432,11 +508,12 @@ ss_syntax(ADD,0,-1,1,"+ <z>...")
   case 2:
     ss_return(ss_vec3(ss_sym(_add), ss_argv[0], ss_argv[1]));
   default:
-    ss_return(ss_vec3(ss_sym(_add), ss_argv[1], ss_cons(ss_sym(ADD), ss_vec(ss_argc - 1, ss_argv + 1))));
+    ss_return(ss_vec3(ss_sym(_add), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
 ss_prim(_add,-1,-1,1,"+ <z>...")
+  ss_constantFold = 1;
   ss_number_coerce_2(ss_argv);
   switch ( ss_type(ss_argv[0]) ) {
   case ss_t_integer:
@@ -447,7 +524,7 @@ ss_prim(_add,-1,-1,1,"+ <z>...")
   }
 ss_end
 
-ss_syntax(SUB,0,-1,1,"- <z>...")
+ss_syntax(SUB,0,-1,0,"- <z>...")
   switch ( ss_argc ) {
   case 0:
     ss_return(ss_box(integer,0));
@@ -456,11 +533,12 @@ ss_syntax(SUB,0,-1,1,"- <z>...")
   case 2:
     ss_return(ss_vec3(ss_sym(_sub), ss_argv[0], ss_argv[1]));
   default:
-    ss_return(ss_vec3(ss_sym(_sub), ss_argv[1], ss_cons(ss_sym(ADD), ss_vec(ss_argc - 1, ss_argv + 1))));
+    ss_return(ss_vec3(ss_sym(_sub), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
 ss_prim(_sub,-1,-1,1,"- <z>...")
+  ss_constantFold = 1;
   ss_number_coerce_2(ss_argv);
   switch ( ss_type(ss_argv[0]) ) {
   case ss_t_integer:
@@ -472,6 +550,7 @@ ss_prim(_sub,-1,-1,1,"- <z>...")
 ss_end
 
 ss_prim(_neg,-1,-1,1,"- <z>")
+  ss_constantFold = 1;
   switch ( ss_type(ss_argv[0]) ) {
   case ss_t_integer:
     ss_return(ss_box(integer, - ss_UNBOX(integer,ss_argv[0])));

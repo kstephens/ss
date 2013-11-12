@@ -119,9 +119,9 @@ typedef struct ss_s_string {
   size_t _l;
   ss_string_t *_v;
 } ss_s_string;
-#define ss_UNBOX_string(X)*((ss_s_string*)ss_REF(X))
-#define ss_string_v(X)((ss_s_string*)ss_REF(X))->_v
-#define ss_string_l(X)((ss_s_string*)ss_REF(X))->_l
+#define ss_UNBOX_string(X) (*((ss_s_string*)ss_REF(X)))
+#define ss_string_v(X) ((ss_s_string*)ss_REF(X))->_v
+#define ss_string_l(X) ((ss_s_string*)ss_REF(X))->_l
 ss_value ss_strn(size_t l);
 
 typedef struct ss_s_symbol {
@@ -131,19 +131,23 @@ typedef struct ss_s_symbol {
   const char *_docstring;
   short _const;
 } ss_s_symbol;
-#define ss_UNBOX_symbol(X)*((ss_s_symbol*)ss_REF(X))
-#define ss_symbol_value(X)(((ss_s_symbol*)ss_REF(X))->_value)
-#define ss_symbol_const(X)(((ss_s_symbol*)ss_REF(X))->_const)
+#define ss_UNBOX_symbol(X) (*((ss_s_symbol*)ss_REF(X)))
+#define ss_symbol_const(X) (((ss_s_symbol*)ss_REF(X))->_const)
 
 typedef struct ss_s_environment {
   ss_type _type;
   int constantExprQ;
+  int argc;
+  ss_value *symv;
+  ss_value *argv;
+  struct ss_s_environment *parent, *top_level;
 } ss_s_environment;
 
-#define ss_PROC_DECL(X) ss_value X (ss_s_environment *ss_env, unsigned int ss_argc, ss_value *ss_argv)
+#define ss_PROC_DECL(X) ss_value X (ss_s_environment *ss_env, ss_value *_ss_expr, unsigned int ss_argc, ss_value *ss_argv)
 typedef struct ss_s_prim {
   ss_type _type;
   const char *_name;
+  int _minargs, _maxargs, _evalq;
   ss_PROC_DECL((*_func));
   const char *_docstring;
 } ss_s_prim;
@@ -152,36 +156,47 @@ typedef ss_s_prim ss_s_syntax;
 #define ss_UNBOX_syntax(X)ss_UNBOX_prim(X)
 
 #ifndef _ss_prim
-#define _ss_prim(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)      \
-  static ss_PROC_DECL(ss_PASTE2(_ss_f_prim_,NAME)); \
-  ss_s_prim ss_PASTE2(_ss_prim_,NAME) = { TYPE, #NAME, ss_PASTE2(_ss_f_prim_,NAME), DOCSTRING } ; \
-static ss_PROC_DECL(ss_PASTE2(_ss_f_prim_,NAME)) { \
-  if ( MINARGS >= 0 ) { \
-    if ( ss_argc < MINARGS ) \
-      _ss_min_args_error(DOCSTRING, ss_argc, MINARGS); \
-    if ( MAXARGS >= 0 && ss_argc > MAXARGS ) \
-      _ss_max_args_error(DOCSTRING, ss_argc, MAXARGS); \
-  } \
-  if ( EVALQ ) { \
-    ss_value *nv = alloca(sizeof(nv[0]) * ss_argc); \
-    unsigned int i; \
-    for ( i = 0; i < ss_argc; i ++ ) \
-      nv[i] = ss_exec(ss_argv[i]); \
-    ss_argv = nv; \
+#define _ss_prim(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)             \
+  static ss_PROC_DECL(ss_PASTE2(_ss_f_prim_,NAME));                     \
+  ss_s_prim ss_PASTE2(_ss_prim_,NAME) = { TYPE, #NAME, MINARGS, MAXARGS, EVALQ, ss_PASTE2(_ss_f_prim_,NAME), DOCSTRING } ; \
+  static ss_PROC_DECL(ss_PASTE2(_ss_f_prim_,NAME)) {                    \
+  ss_value ss_rtn = ss_undef;                                           \
+  int ss_constantFold = 0;                                                \
+  int ss_constantExprQAll = 1;                                          \
+  if ( MINARGS >= 0 ) {                                                 \
+    if ( ss_argc < MINARGS )                                            \
+      _ss_min_args_error(DOCSTRING, ss_argc, MINARGS);                  \
+    if ( MAXARGS >= 0 && ss_argc > MAXARGS )                            \
+      _ss_max_args_error(DOCSTRING, ss_argc, MAXARGS);                  \
+  }                                                                     \
+  if ( EVALQ ) {                                                        \
+    ss_value *nv = alloca(sizeof(nv[0]) * ss_argc);                     \
+    unsigned int i;                                                     \
+    for ( i = 0; i < ss_argc; i ++ ) {                                  \
+      nv[i] = ss_exec(ss_argv[i]);                                      \
+      ss_constantExprQAll &= ss_constantExprQ;                          \
+    }                                                                   \
+    ss_argv = nv;                                                       \
   } {
 #endif
+
+#define ss_return(X) do { ss_rtn = (X); goto _ss_rtn; } while(0)
+#define ss_end                                    \
+  }                                               \
+_ss_rtn:                                          \
+ if ( ss_constantFold && ss_constantExprQAll )    \
+   ss_rewrite_expr(ss_box(quote, ss_rtn));        \
+ return(ss_rtn);                                  \
+ }
 
 #define ss_prim(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
   _ss_prim(ss_t_prim,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
 #define ss_syntax(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
   _ss_prim(ss_t_syntax,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
-#define ss_return(X) return(X)
-#define ss_end }}
 
 struct ss_s_closure {
   ss_type _type;
-  ss_value formals;
-  ss_value args;
+  ss_value params;
   ss_value body;
   struct ss_s_closure *parent;
 };
