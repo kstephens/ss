@@ -49,10 +49,15 @@ typedef ssize_t ss_integer_t;
 #define ss_EQ(X,Y)((X)==(Y))
 #define ss_NE(X,Y)!ss_EQ(X,Y)
 
-#define ss_UNBOX_char(X)              (((ss_integer_t) (X)) >> 1)
+#define ss_box(T,X)ss_PASTE2(ss_box_,T)(X)
+#define ss_BOX(T,X)ss_PASTE2(ss_BOX_,T)(X)
+#define ss_unbox(T,X)ss_PASTE2(ss_unbox_,T)(X)
+#define ss_UNBOX(T,X)ss_PASTE2(ss_UNBOX_,T)(X)
+
+#define ss_UNBOX_char(X)        (((ss_integer_t) (X)) >> 1)
 #define ss_BOX_char(X)   ((ss) ((((ss_integer_t) (X)) & 0xff) << 1))
-ss ss_box_char(int _v);
-int      ss_unbox_char(ss v);
+ss  ss_box_char(int _v);
+int ss_unbox_char(ss v);
 
 static inline ss_e_type ss_type(ss x)
 {
@@ -65,7 +70,7 @@ static inline int ss_literalQ(ss X)
   return ss_t_LITERAL_MIN <= ss_type(X) && ss_type(X) <= ss_t_LITERAL_MAX;
 }
 
-#define ss_UNBOX_integer(X)              (((ss_integer_t)(X)) >> 1)
+#define ss_UNBOX_integer(X)        (((ss_integer_t)(X)) >> 1)
 #define ss_BOX_integer(X)   ((ss) ((((ss_integer_t)(X)) << 1) | 1))
 ss ss_box_integer(ss_integer_t _v);
 ss_integer_t ss_unbox_integer(ss v);
@@ -105,7 +110,6 @@ typedef struct ss_s_vector {
   ss *_v;
   size_t _l;
 } ss_s_vector;
-#define ss_UNBOX_vector(X) (*(ss_s_vector*)(X))
 #define ss_vector_v(X) ((ss_s_vector*)(X))->_v
 #define ss_vector_l(X) ((ss_s_vector*)(X))->_l
 ss ss_vecn(size_t l);
@@ -116,7 +120,6 @@ typedef struct ss_s_string {
   ss_string_t *_v;
   size_t _l;
 } ss_s_string;
-#define ss_UNBOX_string(X) (*((ss_s_string*)(X)))
 #define ss_string_v(X) ((ss_s_string*)(X))->_v
 #define ss_string_l(X) ((ss_s_string*)(X))->_l
 ss ss_strn(size_t l);
@@ -189,19 +192,13 @@ _ss_rtn:                                                             \
 #define ss_syntax(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
   _ss_prim(ss_t_syntax,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
 
-struct ss_s_closure {
+typedef struct ss_s_closure {
   ss_PROC_DECL((*_func));
   ss params;
   ss body;
   ss_s_environment *env;
-};
-typedef struct ss_s_closure ss_s_closure;
+} ss_s_closure;
 #define ss_UNBOX_closure(X) (*(ss_s_closure*)(X))
-
-#define ss_box(T,X)ss_PASTE2(ss_box_,T)(X)
-#define ss_BOX(T,X)ss_PASTE2(ss_BOX_,T)(X)
-#define ss_unbox(T,X)ss_PASTE2(ss_unbox_,T)(X)
-#define ss_UNBOX(T,X)ss_PASTE2(ss_UNBOX_,T)(X)
 
 extern ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f;
 
