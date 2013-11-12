@@ -1,0 +1,8 @@
+BOP(ADD,+)
+BOP(SUB,-)
+BOP(MUL,*)
+BOP(DIV,/)
+UOP(NEG,-)
+UOP(NOT,!)
+#undef BOP
+#undef UOP

@@ -48,13 +48,23 @@ ss ss_error(const char *format, ...)
   return 0;
 }
 
+void ss_write_real(ss v, FILE *out)
+{
+  char buf[64];
+  snprintf(buf, 63, "%g", ss_unbox(real, v));
+  if ( ! (strchr(buf, 'e') || strchr(buf, '.')) ) {
+    strcat(buf, ".0");
+  }
+  fprintf(out, "%s", buf);
+}
+
 ss ss_write(ss v)
 {
   FILE *out = stdout;
   switch ( ss_type(v) ) {
   case ss_t_undef:   fprintf(out, "#<undef>"); break;
   case ss_t_integer: fprintf(out, "%lld",   (long long) ss_unbox(integer, v)); break;
-  case ss_t_real:    fprintf(out, "%g",     ss_unbox(real, v)); break;
+  case ss_t_real:    ss_write_real(v, out); break;
   case ss_t_string:  fprintf(out, "\"%s\"", ss_string_v(v)); break;
   case ss_t_char:    fprintf(out, "#\\%c",  ss_unbox(char, v)); break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
@@ -167,9 +177,17 @@ ss ss_strnv(size_t l, const char *v)
 
 ss ss_string_TO_number(ss s, int radix)
 {
-  char *endp = 0;
-  long long n = strtoll(ss_string_v(s), &endp, radix);
-  return *endp ? ss_f : ss_box(integer, n);
+  char *endp;
+  double d;
+  long long ll;
+
+  ll = strtoll(ss_string_v(s), &endp, radix);
+  if ( ! *endp )
+    return ss_box(integer, ll);
+  d = strtod(ss_string_v(s), &endp);
+  if ( ! *endp )
+    return ss_box(real, d);
+  return ss_f;
 }
 
 static ss ss_symbols;
@@ -203,6 +221,8 @@ void ss_init_symbol(ss_s_environment *ss_env)
 #include "sym.def"
   ss_sym(ADD) = ss_box_symbol("+");
   ss_sym(SUB) = ss_box_symbol("-");
+  ss_sym(MUL) = ss_box_symbol("*");
+  ss_sym(DIV) = ss_box_symbol("/");
   ss_sym(DOT) = ss_box_symbol(".");
   ss_sym(unquote_splicing) = ss_box_symbol("unquote-splicing");
 }
@@ -300,11 +320,9 @@ ss ss_vec(int n, ...)
   ss x = ss_vecn(n);
   int i;
   va_list vap;
-  va_start(vap,n);
-  
-  for ( i = 0; i < n; i ++ ) {
+  va_start(vap,n);  
+  for ( i = 0; i < n; i ++ )
     ss_vector_v(x)[i] = va_arg(vap, ss);
-  }
   va_end(vap);
   return x;
 }
@@ -389,12 +407,12 @@ ss ss_get(ss *_ss_expr, ss_s_environment *env, ss var)
 
 void _ss_min_args_error(const char *DOCSTRING, int ss_argc, int MINARGS)
 {
-  ss_error("apply not-enough-args %s got %d expected %d", DOCSTRING, ss_argc, MINARGS);
+  ss_error("apply not-enough-args (%s) got %d expected %d", DOCSTRING, ss_argc, MINARGS);
 }
 
 void _ss_max_args_error(const char *DOCSTRING, int ss_argc, int MAXARGS)
 {
-  ss_error("apply too-many-args %s got %d expected %d", DOCSTRING, ss_argc, MAXARGS);
+  ss_error("apply too-many-args (%s) got %d expected %d", DOCSTRING, ss_argc, MAXARGS);
 }
 
 ss_syntax(define,2,2,0,"define name value") {
@@ -479,66 +497,82 @@ void ss_number_coerce_2(ss *argv)
   }
 }
 
-ss_syntax(ADD,0,-1,0,"+ <z>...")
+ss_syntax(ADD,0,-1,0,"+ z...")
   switch ( ss_argc ) {
   case 0:
     ss_return(ss_box(integer,0));
   case 1:
     ss_return(ss_argv[0]);
   case 2:
-    ss_return(ss_vec(3, ss_sym(_add), ss_argv[0], ss_argv[1]));
+    ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0], ss_argv[1]));
   default:
-    ss_return(ss_vec(3, ss_sym(_add), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+    ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
-ss_prim(_add,2,2,1,"+ <z>...")
-  ss_constantFold = 1;
-  ss_number_coerce_2(ss_argv);
-  switch ( ss_type(ss_argv[0]) ) {
-  case ss_t_integer:
-    ss_return(ss_box(integer, ss_UNBOX(integer,ss_argv[0]) + ss_UNBOX(integer,ss_argv[1])));
-  case ss_t_real:
-    ss_return(ss_box(real, ss_UNBOX(real,ss_argv[0]) + ss_UNBOX(real,ss_argv[1])));
-  default: abort();
+ss_syntax(SUB,1,-1,0,"- z...")
+  switch ( ss_argc ) {
+  case 1:
+    ss_return(ss_vec(2, ss_sym(_NEG), ss_argv[0]));
+  case 2:
+    ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[0], ss_argv[1]));
+  default:
+    ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
-ss_syntax(SUB,0,-1,0,"- <z>...")
+ss_syntax(MUL,0,-1,0,"* z...")
   switch ( ss_argc ) {
   case 0:
-    ss_return(ss_box(integer,0));
+    ss_return(ss_box(integer,1));
   case 1:
-    ss_return(ss_vec(2, ss_sym(_neg), ss_argv[0]));
+    ss_return(ss_argv[0]);
   case 2:
-    ss_return(ss_vec(3, ss_sym(_sub), ss_argv[0], ss_argv[1]));
+    ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0], ss_argv[1]));
   default:
-    ss_return(ss_vec(3, ss_sym(_sub), ss_argv[1], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+    ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[1], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
-ss_prim(_sub,2,2,1,"- <z>...")
-  ss_constantFold = 1;
-  ss_number_coerce_2(ss_argv);
-  switch ( ss_type(ss_argv[0]) ) {
-  case ss_t_integer:
-    ss_return(ss_box(integer, ss_UNBOX(integer,ss_argv[0]) - ss_UNBOX(integer,ss_argv[1])));
-  case ss_t_real:
-    ss_return(ss_box(real, ss_UNBOX(real,ss_argv[0]) - ss_UNBOX(real,ss_argv[1])));
-  default: abort();
+ss_syntax(DIV,1,-1,0,"/ z...")
+  switch ( ss_argc ) {
+  case 1:
+    ss_return(ss_vec(2, ss_sym(_DIV), ss_box(real, 1.0), ss_argv[0]));
+  case 2:
+    ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_argv[1]));
+  default:
+    ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[1], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
-ss_prim(_neg,1,1,1,"- <z>")
-  ss_constantFold = 1;
-  switch ( ss_type(ss_argv[0]) ) {
-  case ss_t_integer:
-    ss_return(ss_box(integer, - ss_UNBOX(integer,ss_argv[0])));
-  case ss_t_real:
-    ss_return(ss_box(real, - ss_UNBOX(real,ss_argv[0])));
-  default: abort();
-  }
-ss_end
+#define BOP(NAME,OP)                                                    \
+  ss_prim(_##NAME,2,2,1,#OP " z...")                                    \
+  {                                                                     \
+    ss_constantFold = 1;                                                \
+    ss_number_coerce_2(ss_argv);                                        \
+    switch ( ss_type(ss_argv[0]) ) {                                    \
+    case ss_t_integer:                                                  \
+      ss_return(ss_box(integer, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
+    case ss_t_real:                                                     \
+      ss_return(ss_box(real, ss_UNBOX(real,ss_argv[0]) OP ss_UNBOX(real,ss_argv[1]))); \
+    default: abort();                                                   \
+    }                                                                   \
+  }                                                                     \
+  ss_end
+#define UOP(NAME,OP)                                                    \
+  ss_prim(_##NAME,1,1,1,#OP " z")                                       \
+  {                                                                     \
+    ss_constantFold = 1;                                                \
+    switch ( ss_type(ss_argv[0]) ) {                                    \
+    case ss_t_integer:                                                  \
+      ss_return(ss_box(integer, OP ss_UNBOX(integer,ss_argv[0])));      \
+    case ss_t_real:                                                     \
+      ss_return(ss_box(real, OP ss_UNBOX(real,ss_argv[0])));            \
+    default: abort();                                                   \
+    }                                                                   \
+  }                                                                     \
+  ss_end
+#include "cops.def"
 
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
 {

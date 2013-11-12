@@ -23,5 +23,5 @@ ss : $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -o $@ $(CFILES) $(LIBS)
 
 clean:
-	rm -f ss *.o *.def
+	rm -f ss *.o sym.def prim.def
 
