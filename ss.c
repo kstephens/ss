@@ -463,15 +463,6 @@ ss_syntax(if,2,3,0,"if pred true ?false?") {
   ss_return(self);
 } ss_end
 
-ss_prim(_if,3,3,0,"if pred true ?false?")
-  ss x = ss_exec(ss_argv[0]);
-  if ( ss_constantExprQ ) {
-    ss_rewrite_expr(ss_NE(x, ss_f) ? ss_argv[1] : ss_argv[2], "test is constant");
-    ss_return(ss_exec(ss_expr));
-  }
-  ss_return(ss_NE(x, ss_f) ? ss_exec(ss_argv[1]) : ss_exec(ss_argv[2]));
-ss_end
-
 ss_syntax(lambda,1,-1,0,"lambda formals body...") {
   ss rest; int rest_i;
   ss_s_closure *self = ss_alloc(ss_t_closure, sizeof(*self));
