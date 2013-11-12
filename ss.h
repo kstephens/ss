@@ -26,7 +26,7 @@ typedef enum ss_type {
   ss_t_closure,
   ss_t_quote,
   ss_t_eos,
-  ss_t_LITERAL_MAX = ss_t_quote,
+  ss_t_LITERAL_MAX = ss_t_eos,
   
   ss_t_cons,
   ss_t_null,
