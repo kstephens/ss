@@ -864,7 +864,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
         env = ss_m_environment(self->env);
         env->argc = ss_argc;
         env->symv = ss_vector_v(self->params);
-        env->argv = memcpy(ss_malloc(sizeof(env->argv[0]) * (ss_argc + 1)), ss_argv, sizeof(env->argv[0]) * ss_argc);
+        env->argv = ss_malloc(sizeof(env->argv[0]) * (ss_argc + 1));
         for ( i = 0; i < ss_argc; ++ i )
           env->argv[i] = ss_exec(ss_argv[i]);
         if ( self->rest_i >= 0 )
