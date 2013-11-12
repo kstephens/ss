@@ -202,6 +202,7 @@ typedef struct ss_s_closure {
   ss body;
   ss_s_environment *env;
   ss rest;
+  int rest_i;
 } ss_s_closure;
 #define ss_UNBOX_closure(X) (*(ss_s_closure*)(X))
 

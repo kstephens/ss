@@ -257,6 +257,16 @@ ss* _ss_cdr(ss a)
   return &ss_CDR(a);
 }
 
+ss ss_listnv(size_t n, const ss *v)
+{
+  ss l = ss_nil, *lp = &l;
+  while ( n -- ) {
+    *lp = ss_cons(*(v ++), ss_nil);
+    lp = &ss_CDR(*lp);
+  }
+  return l;
+}
+
 size_t ss_list_length(ss x)
 {
   size_t l = 0;
@@ -447,15 +457,18 @@ ss_prim(_if,3,3,0,"if pred true ?false?")
 ss_end
 
 ss_syntax(lambda,1,-1,0,"lambda formals body...") {
-  ss rest;
+  ss rest; int rest_i;
   ss_s_closure *self = ss_alloc(ss_t_closure, sizeof(*self));
   self->formals = ss_argv[0];
   self->params = ss_list_to_vector(ss_argv[0]);
   self->rest = ss_f;
-  if ( ss_vector_l(self->params) > 1 ) {
-    rest = ss_vector_v(self->params)[ss_vector_l(self->params) - 1];
-    if ( ss_type(rest) == ss_t_cons && ss_car(rest) == ss_sym(_rest) ) {
-      ss_vector_v(self->params)[ss_vector_l(self->params) - 1] = self->rest = ss_car(rest);
+  self->rest_i = -1;
+  if ( ss_vector_l(self->params) > 0 ) {
+    rest_i = ss_vector_l(self->params) - 1;
+    rest = ss_vector_v(self->params)[rest_i];
+    if ( ss_type(rest) == ss_t_pair && ss_car(rest) == ss_sym(_rest) ) {
+      self->rest_i = rest_i;
+      ss_vector_v(self->params)[rest_i] = self->rest = ss_cdr(rest);
     }
   }
   self->body = ss_vecnv(ss_argc - 1, ss_argv + 1);
@@ -662,15 +675,21 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
         size_t i, ss_argc = ss_vector_l(ss_expr) - 1;
         ss *ss_argv = ss_vector_v(ss_expr) + 1;
         ss_s_environment *env;
-
-        if ( ss_argc != ss_vector_l(self->params) )
-          return(ss_error("apply wrong-number-of-arguments given %lu, expected %lu", (unsigned long) ss_argc, (unsigned long) ss_vector_l(self->params)));
+        if ( self->rest_i >= 0 ) {
+          if ( ss_argc < self->rest_i )
+            return(ss_error("apply wrong-number-of-arguments given %lu, expected at least %lu", (unsigned long) ss_argc, (unsigned long) self->rest_i));
+        } else {
+          if ( ss_argc != ss_vector_l(self->params) )
+            return(ss_error("apply wrong-number-of-arguments given %lu, expected %lu", (unsigned long) ss_argc, (unsigned long) ss_vector_l(self->params)));
+        }
         env = ss_m_environment(self->env);
         env->argc = ss_argc;
         env->symv = ss_vector_v(self->params);
-        env->argv = memcpy(ss_malloc(sizeof(env->argv[0]) * ss_argc), ss_argv, sizeof(env->argv[0]) * ss_argc);
+        env->argv = memcpy(ss_malloc(sizeof(env->argv[0]) * (ss_argc + 1)), ss_argv, sizeof(env->argv[0]) * ss_argc);
         for ( i = 0; i < ss_argc; ++ i )
           env->argv[i] = ss_exec(ss_argv[i]);
+        if ( self->rest_i >= 0 )
+          env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
         fprintf(stdout, ";; apply closure "); ss_write(self->params); ss_write(ss_expr); fprintf(stdout, "\n");
         rtn = ss_unspec;
         for ( i = 0; i < ss_vector_l(self->body) - 1; ++ i ) {
