@@ -156,12 +156,14 @@ ss ss_box_integer(ss_integer_t v)
 {
   return ss_BOX_integer(v);
 }
+ss ss_i(ss_integer_t v) { return ss_box_integer(v); }
 
 ss_integer_t ss_unbox_integer(ss v)
 {
   ss_typecheck(ss_t_integer,v);
   return ss_UNBOX_integer(v);
 }
+ss_integer_t ss_I(ss v) { return ss_UNBOX_integer(v); }
 
 ss ss_box_real(ss_real_t v)
 {
@@ -169,11 +171,30 @@ ss ss_box_real(ss_real_t v)
   self->value = v;
   return self;
 }
+ss ss_r(ss v)
+{
+  return ss_box_real(*(double*) &v);
+}
 
 ss_real_t ss_unbox_real(ss v)
 {
   ss_typecheck(ss_t_real, v);
   return ss_UNBOX_real(v);
+}
+ss ss_R(ss v)
+{
+  ss rtn;
+  *((double*) &rtn) = ss_unbox_real(v);
+  return rtn;
+}
+
+ss ss_GI(ss o, ss i)
+{
+  return ((ss*) o)[ss_I(i)];
+}
+ss ss_SI(ss o, ss i, ss v)
+{
+  return ((ss*) o)[ss_I(i)] = v;
 }
 
 ss ss_box_char(int _v)
@@ -200,6 +221,17 @@ ss ss_strnv(size_t l, const char *v)
   memcpy(ss_string_v(self), v, sizeof(ss_string_v(self)[0]) * l);
   ss_string_v(self)[l] = 0;
   return self;
+}
+
+ss ss_s(void *p)
+{
+  if ( ! p ) return ss_f;
+  return ss_strnv(strlen(p), p);
+}
+ss ss_S(ss p)
+{
+  if ( p == ss_f || p == ss_nil ) return 0;
+  return ss_string_v(p);
 }
 
 ss ss_string_TO_number(ss s, int radix)

@@ -59,13 +59,15 @@ typedef ssize_t ss_integer_t;
 ss  ss_box_char(int _v);
 int ss_unbox_char(ss v);
 
-static inline ss_e_type ss_type(ss x)
+static inline
+ss_e_type ss_type(ss x)
 {
   return ((ss_integer_t) x) & 1 ? ss_t_integer : 
           x <= ss_BOX_char(255) ? ss_t_char :
                                   ((ss_integer_t*) x)[-1];
 }
-static inline int ss_literalQ(ss X)
+static inline
+int ss_literalQ(ss X)
 {
   return ss_t_LITERAL_MIN <= ss_type(X) && ss_type(X) <= ss_t_LITERAL_MAX;
 }
