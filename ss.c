@@ -9,7 +9,7 @@ ss ss_write(ss obj, ss port);
 
 size_t ss_malloc_bytes, ss_malloc_objects;
 #undef ss_malloc
-void *ss_malloc(size_t s)
+void* ss_malloc(size_t s)
 {
   ss_malloc_bytes += s;
   ss_malloc_objects ++;
@@ -464,7 +464,7 @@ ss ss_define(ss_s_environment *env, ss sym, ss val)
   return sym;
 }
 
-ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
+ss* ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
 {
   int up, over;
   ss *ref;
