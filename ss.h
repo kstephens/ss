@@ -153,10 +153,10 @@ typedef ss_s_prim ss_s_syntax;
 
 #ifndef _ss_prim
 #define _ss_prim(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)             \
-  static ss_PROC_DECL(ss_PASTE2(_ss_pf_,NAME));                          \
+  static ss_PROC_DECL(ss_PASTE2(_ss_pf_,NAME));                         \
   ss_s_prim ss_PASTE2(_ss_p_,NAME) = { ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, EVALQ, DOCSTRING } ; \
-  static ss_PROC_DECL(ss_PASTE2(_ss_pf_,NAME)) {                          \
-  ss ss_rtn = ss_undef;                                           \
+  static ss_PROC_DECL(ss_PASTE2(_ss_pf_,NAME)) {                        \
+  ss ss_rtn = ss_undef;                                                 \
   int ss_constantFold = 0;                                              \
   int ss_constantExprQAll = 1;                                          \
   if ( MINARGS >= 0 ) {                                                 \
@@ -166,7 +166,7 @@ typedef ss_s_prim ss_s_syntax;
       _ss_max_args_error(DOCSTRING, ss_argc, MAXARGS);                  \
   }                                                                     \
   if ( EVALQ ) {                                                        \
-    ss *nv = alloca(sizeof(nv[0]) * ss_argc);                     \
+    ss *nv = alloca(sizeof(nv[0]) * ss_argc);                           \
     unsigned int i;                                                     \
     for ( i = 0; i < ss_argc; i ++ ) {                                  \
       nv[i] = ss_exec(ss_argv[i]);                                      \
