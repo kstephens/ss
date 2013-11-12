@@ -769,6 +769,19 @@ ss_end
 
 #include "cops.def"
 
+ss ss_apply(ss_s_environment *ss_env, ss func, ss args)
+{
+  args = ss_cons(func, args);
+  args = ss_list_to_vector(args);
+  for ( size_t i = 0; i < ss_vector_l(args); ++ i )
+    ss_vector_v(args)[i] = ss_box_quote(ss_vector_v(args)[i]);
+  return(ss_exec(args));
+}
+
+ss_prim(apply,2,2,1,"apply func args") {
+  ss_return(ss_apply(ss_env, ss_argv[0], ss_argv[1]));
+} ss_end
+
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
 {
   ss rtn, var;
@@ -879,15 +892,6 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
   }
   return rtn;
 }
-
-ss_prim(apply,2,2,1,"apply func args") {
-  ss args = ss_argv[1];
-  args = ss_cons(ss_argv[0], args);
-  args = ss_list_to_vector(args);
-  for ( size_t i = 0; i < ss_vector_l(args); ++ i )
-    ss_vector_v(args)[i] = ss_box_quote(ss_vector_v(args)[i]);
-  ss_return(ss_exec(args));
-} ss_end
 
 ss_prim(ss_call_cfunc,0,5,1,"call cfunc")
 {
