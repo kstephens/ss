@@ -649,7 +649,10 @@ void ss_repl(ss_s_environment *ss_env)
 
 int main(int argc, char **argv)
 {
-  ss_s_environment *ss_env = ss_m_environment(0);
+  ss_s_environment *ss_env;
+  GC_INIT();
+  ss_env = ss_m_environment(0);
+  ss_init_const(ss_env);
   ss_init_symbol(ss_env);
   ss_init_prim(ss_env);
   ss_repl(ss_env);

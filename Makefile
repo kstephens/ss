@@ -1,4 +1,6 @@
-CFLAGS = -g
+CFLAGS = -g -I/opt/local/include
+
+LIBS = -L/opt/local/lib -lgc
 
 CFILES = \
   threadcomp.c
@@ -11,12 +13,15 @@ HFILES = \
 all : ss
 
 sym.def : Makefile symdef.pl $(CFILES) prim.def
-	$(CC) -E -Dss_sym=ss_sym $(CFILES) | perl symdef.pl > $@
+	$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | perl symdef.pl > $@
 #	open $@
 
 prim.def : Makefile primdef.pl $(CFILES)
-	$(CC) -E -D_ss_prim=_ss_prim $(CFILES) | perl primdef.pl > $@
+	$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) | perl primdef.pl > $@
 
 ss : $(CFILES) $(HFILES)
-	$(CC) $(CFLAGS) -o $@ $(CFILES)
+	$(CC) $(CFLAGS) -o $@ $(CFILES) $(LIBS)
+
+clean:
+	rm -f ss *.o *.def
 

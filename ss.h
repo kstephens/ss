@@ -1,6 +1,7 @@
 #ifndef _ss_h_
 #define _ss_h_
 
+#include "gc/gc.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -9,7 +10,7 @@
 #define _ss_STRINGTIZE(A)#A
 #define ss_STRINGTIZE(A)_ss_STRINGTIZE(A)
 
-#define ss_malloc(X) malloc(X)
+#define ss_malloc(X) GC_malloc(X)
 
 typedef enum ss_type {
   ss_t_UNDEF = 0,
