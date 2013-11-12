@@ -457,6 +457,22 @@ ss_syntax(lambda,1,-1,0,"lambda formals body...")
   ss_return(self);
 ss_end
 
+ss_syntax(let,1,-1,0,"let bindings body...") {
+  ss params = ss_nil, *pp = &params;
+  ss args = ss_nil, *ap = &args;
+  ss body = ss_vecnv(ss_argc - 1, ss_argv + 1);
+  ss bindings = ss_argv[0];
+  while ( bindings != ss_nil ) {
+    ss binding = ss_car(bindings);
+    bindings = ss_cdr(bindings);
+    *pp = ss_cons(ss_car(binding), ss_nil);
+    pp = &ss_CDR(*pp);
+    *ap = ss_cons(ss_car(ss_cdr(binding)), ss_nil);
+    ap = &ss_CDR(*ap);
+  }
+  ss_return(ss_cons(ss_cons(ss_sym(lambda), ss_cons(params, body)), args));
+} ss_end
+
 ss_prim(cons,2,2,1,"cons car cdr")
   ss_return(ss_cons(ss_argv[0], ss_argv[1]));
 ss_end
