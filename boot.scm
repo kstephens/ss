@@ -1,0 +1,20 @@
+(define eq? C_ss_eqQ)
+(define (null? x) (eq? x '()))
+(define (map proc args)
+  (if (null? args)
+    '()
+    (cons (proc (car args))
+       (map proc (cdr args)))))
+
+;;;;
+
+(define (((sequence op) start constant) . rest)
+  (let ((result start))
+    (set! start (op start constant))
+    result))
+(define arithmetic (sequence +))
+(define geometric (sequence *))
+(map (arithmetic 1 3) '(1 2 3 4))
+  ;;  => (1 4 7 10)
+(map (geometric 1 2) '(1 2 3 4))
+  ;; => (1 2 4 8)

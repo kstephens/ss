@@ -933,17 +933,16 @@ void ss_init_prim(ss_s_environment *ss_env)
 }
 void ss_init_cfunc(ss_s_environment *ss_env);
 
-ss ss_prompt()
+ss ss_prompt(ss input)
 {
   fprintf(*ss_stderr, " ss> ");
-  return ss_read(&stdin);
+  return ss_read(input);
 }
 
-void ss_repl(ss_s_environment *ss_env)
+void ss_repl(ss_s_environment *ss_env, ss input)
 {
   ss expr, value = ss_undef;
-  ss_constantExprQ = 0;
-  while ( (expr = ss_prompt()) != ss_eos ) {
+  while ( (expr = ss_prompt(input)) != ss_eos ) {
     value = ss_exec(expr);
     fprintf(*ss_stderr, ";; => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
     if ( value != ss_undef ) {
@@ -987,7 +986,12 @@ int main(int argc, char **argv)
   ss_init_port(ss_env);
   ss_init_prim(ss_env);
   ss_init_cfunc(ss_env);
-  ss_repl(ss_env);
+  {
+    FILE *fp = fopen("boot.scm", "r");
+    ss_repl(ss_env, &fp);
+    fclose(fp);
+  }
+  ss_repl(ss_env, ss_stdin);
   return 0;
 }
 
