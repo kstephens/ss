@@ -147,7 +147,7 @@ typedef struct ss_s_environment {
   ss_integer_t constantExprQ;
 } ss_s_environment;
 
-#define ss_PROC_DECL(X) ss X (ss_s_environment *ss_env, ss *_ss_expr, unsigned int ss_argc, ss *ss_argv)
+#define ss_PROC_DECL(X) ss X (ss_s_environment *ss_env, ss *_ss_expr, struct ss_s_prim *ss_prim, unsigned int ss_argc, ss *ss_argv)
 typedef struct ss_s_prim {
   ss_PROC_DECL((*func));
   const char *name;
@@ -187,6 +187,8 @@ typedef ss_s_prim ss_s_syntax;
 #endif
 
 #define ss_return(X) do { ss_rtn = (X); goto _ss_rtn; } while(0)
+
+#ifndef ss_prim
 #define ss_end                                                       \
   }                                                                  \
 _ss_rtn:                                                             \
@@ -194,11 +196,11 @@ _ss_rtn:                                                             \
    ss_rewrite_expr(ss_box_quote(ss_rtn), "constant folding");        \
  return(ss_rtn);                                                     \
  }
-
 #define ss_prim(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
   _ss_prim(ss_t_prim,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
 #define ss_syntax(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
   _ss_prim(ss_t_syntax,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
+#endif
 
 typedef struct ss_s_closure {
   ss_PROC_DECL((*_func));

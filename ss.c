@@ -490,6 +490,13 @@ ss_prim(setE,2,2,0,"set! name value") {
   ss_return(ss_set(&ss_argv[0], ss_env, ss_argv[0], ss_exec(ss_argv[1])));
 } ss_end
 
+ss ss_read(ss port);
+ss_prim(_read,1,1,1,"_read port")
+{
+  ss_return(ss_read(ss_argv[0]));
+}
+ss_end
+
 ss_prim(write,1,1,1,"write object")
   ss_write(ss_argv[0]);
 ss_end
@@ -732,10 +739,10 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       ss_vector_v(ss_expr)[0] = ss_box_quote(op);
     switch ( ss_type(op) ) {
     case ss_t_syntax:
-      ss_rewrite_expr((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1), "syntax rewrite");
+      ss_rewrite_expr((ss_UNBOX(prim,op)->func)(ss_env, &ss_expr, op, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1), "syntax rewrite");
       goto again;
     case ss_t_prim:
-      return((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1));
+      return((ss_UNBOX(prim,op)->func)(ss_env, &ss_expr, op, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1));
     case ss_t_closure:
       {
         ss_s_closure *self = (ss_s_closure*) op;
@@ -788,11 +795,40 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
   return rtn;
 }
 
-ss ss_read(ss port);
-ss_prim(_read,1,1,1,"_read port")
+ss_prim(ss_call_cfunc,0,5,1,"call cfunc")
 {
-  ss_return(ss_read(ss_argv[0]));
+  switch ( ss_argc ) {
+  case 0:
+    ss_return(((ss(*)()) ss_prim->c_func)());
+  case 1:
+    ss_return(((ss(*)(ss)) ss_prim->c_func)(ss_argv[0]));
+  case 2:
+    ss_return(((ss(*)(ss,ss)) ss_prim->c_func)(ss_argv[0], ss_argv[1]));
+  case 3:
+    ss_return(((ss(*)(ss,ss,ss)) ss_prim->c_func)(ss_argv[0], ss_argv[1], ss_argv[2]));
+  case 4:
+    ss_return(((ss(*)(ss,ss,ss,ss)) ss_prim->c_func)(ss_argv[0], ss_argv[1], ss_argv[2], ss_argv[3]));
+  case 5:
+    ss_return(((ss(*)(ss,ss,ss,ss,ss)) ss_prim->c_func)(ss_argv[0], ss_argv[1], ss_argv[2], ss_argv[3], ss_argv[4]));
+  default: abort();
+  }
 }
+ss_end
+
+ss ss_m_cfunc(void *ptr, const char *name, const char *docstr)
+{
+  ss_s_prim *self = ss_alloc(ss_t_prim, sizeof(*self));
+  self->func = _ss_pf_ss_call_cfunc;
+  self->minargs = 0; self->maxargs = 5;
+  self->evalq = 1;
+  self->name = name;
+  self->docstring = docstr ? docstr : name;
+  self->c_func = ptr;
+  return self;
+}
+
+ss_prim(ss_symbols,0,0,0,"")
+  ss_return(ss_symbols);
 ss_end
 
 void ss_init_const(ss_s_environment *ss_env)
@@ -816,6 +852,7 @@ void ss_init_prim(ss_s_environment *ss_env)
   ss_UNBOX(symbol, sym).is_const = 1;
 #include "prim.def"
 }
+void ss_init_cfunc(ss_s_environment *ss_env);
 
 ss ss_prompt()
 {
@@ -849,6 +886,7 @@ int main(int argc, char **argv)
   ss_init_const(ss_env);
   ss_init_symbol(ss_env);
   ss_init_prim(ss_env);
+  ss_init_cfunc(ss_env);
   ss_repl(ss_env);
   return 0;
 }
@@ -885,3 +923,12 @@ int main(int argc, char **argv)
 #endif
 #include "lispread/lispread.c"
 
+void ss_init_cfunc(ss_s_environment *ss_env)
+{
+  ss sym;
+#define ss_cfunc_def(TYPE,NAME,ARGS)                                    \
+  sym = ss_sym(C_##NAME);                                               \
+  ss_define(ss_env, sym, ss_m_cfunc(NAME, #NAME, TYPE " " #NAME ARGS)); \
+  ss_UNBOX(symbol, sym).is_const = 1;
+#include "cfunc.def"
+}
