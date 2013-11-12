@@ -380,16 +380,16 @@ ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
       ++ up;
       env = env->parent;
     }
-    return(ss_error("unbound ~S", var));
+    break;
   case ss_t_var_ref:
     up   = ss_UNBOX(var_ref, var)._up;
     over = ss_UNBOX(var_ref, var)._over;
     while ( up -- > 0 ) env = env->parent;
     assert(env);
     return &env->argv[over];
-  default:
-    return(ss_error("unbound ~S", var));
+  default: break;
   }
+  return(ss_error("unbound ~S", var));
 }
 
 ss ss_set(ss *_ss_expr, ss_s_environment *env, ss var, ss val)
