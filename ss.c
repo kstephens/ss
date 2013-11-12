@@ -432,12 +432,11 @@ ss_prim(newline,0,0,0,"newline")
 ss_end
 
 ss_syntax(quote,1,1,0,"quote value")
-  ss_constantExprQ = 1;
   ss_return(ss_box(quote,ss_argv[0]));
 ss_end
 
-ss_syntax(if,2,3,1,"if pred true ?false?")
-  ss_return(ss_vec(4, ss_sym(_if), ss_argv[0], ss_argv[1], (ss_argc == 3 ? ss_exec(ss_argv[2]) : ss_undef)));
+ss_syntax(if,2,3,0,"if pred true ?false?")
+  ss_return(ss_vec(4, ss_sym(_if), ss_argv[0], ss_argv[1], (ss_argc == 3 ? ss_argv[2] : ss_undef)));
 ss_end
 
 ss_prim(_if,3,3,0,"if pred true ?false?")
