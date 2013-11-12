@@ -413,7 +413,7 @@ ss ss_vec(int n, ...)
   ss x = ss_vecn(n);
   int i = 0;
   va_list vap;
-  va_start(vap,n);  
+  va_start(vap,n);
   while ( i < n )
     ss_vector_v(x)[i ++] = va_arg(vap, ss);
   va_end(vap);
@@ -863,6 +863,15 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
   }
   return rtn;
 }
+
+ss_prim(apply,2,2,1,"apply func args") {
+  ss args = ss_argv[1];
+  args = ss_cons(ss_argv[0], args);
+  args = ss_list_to_vector(args);
+  for ( size_t i = 0; i < ss_vector_l(args); ++ i )
+    ss_vector_v(args)[i] = ss_box_quote(ss_vector_v(args)[i]);
+  ss_return(ss_exec(args));
+} ss_end
 
 ss_prim(ss_call_cfunc,0,5,1,"call cfunc")
 {
