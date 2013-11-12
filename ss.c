@@ -496,11 +496,13 @@ ss_prim(cons,2,2,1,"cons car cdr")
 ss_end
 
 ss_prim(car,1,1,1,"car pair")
+  ss_constantFold = 1;
   ss_typecheck(ss_t_pair,ss_argv[0]);
   ss_return(ss_CAR(ss_argv[0]));
 ss_end
 
 ss_prim(cdr,1,1,1,"cdr pair")
+  ss_constantFold = 1;
   ss_typecheck(ss_t_pair,ss_argv[0]);
   ss_return(ss_CDR(ss_argv[0]));
 ss_end
