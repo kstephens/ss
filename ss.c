@@ -10,15 +10,21 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
 #define ss_constantExprQ ss_env->constantExprQ
+#define ss_rewrite_verbose 0
+#define ss_exec_verbose 0
 #define ss_rewrite_expr(X,REASON)                        \
   do {                                                   \
-  fprintf(stdout, ";; rewrite: ");                       \
-  ss_write(ss_expr);                                     \
-  fprintf(stdout, "\n;;  reason: %s\n", (REASON));       \
-  ss_expr = (X);                                         \
-  fprintf(stdout, ";;      as: ");                       \
-  ss_write(ss_expr);                                     \
-  fprintf(stdout, "\n");                                 \
+    if ( ss_rewrite_verbose) {                           \
+      fprintf(stdout, ";; rewrite: ");                   \
+      ss_write(ss_expr);                                 \
+      fprintf(stdout, "\n;;  reason: %s\n", (REASON));   \
+    }                                                    \
+    ss_expr = (X);                                       \
+    if ( ss_rewrite_verbose) {                           \
+      fprintf(stdout, ";;      as: ");                   \
+      ss_write(ss_expr);                                 \
+      fprintf(stdout, "\n");                             \
+    }                                                    \
   } while ( 0 )
 
 ss ss_alloc(ss_e_type type, size_t size)
@@ -634,12 +640,14 @@ ss_end
 
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
 {
-  ss var ,rtn;
+  ss rtn, var;
 #define return(X) do { rtn = (X); goto _return; } while(0)
   again:
   ss_constantExprQ = 0;
   rtn = ss_expr;
-  fprintf(stdout, ";; exec: "); ss_write(ss_expr); fprintf(stdout, "\n");
+  if ( ss_exec_verbose ) {
+    fprintf(stdout, ";; exec: "); ss_write(ss_expr); fprintf(stdout, "\n");
+  }
   switch ( ss_type(ss_expr) ) {
   case ss_t_quote:
     ss_constantExprQ = 1;
@@ -709,7 +717,9 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
         if ( self->rest_i >= 0 )
           env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
         ss_constantExprQ = 0;
-        fprintf(stdout, ";; apply closure "); ss_write(self->params); ss_write(ss_expr); fprintf(stdout, "\n");
+        if ( ss_exec_verbose ) {
+          fprintf(stdout, ";; apply closure "); ss_write(self->params); ss_write(ss_expr); fprintf(stdout, "\n");
+        }
         rtn = ss_unspec;
         for ( i = 0; i < ss_vector_l(self->body) - 1; ++ i ) {
           rtn = _ss_exec(env, &ss_vector_v(self->body)[i]);
@@ -730,8 +740,10 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
   }
 #undef return
   _return:
-  fprintf(stdout, ";; exec result expr: "); ss_write(ss_expr); fprintf(stdout, "\n");
-  fprintf(stdout, ";; exec result  val: "); ss_write(rtn); fprintf(stdout, "\n");
+  if ( ss_exec_verbose ) {
+    fprintf(stdout, ";; exec result expr: "); ss_write(ss_expr); fprintf(stdout, "\n");
+    fprintf(stdout, ";; exec result  val: "); ss_write(rtn); fprintf(stdout, "\n");
+  }
   return rtn;
 }
 
