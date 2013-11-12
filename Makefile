@@ -1,4 +1,5 @@
 CFLAGS = -g -I/opt/local/include
+CFLAGS += -O3
 
 LIBS = -L/opt/local/lib -lgc
 
