@@ -27,11 +27,13 @@ typedef enum ss_type {
   ss_t_quote,
   ss_t_eos,
   ss_t_LITERAL_MAX = ss_t_eos,
-  
+
   ss_t_cons,
   ss_t_null,
   ss_t_vector,
   ss_t_symbol,
+  ss_t_var_ref,
+  ss_t_var_set,
 
   ss_t_port,
   
@@ -75,6 +77,13 @@ typedef struct ss_s_quote {
   ss_value _value;
 } ss_s_quote;
 #define ss_UNBOX_quote(X)((ss_s_quote*)ss_REF(X))->_value
+
+typedef struct ss_s_var_ref {
+  ss_type _type;
+  ss_value _name;
+  int _up, _over;
+} ss_s_var_ref;
+#define ss_UNBOX_var_ref(X) (*(ss_s_var_ref*)ss_REF(X))
 
 typedef struct ss_s_cons {
   ss_type _type;

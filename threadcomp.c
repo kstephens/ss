@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h> /* memcpy() */
+#include <assert.h>
 
 ss_type ss_undef[] = { ss_t_undef };
 ss_type ss_unspec[] = { ss_t_unspec };
@@ -245,18 +246,85 @@ ss_value ss_vec(int n, ...)
   return x;
 }
 
-
-ss_value ss_error(const char *format, ...)
+ss_value ss_m_environment(ss_s_environment *parent)
 {
-  va_list vap;
-  va_start(vap, format);
-  fprintf(stderr, "error ");
-  vfprintf(stderr, format, vap);
-  fprintf(stderr, "\n");
-  va_end(vap);
-  abort();
-  return 0;
+  ss_s_environment *env = ss_malloc(sizeof(*env));
+  env->_type = ss_t_environment;
+  env->constantExprQ = 0;
+  env->argc = 0;
+  env->symv = env->argv = 0;
+  env->parent = parent;
+  env->top_level = parent ? parent->top_level : env;
+  return ss_BOX_REF(env);
 }
+
+ss_value ss_m_var_ref(ss_value sym, int up, int over)
+{
+  ss_s_var_ref *self = ss_malloc(sizeof(*self));
+  self->_type = ss_t_var_ref;
+  self->_name = sym;
+  self->_up = up;
+  self->_over = over;
+  return ss_BOX_REF(self);
+}
+
+ss_value ss_define(ss_s_environment *env, ss_value sym, ss_value val)
+{
+  int i;
+  for ( i = 0; i < env->argc; ++ i )
+    if ( ss_EQ(sym, env->symv[i]) )
+      return env->argv[i] = val;
+
+  env->symv = memcpy(ss_malloc(sizeof(env->symv) * (env->argc + 1)), env->symv, sizeof(env->symv[0]) * env->argc);
+  env->symv[env->argc] = sym;
+  env->argv = memcpy(ss_malloc(sizeof(env->argv) * (env->argc + 1)), env->argv, sizeof(env->argv[0]) * env->argc);
+  env->argv[env->argc] = val;
+  ++ env->argc;
+
+  return sym;
+}
+
+ss_value *ss_bind(ss_value *_ss_expr, ss_s_environment *env, ss_value var)
+{
+  int up, over;
+  switch ( ss_type(var) ) {
+  case ss_t_symbol:
+    up = 0;
+    while ( env ) {
+      for ( over = 0; over < env->argc; ++ over ) {
+        // fprintf(stdout, ";; bind "); ss_write(var); fprintf(stdout, " = "); ss_write(env->symv[over]); fprintf(stdout, "\n");
+        if ( ss_EQ(var, env->symv[over]) ) {
+          ss_expr = ss_m_var_ref(var, up, over);
+          return &env->argv[over];
+        }
+      }
+      ++ up;
+      env = env->parent;
+    }
+    return(ss_error("unbound ~S", var));
+  case ss_t_var_ref:
+    up   = ss_UNBOX(var_ref, var)._up;
+    over = ss_UNBOX(var_ref, var)._over;
+    while ( up > 0 ) env = env->parent;
+    assert(env);
+    return &env->argv[over];
+  default:
+    return(ss_error("unbound ~S", var));
+  }
+}
+
+ss_value ss_set(ss_value *_ss_expr, ss_s_environment *env, ss_value var, ss_value val)
+{
+  *ss_bind(_ss_expr, env, var) = val;
+  return var;
+}
+
+ss_value ss_get(ss_value *_ss_expr, ss_s_environment *env, ss_value var)
+{
+  return *ss_bind(_ss_expr, env, var);
+}
+
+#define ss_symbol_value(X) ss_get(&ss_expr, ss_env, (X))
 
 void _ss_min_args_error(const char *DOCSTRING, int ss_argc, int MINARGS)
 {
@@ -413,44 +481,56 @@ ss_prim(_neg,-1,-1,1,"- <z>")
   }
 ss_end
 
-#define ss_expr (*_ss_expr)
-
 ss_value _ss_exec(ss_s_environment *ss_env, ss_value *_ss_expr)
 {
+  ss_value rtn = ss_expr;
+#define rtn(X) do { rtn = (X); goto rtn; } while(0)
   again:
+  fprintf(stdout, ";; exec: "); ss_write(ss_expr); fprintf(stdout, "\n");
   switch ( ss_type(ss_expr) ) {
   case ss_t_quote:
     ss_constantExprQ = 1;
-    ss_return(ss_UNBOX(quote,ss_expr));
+    rtn(ss_UNBOX(quote,ss_expr));
+  case ss_t_var_ref: {
+    ss_value v = ss_get(&ss_expr, ss_env, ss_expr);
+    ss_value var = ss_UNBOX(var_ref, ss_expr)._name;
+    if ( (ss_constantExprQ = ss_symbol_const(var)) )
+      ss_rewrite_expr(ss_box(quote,v));
+    rtn(v);
+  }
   case ss_t_symbol: {
     ss_value v = ss_symbol_value(ss_expr);
     if ( (ss_constantExprQ = ss_symbol_const(ss_expr)) )
-      ss_expr = ss_box(quote,v);
-    ss_return(v);
+      ss_rewrite_expr(ss_box(quote,v));
+    rtn(v);
   }
   case ss_t_cons:
-    ss_expr = ss_list_to_vector(ss_expr);
+    ss_rewrite_expr(ss_list_to_vector(ss_expr));
     /* FALL THROUGH */
   case ss_t_vector: {
     ss_value op;
-    if ( ss_vector_l(ss_expr) < 1 ) ss_return(ss_error("apply empty-vector"));
+    if ( ss_vector_l(ss_expr) < 1 ) rtn(ss_error("apply empty-vector"));
     op = ss_exec(ss_vector_v(ss_expr)[0]);
     if ( ss_constantExprQ )
       ss_vector_v(ss_expr)[0] = op;
     switch ( ss_type(op) ) {
     case ss_t_syntax:
-      ss_expr = (ss_UNBOX(prim,op)->_func)(ss_env, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1);
+      ss_rewrite_expr((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1));
       goto again;
     case ss_t_prim:
-      ss_return((ss_UNBOX(prim,op)->_func)(ss_env, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1));
+      rtn((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1));
     default:
-      ss_return(ss_error("apply cannot apply type=%d", (int) ss_type(op)));
+      rtn(ss_error("apply cannot apply type=%d", (int) ss_type(op)));
     }
   }
   default:
     ss_constantExprQ = 1;
   }
-  ss_return(ss_expr);
+#undef rtn
+ rtn:
+  fprintf(stdout, ";; result expr: "); ss_write(ss_expr); fprintf(stdout, "\n");
+  fprintf(stdout, ";; result  val: "); ss_write(rtn); fprintf(stdout, "\n");
+  return rtn;
 }
 
 ss_value ss_read(ss_value port);
@@ -460,10 +540,12 @@ ss_prim(_read,1,1,1,"_read port")
 }
 ss_end
 
-void ss_init_prim()
+void ss_init_prim(ss_s_environment *ss_env)
 {
   ss_value sym;
-#define ss_prim_def(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) sym = ss_sym(NAME); ss_symbol_value(sym) = ss_BOX_REF(&ss_PASTE2(_ss_prim_,NAME));
+#define ss_prim_def(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
+  sym = ss_sym(NAME); \
+  ss_define(ss_env, sym, ss_BOX_REF(&ss_PASTE2(_ss_prim_,NAME)));
 #include "prim.def"
 }
 
@@ -473,22 +555,25 @@ ss_value ss_prompt()
   return ss_read(&stdin);
 }
 
-void ss_repl()
+void ss_repl(ss_s_environment *ss_env)
 {
-  ss_s_environment _env, *ss_env = &_env;
   ss_value expr, value = ss_undef;
   ss_constantExprQ = 0;
   while ( (expr = ss_prompt()) != ss_eos ) {
     value = ss_exec(expr);
-    printf("%lld (%p)\n", (long long) ss_unbox(integer, value), (void*) value);
+    if ( value != ss_undef ) {
+      ss_write(value); fprintf(stdout, "\n");
+      printf(";; %lld (%p)\n", (long long) ss_unbox(integer, value), (void*) value);
+    }
   }
 }
 
 int main(int argc, char **argv)
 {
-  ss_init_symbol();
-  ss_init_prim();
-  ss_repl();
+  ss_s_environment *ss_env = ss_m_environment(0);
+  ss_init_symbol(ss_env);
+  ss_init_prim(ss_env);
+  ss_repl(ss_env);
   return 0;
 }
 
