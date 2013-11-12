@@ -30,7 +30,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_rewrite_verbose 0
 #define ss_exec_verbose 0
 static inline
-void ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON)
+void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON)
 {
   if ( ss_rewrite_verbose ) {
     fprintf(*ss_stderr, ";; rewrite: ");
