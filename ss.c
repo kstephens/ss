@@ -112,7 +112,7 @@ ss ss_write(ss v, ss port)
     break;
   case ss_t_global:
     fprintf(out, "#<g ");
-    ss_write(ss_UNBOX(var_ref, v).name, port);
+    ss_write(((ss_s_global*) v)->name, port);
     fprintf(out, ">");
     break;
   case ss_t_quote:   fprintf(out, "'"); ss_write(ss_UNBOX(quote, v), port); break;
