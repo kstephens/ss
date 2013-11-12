@@ -416,6 +416,14 @@ ss ss_m_var_ref(ss sym, int up, int over)
   return self;
 }
 
+ss ss_m_global(ss sym, ss ref)
+{
+  ss_s_global *self = ss_alloc(ss_t_global, sizeof(*self));
+  self->name = sym;
+  self->ref = ref;
+  return self;
+}
+
 ss ss_define(ss_s_environment *env, ss sym, ss val)
 {
   int i;
@@ -435,6 +443,7 @@ ss ss_define(ss_s_environment *env, ss sym, ss val)
 ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
 {
   int up, over;
+  ss *ref;
   switch ( ss_type(var) ) {
   case ss_t_symbol:
     up = 0;
@@ -443,7 +452,8 @@ ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
         // fprintf(stdout, ";; bind "); ss_write(var); fprintf(stdout, " = "); ss_write(env->symv[over]); fprintf(stdout, "\n");
         if ( ss_EQ(var, env->symv[over]) ) {
           ss_rewrite_expr(ss_m_var_ref(var, up, over), "var_ref binding is known");
-          return &env->argv[over];
+          ref = &env->argv[over];
+          goto rtn;
         }
       }
       ++ up;
@@ -455,10 +465,18 @@ ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
     over = ss_UNBOX(var_ref, var).over;
     while ( up -- > 0 ) env = env->parent;
     assert(env);
-    return &env->argv[over];
+    ref = &env->argv[over];
+    goto rtn;
   default: break;
   }
-  return(ss_error("unbound ~S", var));
+  return(ss_error("unbound", var));
+
+ rtn:
+  if ( ss_type(*ref) == ss_t_global ) {
+    ss_rewrite_expr(*ref, "global binding is known");
+    ref = &ss_UNBOX(global, *ref);
+  }
+  return ref;
 }
 
 ss ss_set(ss *_ss_expr, ss_s_environment *env, ss var, ss val)
@@ -736,6 +754,9 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     var = ss_UNBOX(var_ref, ss_expr).name;
     rtn = ss_get(&ss_expr, ss_env, ss_expr);
     goto rewrite_const_var;
+  }
+  case ss_t_global: {
+    return(ss_UNBOX(global, ss_expr));
   }
   case ss_t_if: {
     ss_s_if *self = ss_expr;

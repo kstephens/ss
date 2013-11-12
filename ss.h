@@ -34,6 +34,7 @@ typedef enum ss_e_type {
   ss_t_vector,
   ss_t_symbol,
   ss_t_var_ref,
+  ss_t_global,
   ss_t_if,
 
   ss_t_port,
@@ -98,6 +99,12 @@ typedef struct ss_s_var_ref {
   ss_integer_t up, over;
 } ss_s_var_ref;
 #define ss_UNBOX_var_ref(X) (*(ss_s_var_ref*)(X))
+
+typedef struct ss_s_global {
+  ss *ref;
+  ss name;
+} ss_s_global;
+#define ss_UNBOX_global(X) (*((ss_s_global*)(X))->ref)
 
 typedef struct ss_s_if {
   ss t, a, b;
