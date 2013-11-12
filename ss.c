@@ -440,7 +440,7 @@ ss_prim(newline,0,0,0,"newline")
 ss_end
 
 ss_syntax(quote,1,1,0,"quote value")
-  ss_return(ss_box(quote,ss_argv[0]));
+  ss_return(ss_box_quote(ss_argv[0]));
 ss_end
 
 ss_syntax(if,2,3,0,"if pred true ?false?")
@@ -642,7 +642,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     rtn = ss_get(&ss_expr, ss_env, var);
     rewrite_const_var:
     if ( (ss_constantExprQ = ss_symbol_const(var)) )
-      ss_rewrite_expr(ss_box(quote,rtn), "constant variable");
+      ss_rewrite_expr(ss_box_quote(rtn), "constant variable");
     return(rtn);
   }
   case ss_t_var_ref: {
