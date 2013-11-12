@@ -4,6 +4,15 @@
 #include <string.h> /* memcpy() */
 #include <assert.h>
 
+size_t ss_malloc_bytes, ss_malloc_objects;
+#undef ss_malloc
+void *ss_malloc(size_t s)
+{
+  ss_malloc_bytes += s;
+  ss_malloc_objects ++;
+  return GC_malloc(s);
+}
+
 ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
