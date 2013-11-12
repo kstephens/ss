@@ -85,11 +85,11 @@ ss ss_write(ss v)
     fprintf(out, ">");
     break;
   default:           fprintf(out, "#<??? %d @%p>", ss_type(v), (void*) v); break;
-  case ss_t_cons:
+  case ss_t_pair:
     fprintf(out, "(");
     while ( v != ss_nil ) {
       switch ( ss_type(v) ) {
-      case ss_t_cons:
+      case ss_t_pair:
         ss_write(ss_car(v));
         v = ss_cdr(v);
         if ( v != ss_nil )
@@ -241,19 +241,19 @@ ss ss_box_quote(ss v)
 
 ss ss_cons(ss a, ss d)
 {
-  ss_s_cons *self = ss_alloc(ss_t_cons, sizeof(*self));
+  ss_s_cons *self = ss_alloc(ss_t_pair, sizeof(*self));
   self->_car = a;
   self->_cdr = d;
   return self;
 }
 ss* _ss_car(ss a)
 {
-  ss_typecheck(ss_t_cons,a);
+  ss_typecheck(ss_t_pair,a);
   return &ss_CAR(a);
 }
 ss* _ss_cdr(ss a)
 {
-  ss_typecheck(ss_t_cons,a);
+  ss_typecheck(ss_t_pair,a);
   return &ss_CDR(a);
 }
 
@@ -263,7 +263,7 @@ size_t ss_list_length(ss x)
   
   again:
   switch ( ss_type(x) ) {
-  case ss_t_cons:
+  case ss_t_pair:
     x = ss_CDR(x);
     l ++;
     goto again;
@@ -282,7 +282,7 @@ ss ss_list_to_vector(ss x)
   ss v = ss_vecn(ss_list_length(x));
   again:
   switch ( ss_type(x) ) {
-  case ss_t_cons:
+  case ss_t_pair:
     ss_vector_v(v)[l ++] = ss_CAR(x);
     x = ss_CDR(x);
     goto again;
@@ -483,12 +483,12 @@ ss_prim(cons,2,2,1,"cons car cdr")
 ss_end
 
 ss_prim(car,1,1,1,"car pair")
-  ss_typecheck(ss_t_cons,ss_argv[0]);
+  ss_typecheck(ss_t_pair,ss_argv[0]);
   ss_return(ss_CAR(ss_argv[0]));
 ss_end
 
 ss_prim(cdr,1,1,1,"cdr pair")
-  ss_typecheck(ss_t_cons,ss_argv[0]);
+  ss_typecheck(ss_t_pair,ss_argv[0]);
   ss_return(ss_CDR(ss_argv[0]));
 ss_end
 
@@ -641,8 +641,8 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       self->env = ss_env;
       return(self);
     }
-  case ss_t_cons:
-    ss_rewrite_expr(ss_list_to_vector(ss_expr), "convert cons to vector");
+  case ss_t_pair:
+    ss_rewrite_expr(ss_list_to_vector(ss_expr), "convert pair to vector");
     /* FALL THROUGH */
   case ss_t_vector: {
     ss op;
