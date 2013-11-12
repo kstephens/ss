@@ -29,5 +29,5 @@ ss.s : $(CFILES) $(HFILES)
 	rm $@.tmp
 
 clean:
-	rm -f ss *.o *.s sym.def prim.def
+	rm -f ss *.o *.s *.tmp sym.def prim.def
 
