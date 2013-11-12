@@ -10,11 +10,11 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
 #define ss_constantExprQ ss_env->constantExprQ
-#define ss_rewrite_expr(X)                               \
+#define ss_rewrite_expr(X,REASON)                        \
   do {                                                   \
   fprintf(stdout, ";; rewrite: ");                       \
   ss_write(ss_expr);                                     \
-  fprintf(stdout, "\n");                                 \
+  fprintf(stdout, "\n;; because of %s\n", (REASON));     \
   ss_expr = (X);                                         \
   fprintf(stdout, ";;      as: ");                       \
   ss_write(ss_expr);                                     \
@@ -223,6 +223,7 @@ void ss_init_symbol(ss_s_environment *ss_env)
   ss_sym(MUL) = ss_box_symbol("*");
   ss_sym(DIV) = ss_box_symbol("/");
   ss_sym(DOT) = ss_box_symbol(".");
+  ss_sym(NOT) = ss_box_symbol("!");
   ss_sym(unquote_splicing) = ss_box_symbol("unquote-splicing");
 }
 
@@ -372,7 +373,7 @@ ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
       for ( over = 0; over < env->argc; ++ over ) {
         // fprintf(stdout, ";; bind "); ss_write(var); fprintf(stdout, " = "); ss_write(env->symv[over]); fprintf(stdout, "\n");
         if ( ss_EQ(var, env->symv[over]) ) {
-          ss_expr = ss_m_var_ref(var, up, over);
+          ss_rewrite_expr(ss_m_var_ref(var, up, over), "var_ref binding");
           return &env->argv[over];
         }
       }
@@ -442,7 +443,7 @@ ss_end
 ss_prim(_if,-1,-1,0,"if pred true ?false?")
   ss x = ss_exec(ss_argv[0]);
   if ( ss_constantExprQ ) {
-    ss_rewrite_expr(ss_NE(x, ss_f) ? ss_argv[1] : ss_argv[2]);
+    ss_rewrite_expr(ss_NE(x, ss_f) ? ss_argv[1] : ss_argv[2], "test is constant");
     ss_return(ss_exec(ss_expr));
   }
   ss_return(ss_NE(x, ss_f) ? ss_exec(ss_argv[1]) : ss_exec(ss_argv[2]));
@@ -559,7 +560,7 @@ ss_end
   }                                                                     \
   ss_end
 #define UOP(NAME,OP)                                                    \
-  ss_prim(_##NAME,1,1,1,#OP " z")                                       \
+  ss_prim(NAME,1,1,1,#OP " z")                                          \
   {                                                                     \
     ss_constantFold = 1;                                                \
     switch ( ss_type(ss_argv[0]) ) {                                    \
@@ -590,7 +591,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     rtn = ss_get(&ss_expr, ss_env, var);
     rewrite_const_var:
     if ( (ss_constantExprQ = ss_symbol_const(var)) )
-      ss_rewrite_expr(ss_box(quote,rtn));
+      ss_rewrite_expr(ss_box(quote,rtn), "constant variable");
     return(rtn);
   }
   case ss_t_var_ref: {
@@ -605,7 +606,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       return(self);
     }
   case ss_t_cons:
-    ss_rewrite_expr(ss_list_to_vector(ss_expr));
+    ss_rewrite_expr(ss_list_to_vector(ss_expr), "convert cons to vector");
     /* FALL THROUGH */
   case ss_t_vector: {
     ss op;
@@ -615,7 +616,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       ss_vector_v(ss_expr)[0] = op;
     switch ( ss_type(op) ) {
     case ss_t_syntax:
-      ss_rewrite_expr((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1));
+      ss_rewrite_expr((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1), "syntax");
       goto again;
     case ss_t_prim:
       return((ss_UNBOX(prim,op)->_func)(ss_env, &ss_expr, ss_vector_l(ss_expr) - 1, ss_vector_v(ss_expr) + 1));

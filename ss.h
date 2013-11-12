@@ -174,12 +174,12 @@ typedef ss_s_prim ss_s_syntax;
 #endif
 
 #define ss_return(X) do { ss_rtn = (X); goto _ss_rtn; } while(0)
-#define ss_end                                    \
-  }                                               \
-_ss_rtn:                                          \
- if ( ss_constantFold && ss_constantExprQAll )    \
-   ss_rewrite_expr(ss_box(quote, ss_rtn));        \
- return(ss_rtn);                                  \
+#define ss_end                                                       \
+  }                                                                  \
+_ss_rtn:                                                             \
+ if ( ss_constantFold && ss_constantExprQAll )                       \
+   ss_rewrite_expr(ss_box(quote, ss_rtn), "constant folding");       \
+ return(ss_rtn);                                                     \
  }
 
 #define ss_prim(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
