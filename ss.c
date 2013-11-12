@@ -165,7 +165,7 @@ ss ss_box_char(int _v)
 {
   return ss_BOX_char(_v);
 }
-int      ss_unbox_char(ss v)
+int ss_unbox_char(ss v)
 {
   ss_typecheck(ss_t_char, v);
   return ((int) ss_UNBOX_char(v)) & 0xff;
@@ -338,11 +338,11 @@ ss ss_vecnv(size_t l, const ss *v)
 ss ss_vec(int n, ...)
 {
   ss x = ss_vecn(n);
-  int i;
+  int i = 0;
   va_list vap;
   va_start(vap,n);  
-  for ( i = 0; i < n; i ++ )
-    ss_vector_v(x)[i] = va_arg(vap, ss);
+  while ( i < n )
+    ss_vector_v(x)[i ++] = va_arg(vap, ss);
   va_end(vap);
   return x;
 }
