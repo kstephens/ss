@@ -10,6 +10,15 @@ ROP(LE,<=)
 ROP(GE,>=)
 ROP(EQ,==)
 ROP(NE,!=)
+IUOP(INV,~)
+IBOP(MOD,%)
+IBOP(AND,&)
+IBOP(OR,|)
+IBOP(XOR,^)
+IBOP(LSH,<<)
+IBOP(RSH,>>)
 #undef BOP
 #undef UOP
 #undef ROP
+#undef IUOP
+#undef IBOP

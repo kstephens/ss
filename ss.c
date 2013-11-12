@@ -101,7 +101,7 @@ ss ss_write(ss v)
   case ss_t_var_ref:
     fprintf(out, "#<v ");
     ss_write(ss_UNBOX(var_ref, v).name);
-    fprintf(out, " %d %d>", ss_UNBOX(var_ref, v).up, ss_UNBOX(var_ref, v).over);
+    fprintf(out, " %d %d>", (int) ss_UNBOX(var_ref, v).up, (int) ss_UNBOX(var_ref, v).over);
     break;
   case ss_t_quote:   fprintf(out, "'"); ss_write(ss_UNBOX(quote, v)); break;
   case ss_t_eos:     fprintf(out, "#<eos>"); break;
@@ -280,6 +280,8 @@ void ss_init_symbol(ss_s_environment *ss_env)
 #define BOP(NAME,OP) ss_sym(NAME) = ss_box_symbol(#OP);
 #define UOP(NAME,OP) BOP(NAME,OP)
 #define ROP(NAME,OP) BOP(NAME,OP)
+#define IBOP(NAME,OP) BOP(NAME,OP)
+#define IUOP(NAME,OP) BOP(NAME,OP)
 #include "cops.def"
   ss_sym(DOT) = ss_box_symbol(".");
   ss_sym(setE) = ss_box_symbol("set!");
@@ -657,6 +659,7 @@ ss_end
     }                                                                   \
   }                                                                     \
   ss_end
+
 #define UOP(NAME,OP)                                                    \
   ss_prim(NAME,1,1,1,#OP " z")                                          \
   {                                                                     \
@@ -670,6 +673,7 @@ ss_end
     }                                                                   \
   }                                                                     \
   ss_end
+
 #define ROP(NAME,OP)                                                    \
   ss_prim(NAME,2,2,1,#OP " x y")                                        \
   {                                                                     \
@@ -684,6 +688,26 @@ ss_end
     }                                                                   \
   }                                                                     \
   ss_end
+
+#define IBOP(NAME,OP)                                                   \
+  ss_prim(NAME,2,2,1,#OP " i j")                                        \
+  {                                                                     \
+    ss_constantFold = 1;                                                \
+    ss_typecheck(ss_t_integer, ss_argv[0]);                             \
+    ss_typecheck(ss_t_integer, ss_argv[1]);                             \
+    ss_return(ss_box(integer, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
+  }                                                                     \
+  ss_end
+
+#define IUOP(NAME,OP)                                                   \
+  ss_prim(NAME,1,1,1,#OP " i")                                          \
+  {                                                                     \
+    ss_constantFold = 1;                                                \
+    ss_typecheck(ss_t_integer, ss_argv[0]);                             \
+    ss_return(ss_box(integer, OP ss_UNBOX(integer,ss_argv[1])));        \
+  }                                                                     \
+  ss_end
+
 #include "cops.def"
 
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
