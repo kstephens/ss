@@ -34,7 +34,7 @@ typedef enum ss_e_type {
   ss_t_vector,
   ss_t_symbol,
   ss_t_var_ref,
-  ss_t_var_set,
+  ss_t_if,
 
   ss_t_port,
   
@@ -96,6 +96,10 @@ typedef struct ss_s_var_ref {
   int _up, _over;
 } ss_s_var_ref;
 #define ss_UNBOX_var_ref(X) (*(ss_s_var_ref*)(X))
+
+typedef struct ss_s_if {
+  ss _test, _true, _false;
+} ss_s_if;
 
 typedef struct ss_s_cons {
   ss _car, _cdr;

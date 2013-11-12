@@ -71,6 +71,18 @@ ss ss_write(ss v)
   case ss_t_syntax:  fprintf(out, "#<syntax %s>", ss_UNBOX(syntax, v)->_name); break;
   case ss_t_prim:    fprintf(out, "#<prim %s>",   ss_UNBOX(prim, v)->_name); break;
   case ss_t_symbol:  fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v)._str)); break;
+  case ss_t_if:
+    {
+      ss_s_if *self = v;
+      fprintf(out, "(if ");
+      ss_write(self->_test);
+      fprintf(out, " ");
+      ss_write(self->_true);
+      fprintf(out, " ");
+      ss_write(self->_false);
+      fprintf(out, ")");
+    }
+    break;
   case ss_t_var_ref:
     fprintf(out, "#<v ");
     ss_write(ss_UNBOX(var_ref, v)._name);
@@ -443,9 +455,13 @@ ss_syntax(quote,1,1,0,"quote value")
   ss_return(ss_box_quote(ss_argv[0]));
 ss_end
 
-ss_syntax(if,2,3,0,"if pred true ?false?")
-  ss_return(ss_vec(4, ss_sym(_if), ss_argv[0], ss_argv[1], (ss_argc == 3 ? ss_argv[2] : ss_undef)));
-ss_end
+ss_syntax(if,2,3,0,"if pred true ?false?") {
+  ss_s_if *self = ss_alloc(ss_t_if, sizeof(*self));
+  self->_test = ss_argv[0];
+  self->_true = ss_argv[1];
+  self->_false = ss_argc == 3 ? ss_argv[2] : ss_undef;
+  ss_return(self);
+} ss_end
 
 ss_prim(_if,3,3,0,"if pred true ?false?")
   ss x = ss_exec(ss_argv[0]);
@@ -649,6 +665,12 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     var = ss_UNBOX(var_ref, ss_expr)._name;
     rtn = ss_get(&ss_expr, ss_env, ss_expr);
     goto rewrite_const_var;
+  }
+  case ss_t_if: {
+    ss_s_if *self = ss_expr;
+    rtn = ss_exec(self->_test);
+    _ss_expr = rtn != ss_f ? &self->_true : &self->_false;
+    goto again;
   }
   case ss_t_closure:
     {
