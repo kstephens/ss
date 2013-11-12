@@ -83,25 +83,25 @@ ss ss_write(ss v)
   case ss_t_string:  fprintf(out, "\"%s\"", ss_string_v(v)); break;
   case ss_t_char:    fprintf(out, "#\\%c",  ss_unbox(char, v)); break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
-  case ss_t_syntax:  fprintf(out, "#<syntax %s>", ss_UNBOX(syntax, v)->_name); break;
-  case ss_t_prim:    fprintf(out, "#<prim %s>",   ss_UNBOX(prim, v)->_name); break;
-  case ss_t_symbol:  fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v)._str)); break;
+  case ss_t_syntax:  fprintf(out, "#<syntax %s>", ss_UNBOX(syntax, v)->name); break;
+  case ss_t_prim:    fprintf(out, "#<prim %s>",   ss_UNBOX(prim, v)->name); break;
+  case ss_t_symbol:  fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v).name)); break;
   case ss_t_if:
     {
       ss_s_if *self = v;
       fprintf(out, "(if ");
-      ss_write(self->_test);
+      ss_write(self->t);
       fprintf(out, " ");
-      ss_write(self->_true);
+      ss_write(self->a);
       fprintf(out, " ");
-      ss_write(self->_false);
+      ss_write(self->b);
       fprintf(out, ")");
     }
     break;
   case ss_t_var_ref:
     fprintf(out, "#<v ");
-    ss_write(ss_UNBOX(var_ref, v)._name);
-    fprintf(out, " %d %d>", ss_UNBOX(var_ref, v)._up, ss_UNBOX(var_ref, v)._over);
+    ss_write(ss_UNBOX(var_ref, v).name);
+    fprintf(out, " %d %d>", ss_UNBOX(var_ref, v).up, ss_UNBOX(var_ref, v).over);
     break;
   case ss_t_quote:   fprintf(out, "'"); ss_write(ss_UNBOX(quote, v)); break;
   case ss_t_eos:     fprintf(out, "#<eos>"); break;
@@ -166,7 +166,7 @@ ss_integer_t ss_unbox_integer(ss v)
 ss ss_box_real(ss_real_t v)
 {
   ss_s_real *self = ss_alloc(ss_t_real, sizeof(*self));
-  self->_v = v;
+  self->value = v;
   return self;
 }
 
@@ -189,8 +189,8 @@ int ss_unbox_char(ss v)
 ss ss_strn(size_t l)
 {
   ss_s_string *self = ss_alloc(ss_t_string, sizeof(*self));
-  self->_v = ss_malloc(sizeof(self->_v[0]) * (l + 1));
-  self->_l = l;
+  self->v = ss_malloc(sizeof(self->v[0]) * (l + 1));
+  self->l = l;
   return self;
 }
 
@@ -225,14 +225,14 @@ ss ss_box_symbol(const char *name)
     ss l;
     for ( l = ss_symbols; l != ss_nil; l = ss_cdr(l) ) {
       sym = (ss_s_symbol*) ss_car(l);
-      if ( strcmp(name, ss_string_v(sym->_str)) == 0 )
+      if ( strcmp(name, ss_string_v(sym->name)) == 0 )
         goto rtn;
     }
   }
 
   sym = ss_alloc(ss_t_symbol, sizeof(*sym));
-  sym->_str = ss_strnv(strlen(name), name);
-  sym->_const = 0;
+  sym->name = ss_strnv(strlen(name), name);
+  sym->is_const = 0;
 
   ss_symbols = ss_cons(sym, ss_symbols);
 
@@ -261,7 +261,7 @@ ss ss_box_quote(ss v)
     return(v);
   } else {
     ss_s_quote *self = ss_alloc(ss_t_quote, sizeof(*self));
-    self->_value = v;
+    self->value = v;
     return self;
   }
 }
@@ -269,8 +269,8 @@ ss ss_box_quote(ss v)
 ss ss_cons(ss a, ss d)
 {
   ss_s_cons *self = ss_alloc(ss_t_pair, sizeof(*self));
-  self->_car = a;
-  self->_cdr = d;
+  self->a = a;
+  self->d = d;
   return self;
 }
 ss* _ss_car(ss a)
@@ -338,15 +338,15 @@ ss ss_list_to_vector(ss x)
 ss ss_vecn(size_t l)
 {
   ss_s_vector *self = ss_alloc(ss_t_vector, sizeof(*self));
-  self->_v = ss_malloc(sizeof(self->_v[0]) * l);
-  self->_l = l;
+  self->v = ss_malloc(sizeof(self->v[0]) * l);
+  self->l = l;
   return self;
 }
 
 ss ss_vecnv(size_t l, const ss *v)
 {
-  ss self = ss_vecn(l);
-  memcpy(ss_vector_v(self), v, sizeof(ss_vector_v(self)[0]) * l);
+  ss_s_vector *self = ss_vecn(l);
+  memcpy(self->v, v, sizeof(self->v[0]) * l);
   return self;
 }
 
@@ -376,9 +376,9 @@ ss ss_m_environment(ss_s_environment *parent)
 ss ss_m_var_ref(ss sym, int up, int over)
 {
   ss_s_var_ref *self = ss_alloc(ss_t_var_ref, sizeof(*self));
-  self->_name = sym;
-  self->_up = up;
-  self->_over = over;
+  self->name = sym;
+  self->up = up;
+  self->over = over;
   return self;
 }
 
@@ -417,8 +417,8 @@ ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
     }
     break;
   case ss_t_var_ref:
-    up   = ss_UNBOX(var_ref, var)._up;
-    over = ss_UNBOX(var_ref, var)._over;
+    up   = ss_UNBOX(var_ref, var).up;
+    over = ss_UNBOX(var_ref, var).over;
     while ( up -- > 0 ) env = env->parent;
     assert(env);
     return &env->argv[over];
@@ -472,9 +472,9 @@ ss_end
 
 ss_syntax(if,2,3,0,"if pred true ?false?") {
   ss_s_if *self = ss_alloc(ss_t_if, sizeof(*self));
-  self->_test = ss_argv[0];
-  self->_true = ss_argv[1];
-  self->_false = ss_argc == 3 ? ss_argv[2] : ss_undef;
+  self->t = ss_argv[0];
+  self->a = ss_argv[1];
+  self->b = ss_argc == 3 ? ss_argv[2] : ss_undef;
   ss_return(self);
 } ss_end
 
@@ -665,20 +665,20 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     var = ss_expr;
     rtn = ss_get(&ss_expr, ss_env, var);
     rewrite_const_var:
-    if ( (ss_constantExprQ = ss_symbol_const(var)) )
+    if ( (ss_constantExprQ = ss_UNBOX(symbol, var).is_const) )
       ss_rewrite_expr(ss_box_quote(rtn), "variable is constant");
     return(rtn);
   }
   case ss_t_var_ref: {
-    var = ss_UNBOX(var_ref, ss_expr)._name;
+    var = ss_UNBOX(var_ref, ss_expr).name;
     rtn = ss_get(&ss_expr, ss_env, ss_expr);
     goto rewrite_const_var;
   }
   case ss_t_if: {
     ss_s_if *self = ss_expr;
     ss *expr;
-    rtn = ss_exec(self->_test);
-    expr = rtn != ss_f ? &self->_true : &self->_false;
+    rtn = ss_exec(self->t);
+    expr = rtn != ss_f ? &self->a : &self->b;
     if ( ss_constantExprQ ) ss_rewrite_expr(*expr, rtn != ss_f ? "constant test is true" : "constant test is false");
     _ss_expr = expr;
     goto again;
@@ -781,7 +781,7 @@ void ss_init_prim(ss_s_environment *ss_env)
 #define ss_prim_def(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
   sym = ss_sym(NAME); \
   ss_define(ss_env, sym, ss_alloc_copy(TYPE, sizeof(ss_s_prim), &ss_PASTE2(_ss_p_,NAME))); \
-  ss_UNBOX(symbol, sym)._const = 1;
+  ss_UNBOX(symbol, sym).is_const = 1;
 #include "prim.def"
 }
 
@@ -801,6 +801,10 @@ void ss_repl(ss_s_environment *ss_env)
     if ( value != ss_undef ) {
       ss_write(value); fprintf(stdout, "\n");
       printf(";; %lld (%p)\n", (long long) ss_unbox(integer, value), (void*) value);
+      printf(";; %llu bytes %llu objects\n",
+             (unsigned long long) ss_malloc_bytes,
+             (unsigned long long) ss_malloc_objects);
+
     }
   }
 }

@@ -77,9 +77,9 @@ ss_integer_t ss_unbox_integer(ss v);
 
 typedef double ss_real_t;
 typedef struct ss_s_real {
-  ss_real_t _v;
+  ss_real_t value;
 } ss_s_real;
-#define ss_UNBOX_real(X)((ss_s_real*)(X))->_v
+#define ss_UNBOX_real(X)((ss_s_real*)(X))->value
 ss ss_box_real(ss_real_t _v);
 ss_real_t ss_unbox_real(ss v);
 
@@ -87,72 +87,71 @@ ss_real_t ss_unbox_real(ss v);
 #define ss_UNBOX_boolean(X) ((X) != ss_f)
 
 typedef struct ss_s_quote {
-  ss _value;
+  ss value;
 } ss_s_quote;
-#define ss_UNBOX_quote(X)((ss_s_quote*)(X))->_value
+#define ss_UNBOX_quote(X)((ss_s_quote*)(X))->value
 
 typedef struct ss_s_var_ref {
-  ss _name;
-  int _up, _over;
+  ss name;
+  ss_integer_t up, over;
 } ss_s_var_ref;
 #define ss_UNBOX_var_ref(X) (*(ss_s_var_ref*)(X))
 
 typedef struct ss_s_if {
-  ss _test, _true, _false;
+  ss t, a, b;
 } ss_s_if;
 
 typedef struct ss_s_cons {
-  ss _car, _cdr;
+  ss a, d;
 } ss_s_cons;
 ss ss_cons(ss _car, ss _cdr);
-#define ss_UNBOX_cons(X)((ss_s_cons*)(X))
-#define ss_CAR(X)(ss_UNBOX_cons(X)->_car)
-#define ss_CDR(X)(ss_UNBOX_cons(X)->_cdr)
+#define ss_CAR(X) (((ss_s_cons*) (X))->a)
+#define ss_CDR(X) (((ss_s_cons*) (X))->d)
 ss* _ss_car(ss a);
 ss* _ss_cdr(ss a);
-#define ss_car(X)(*_ss_car(X))
-#define ss_cdr(X)(*_ss_cdr(X))
+#define ss_car(X) (*_ss_car(X))
+#define ss_cdr(X) (*_ss_cdr(X))
 
 typedef struct ss_s_vector {
-  ss *_v;
-  size_t _l;
+  ss *v;
+  size_t l;
 } ss_s_vector;
-#define ss_vector_v(X) ((ss_s_vector*)(X))->_v
-#define ss_vector_l(X) ((ss_s_vector*)(X))->_l
+#define ss_vector_v(X) ((ss_s_vector*)(X))->v
+#define ss_vector_l(X) ((ss_s_vector*)(X))->l
 ss ss_vecn(size_t l);
 ss ss_vec(int n, ...);
 
 typedef char ss_string_t;
 typedef struct ss_s_string {
-  ss_string_t *_v;
-  size_t _l;
+  ss_string_t *v;
+  size_t l;
 } ss_s_string;
-#define ss_string_v(X) ((ss_s_string*)(X))->_v
-#define ss_string_l(X) ((ss_s_string*)(X))->_l
+#define ss_string_v(X) ((ss_s_string*)(X))->v
+#define ss_string_l(X) ((ss_s_string*)(X))->l
 ss ss_strn(size_t l);
 
 typedef struct ss_s_symbol {
-  ss _str;
-  const char *_docstring;
-  short _const;
+  ss name;
+  const char *docstring;
+  ss_integer_t is_const;
 } ss_s_symbol;
 #define ss_UNBOX_symbol(X) (*((ss_s_symbol*)(X)))
-#define ss_symbol_const(X) (((ss_s_symbol*)(X))->_const)
 
 typedef struct ss_s_environment {
-  int constantExprQ;
-  int argc;
+  ss_integer_t argc;
   ss *symv;
   ss *argv;
   struct ss_s_environment *parent, *top_level;
+  ss_integer_t constantExprQ;
 } ss_s_environment;
 
 #define ss_PROC_DECL(X) ss X (ss_s_environment *ss_env, ss *_ss_expr, unsigned int ss_argc, ss *ss_argv)
 typedef struct ss_s_prim {
-  ss_PROC_DECL((*_func));
-  const char *_name;
-  int _minargs, _maxargs, _evalq;
-  const char *_docstring;
+  ss_PROC_DECL((*func));
+  const char *name;
+  ss_integer_t minargs, maxargs, evalq;
+  const char *docstring;
+  void *c_func;
 } ss_s_prim;
 typedef ss_s_prim ss_s_syntax;
 #define ss_UNBOX_prim(X)((ss_s_prim*)(X))
@@ -206,7 +205,7 @@ typedef struct ss_s_closure {
   ss body;
   ss_s_environment *env;
   ss rest;
-  int rest_i;
+  ss_integer_t rest_i;
 } ss_s_closure;
 #define ss_UNBOX_closure(X) (*(ss_s_closure*)(X))
 
