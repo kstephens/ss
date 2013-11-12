@@ -224,6 +224,7 @@ void ss_init_symbol(ss_s_environment *ss_env)
   ss_sym(DIV) = ss_box_symbol("/");
   ss_sym(DOT) = ss_box_symbol(".");
   ss_sym(NOT) = ss_box_symbol("!");
+  ss_sym(setE) = ss_box_symbol("set!");
   ss_sym(unquote_splicing) = ss_box_symbol("unquote-splicing");
 }
 
@@ -415,12 +416,12 @@ void _ss_max_args_error(const char *DOCSTRING, int ss_argc, int MAXARGS)
   ss_error("apply too-many-args (%s) got %d expected %d", DOCSTRING, ss_argc, MAXARGS);
 }
 
-ss_syntax(define,2,2,0,"define name value") {
-  ss_return(ss_vec(3, ss_sym(_define), ss_box(quote, ss_argv[0]), ss_argv[1]));
+ss_prim(define,2,2,0,"define name value") {
+  ss_return(ss_define(ss_env->top_level, ss_argv[0], ss_exec(ss_argv[1])));
 } ss_end
 
-ss_prim(_define,2,2,1,"define name value") {
-  ss_return(ss_define(ss_env->top_level, ss_argv[0], ss_argv[1]));
+ss_prim(setE,2,2,0,"set! name value") {
+  ss_return(ss_set(&ss_argv[0], ss_env, ss_argv[0], ss_exec(ss_argv[1])));
 } ss_end
 
 ss_prim(write,1,1,1,"write object")
@@ -440,7 +441,7 @@ ss_syntax(if,2,3,1,"if pred true ?false?")
   ss_return(ss_vec(4, ss_sym(_if), ss_argv[0], ss_argv[1], (ss_argc == 3 ? ss_exec(ss_argv[2]) : ss_undef)));
 ss_end
 
-ss_prim(_if,-1,-1,0,"if pred true ?false?")
+ss_prim(_if,3,3,0,"if pred true ?false?")
   ss x = ss_exec(ss_argv[0]);
   if ( ss_constantExprQ ) {
     ss_rewrite_expr(ss_NE(x, ss_f) ? ss_argv[1] : ss_argv[2], "test is constant");
