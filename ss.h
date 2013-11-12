@@ -170,7 +170,9 @@ typedef ss_s_prim ss_s_syntax;
       ss_constantExprQAll &= ss_constantExprQ;                          \
     }                                                                   \
     ss_argv = nv;                                                       \
-  } {
+  }                                                                     \
+  ss_constantExprQ = 0;                                                 \
+{
 #endif
 
 #define ss_return(X) do { ss_rtn = (X); goto _ss_rtn; } while(0)
