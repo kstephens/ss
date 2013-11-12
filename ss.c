@@ -5,6 +5,7 @@
 #include <assert.h>
 
 FILE **ss_stdin = &stdin, **ss_stdout = &stdout, **ss_stderr = &stderr;
+ss ss_write(ss obj, ss port);
 
 size_t ss_malloc_bytes, ss_malloc_objects;
 #undef ss_malloc
@@ -23,20 +24,26 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_constantExprQ ss_env->constantExprQ
 #define ss_rewrite_verbose 0
 #define ss_exec_verbose 0
-#define ss_rewrite_expr(X,REASON)                            \
-  do {                                                       \
-    if ( ss_rewrite_verbose) {                               \
-      fprintf(*ss_stderr, ";; rewrite: ");                   \
-      ss_write(ss_expr, ss_stderr);                          \
-      fprintf(*ss_stderr, "\n;;  reason: %s\n", (REASON));   \
-    }                                                        \
-    ss_expr = (X);                                           \
-    if ( ss_rewrite_verbose) {                               \
-      fprintf(*ss_stderr, ";;      as: ");                   \
-      ss_write(ss_expr, ss_stderr);                          \
-      fprintf(*ss_stderr, "\n");                             \
-    }                                                        \
-  } while ( 0 )
+static inline
+void ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON)
+{
+  if ( ss_rewrite_verbose ) {
+    fprintf(*ss_stderr, ";; rewrite: ");
+    ss_write(ss_expr, ss_stderr);
+    fprintf(*ss_stderr, "\n;;  reason: %s\n", (REASON));
+  }
+  ss_expr = X;
+  if ( ss_rewrite_verbose ) {
+    fprintf(*ss_stderr, ";;      as: ");
+    ss_write(ss_expr, ss_stderr);
+    fprintf(*ss_stderr, "\n");
+  }
+}
+#if ss_rewrite_verbose == 0
+#define ss_rewrite_expr(X,REASON) (ss_expr = (X))
+#else
+#define ss_rewrite_expr(X,REASON) _ss_rewrite_expr(&ss_expr, X, REASON)
+#endif
 
 ss ss_alloc(ss_e_type type, size_t size)
 {
@@ -52,8 +59,6 @@ ss ss_alloc_copy(ss_e_type type, size_t size, void *ptr)
   memcpy(self, ptr, size);
   return self;
 }
-
-ss ss_write(ss obj, ss port);
 
 #define FP(port) (*(FILE**) (port))
 ss ss_error(const char *format, ss obj, ...)
@@ -105,10 +110,10 @@ ss ss_write(ss v, ss port)
       fprintf(out, ")");
     }
     break;
-  case ss_t_var_ref:
+  case ss_t_var:
     fprintf(out, "#<v ");
-    ss_write(ss_UNBOX(var_ref, v).name, port);
-    fprintf(out, " %d %d>", (int) ss_UNBOX(var_ref, v).up, (int) ss_UNBOX(var_ref, v).over);
+    ss_write(ss_UNBOX(var, v).name, port);
+    fprintf(out, " %d %d>", (int) ss_UNBOX(var, v).up, (int) ss_UNBOX(var, v).over);
     break;
   case ss_t_global:
     fprintf(out, "#<g ");
@@ -426,9 +431,9 @@ ss ss_m_environment(ss_s_environment *parent)
   return env;
 }
 
-ss ss_m_var_ref(ss sym, int up, int over)
+ss ss_m_var(ss sym, int up, int over)
 {
-  ss_s_var_ref *self = ss_alloc(ss_t_var_ref, sizeof(*self));
+  ss_s_var *self = ss_alloc(ss_t_var, sizeof(*self));
   self->name = sym;
   self->up = up;
   self->over = over;
@@ -470,7 +475,7 @@ ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
       for ( over = 0; over < env->argc; ++ over ) {
         // fprintf(*ss_stderr, ";; bind "); ss_write(var, ss_stdout); fprintf(*ss_stderr, " = "); ss_write(env->symv[over], ss_stdout); fprintf(*ss_stderr, "\n");
         if ( ss_EQ(var, env->symv[over]) ) {
-          ss_rewrite_expr(ss_m_var_ref(var, up, over), "var_ref binding is known");
+          ss_rewrite_expr(ss_m_var(var, up, over), "var binding is known");
           ref = &env->argv[over];
           goto rtn;
         }
@@ -479,9 +484,9 @@ ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
       env = env->parent;
     }
     break;
-  case ss_t_var_ref:
-    up   = ss_UNBOX(var_ref, var).up;
-    over = ss_UNBOX(var_ref, var).over;
+  case ss_t_var:
+    up   = ss_UNBOX(var, var).up;
+    over = ss_UNBOX(var, var).over;
     while ( up -- > 0 ) env = env->parent;
     assert(env);
     ref = &env->argv[over];
@@ -769,8 +774,8 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       ss_rewrite_expr(ss_box_quote(rtn), "variable is constant");
     return(rtn);
   }
-  case ss_t_var_ref: {
-    var = ss_UNBOX(var_ref, ss_expr).name;
+  case ss_t_var: {
+    var = ss_UNBOX(var, ss_expr).name;
     rtn = ss_get(&ss_expr, ss_env, ss_expr);
     goto rewrite_const_var;
   }
