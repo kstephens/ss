@@ -92,7 +92,7 @@ ss_real_t ss_unbox_real(ss v);
 typedef struct ss_s_quote {
   ss value;
 } ss_s_quote;
-#define ss_UNBOX_quote(X)((ss_s_quote*)(X))->value
+#define ss_UNBOX_quote(X) ((ss_s_quote*)(X))->value
 
 typedef struct ss_s_var_ref {
   ss name;
@@ -176,9 +176,9 @@ typedef ss_s_prim ss_s_syntax;
   int ss_constantExprQAll = 1;                                          \
   if ( MINARGS >= 0 ) {                                                 \
     if ( ss_argc < MINARGS )                                            \
-      _ss_min_args_error(DOCSTRING, ss_argc, MINARGS);                  \
+      _ss_min_args_error(ss_prim, DOCSTRING, ss_argc, MINARGS);         \
     if ( MAXARGS >= 0 && ss_argc > MAXARGS )                            \
-      _ss_max_args_error(DOCSTRING, ss_argc, MAXARGS);                  \
+      _ss_max_args_error(ss_prim, DOCSTRING, ss_argc, MAXARGS);         \
   }                                                                     \
   if ( EVALQ ) {                                                        \
     ss *nv = alloca(sizeof(nv[0]) * ss_argc);                           \
@@ -219,6 +219,13 @@ typedef struct ss_s_closure {
   ss_integer_t rest_i;
 } ss_s_closure;
 #define ss_UNBOX_closure(X) (*(ss_s_closure*)(X))
+
+typedef struct ss_s_port {
+  FILE *fp;
+  ss name;
+  ss mode;
+} ss_s_port;
+#define ss_UNBOX_port(X) (*(ss_s_port*)(X))
 
 extern ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f;
 

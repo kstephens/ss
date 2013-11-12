@@ -4,6 +4,8 @@
 #include <string.h> /* memcpy() */
 #include <assert.h>
 
+FILE **ss_stdin = &stdin, **ss_stdout = &stdout, **ss_stderr = &stderr;
+
 size_t ss_malloc_bytes, ss_malloc_objects;
 #undef ss_malloc
 void *ss_malloc(size_t s)
@@ -21,19 +23,19 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_constantExprQ ss_env->constantExprQ
 #define ss_rewrite_verbose 0
 #define ss_exec_verbose 0
-#define ss_rewrite_expr(X,REASON)                        \
-  do {                                                   \
-    if ( ss_rewrite_verbose) {                           \
-      fprintf(stdout, ";; rewrite: ");                   \
-      ss_write(ss_expr);                                 \
-      fprintf(stdout, "\n;;  reason: %s\n", (REASON));   \
-    }                                                    \
-    ss_expr = (X);                                       \
-    if ( ss_rewrite_verbose) {                           \
-      fprintf(stdout, ";;      as: ");                   \
-      ss_write(ss_expr);                                 \
-      fprintf(stdout, "\n");                             \
-    }                                                    \
+#define ss_rewrite_expr(X,REASON)                            \
+  do {                                                       \
+    if ( ss_rewrite_verbose) {                               \
+      fprintf(*ss_stderr, ";; rewrite: ");                   \
+      ss_write(ss_expr, ss_stderr);                          \
+      fprintf(*ss_stderr, "\n;;  reason: %s\n", (REASON));   \
+    }                                                        \
+    ss_expr = (X);                                           \
+    if ( ss_rewrite_verbose) {                               \
+      fprintf(*ss_stderr, ";;      as: ");                   \
+      ss_write(ss_expr, ss_stderr);                          \
+      fprintf(*ss_stderr, "\n");                             \
+    }                                                        \
   } while ( 0 )
 
 ss ss_alloc(ss_e_type type, size_t size)
@@ -51,35 +53,40 @@ ss ss_alloc_copy(ss_e_type type, size_t size, void *ptr)
   return self;
 }
 
-ss ss_error(const char *format, ...)
+ss ss_write(ss obj, ss port);
+
+#define FP(port) (*(FILE**) (port))
+ss ss_error(const char *format, ss obj, ...)
 {
   va_list vap;
-  va_start(vap, format);
-  fprintf(stderr, "error ");
-  vfprintf(stderr, format, vap);
-  fprintf(stderr, "\n");
+  va_start(vap, obj);
+  fprintf(FP(ss_stderr), "\n  ss: error ");
+  vfprintf(FP(ss_stderr), format, vap);
+  fprintf(FP(ss_stderr), ": ");
+  ss_write(obj, ss_stderr);
+  fprintf(FP(ss_stderr), "\n");
   va_end(vap);
   abort();
   return 0;
 }
 
-void ss_write_real(ss v, FILE *out)
+void ss_write_real(ss v, ss port)
 {
   char buf[64];
   snprintf(buf, 63, "%.22g", ss_unbox(real, v));
   if ( ! (strchr(buf, 'e') || strchr(buf, '.')) ) {
     strcat(buf, ".0");
   }
-  fprintf(out, "%s", buf);
+  fprintf(FP(port), "%s", buf);
 }
 
-ss ss_write(ss v)
+ss ss_write(ss v, ss port)
 {
-  FILE *out = stdout;
+  FILE *out = FP(port);
   switch ( ss_type(v) ) {
   case ss_t_undef:   fprintf(out, "#<undef>"); break;
   case ss_t_integer: fprintf(out, "%lld",   (long long) ss_unbox(integer, v)); break;
-  case ss_t_real:    ss_write_real(v, out); break;
+  case ss_t_real:    ss_write_real(v, port); break;
   case ss_t_string:  fprintf(out, "\"%s\"", ss_string_v(v)); break;
   case ss_t_char:    fprintf(out, "#\\%c",  ss_unbox(char, v)); break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
@@ -90,25 +97,37 @@ ss ss_write(ss v)
     {
       ss_s_if *self = v;
       fprintf(out, "(if ");
-      ss_write(self->t);
+      ss_write(self->t, port);
       fprintf(out, " ");
-      ss_write(self->a);
+      ss_write(self->a, port);
       fprintf(out, " ");
-      ss_write(self->b);
+      ss_write(self->b, port);
       fprintf(out, ")");
     }
     break;
   case ss_t_var_ref:
     fprintf(out, "#<v ");
-    ss_write(ss_UNBOX(var_ref, v).name);
+    ss_write(ss_UNBOX(var_ref, v).name, port);
     fprintf(out, " %d %d>", (int) ss_UNBOX(var_ref, v).up, (int) ss_UNBOX(var_ref, v).over);
     break;
-  case ss_t_quote:   fprintf(out, "'"); ss_write(ss_UNBOX(quote, v)); break;
+  case ss_t_global:
+    fprintf(out, "#<g ");
+    ss_write(ss_UNBOX(var_ref, v).name, port);
+    fprintf(out, ">");
+    break;
+  case ss_t_quote:   fprintf(out, "'"); ss_write(ss_UNBOX(quote, v), port); break;
   case ss_t_eos:     fprintf(out, "#<eos>"); break;
   case ss_t_null:    fprintf(out, "()"); break;
   case ss_t_closure:
     fprintf(out, "#<closure ");
-    ss_write(ss_UNBOX(closure, v).formals);
+    ss_write(ss_UNBOX(closure, v).formals, port);
+    fprintf(out, ">");
+    break;
+  case ss_t_port:
+    fprintf(out, "#<port ");
+    ss_write(ss_UNBOX(port, v).name, port);
+    fprintf(out, " ");
+    ss_write(ss_UNBOX(port, v).mode, port);
     fprintf(out, ">");
     break;
   default:           fprintf(out, "#<??? %d @%p>", ss_type(v), (void*) v); break;
@@ -117,14 +136,14 @@ ss ss_write(ss v)
     while ( v != ss_nil ) {
       switch ( ss_type(v) ) {
       case ss_t_pair:
-        ss_write(ss_car(v));
+        ss_write(ss_car(v), port);
         v = ss_cdr(v);
         if ( v != ss_nil )
           fprintf(out, " ");
         break;
       default:
-        fprintf(out, " . ");
-        ss_write(v);
+        fprintf(out, ". ");
+        ss_write(v, port);
         v = ss_nil;
         break;
       }
@@ -136,7 +155,7 @@ ss ss_write(ss v)
       size_t i = 0;
       fprintf(out, "#(");
       while ( i < ss_vector_l(v) ) {
-        ss_write(ss_vector_v(v)[i]);
+        ss_write(ss_vector_v(v)[i], port);
         if ( ++ i < ss_vector_l(v) )
           fprintf(out, " ");
       }
@@ -223,10 +242,10 @@ ss ss_strnv(size_t l, const char *v)
   return self;
 }
 
-ss ss_s(void *p)
+ss ss_s(const char *p)
 {
   if ( ! p ) return ss_f;
-  return ss_strnv(strlen(p), p);
+  return ss_strnv(strlen(p), (void*) p);
 }
 ss ss_S(ss p)
 {
@@ -449,7 +468,7 @@ ss *ss_bind(ss *_ss_expr, ss_s_environment *env, ss var)
     up = 0;
     while ( env ) {
       for ( over = 0; over < env->argc; ++ over ) {
-        // fprintf(stdout, ";; bind "); ss_write(var); fprintf(stdout, " = "); ss_write(env->symv[over]); fprintf(stdout, "\n");
+        // fprintf(*ss_stderr, ";; bind "); ss_write(var, ss_stdout); fprintf(*ss_stderr, " = "); ss_write(env->symv[over], ss_stdout); fprintf(*ss_stderr, "\n");
         if ( ss_EQ(var, env->symv[over]) ) {
           ss_rewrite_expr(ss_m_var_ref(var, up, over), "var_ref binding is known");
           ref = &env->argv[over];
@@ -492,14 +511,14 @@ ss ss_get(ss *_ss_expr, ss_s_environment *env, ss var)
 
 #define ss_symbol_value(X) ss_get(&ss_expr, ss_env, (X))
 
-void _ss_min_args_error(const char *DOCSTRING, int ss_argc, int MINARGS)
+void _ss_min_args_error(ss op, const char *DOCSTRING, int ss_argc, int MINARGS)
 {
-  ss_error("apply not-enough-args (%s) got %d expected %d", DOCSTRING, ss_argc, MINARGS);
+  ss_error("apply not-enough-args (%s) got %d expected %d", op, DOCSTRING, ss_argc, MINARGS);
 }
 
-void _ss_max_args_error(const char *DOCSTRING, int ss_argc, int MAXARGS)
+void _ss_max_args_error(ss op, const char *DOCSTRING, int ss_argc, int MAXARGS)
 {
-  ss_error("apply too-many-args (%s) got %d expected %d", DOCSTRING, ss_argc, MAXARGS);
+  ss_error("apply too-many-args (%s) got %d expected %d", op, DOCSTRING, ss_argc, MAXARGS);
 }
 
 ss_prim(define,2,2,0,"define name value") {
@@ -511,18 +530,18 @@ ss_prim(setE,2,2,0,"set! name value") {
 } ss_end
 
 ss ss_read(ss port);
-ss_prim(_read,1,1,1,"_read port")
+ss_prim(read,0,1,1,"_read port")
 {
-  ss_return(ss_read(ss_argv[0]));
+  ss_return(ss_read(ss_argc > 0 ? ss_argv[0] : ss_stdin));
 }
 ss_end
 
-ss_prim(write,1,1,1,"write object")
-  ss_write(ss_argv[0]);
+ss_prim(write,1,2,1,"write object")
+  ss_write(ss_argv[0], ss_argc > 1 ? ss_argv[1] : ss_stdout);
 ss_end
 
 ss_prim(newline,0,0,0,"newline")
-  fprintf(stdout, "\n");
+  fprintf(*ss_stdout, "\n");
 ss_end
 
 ss_syntax(quote,1,1,0,"quote value")
@@ -736,7 +755,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
   ss_constantExprQ = 0;
   rtn = ss_expr;
   if ( ss_exec_verbose ) {
-    fprintf(stdout, ";; exec: "); ss_write(ss_expr); fprintf(stdout, "\n");
+    fprintf(*ss_stderr, ";; exec: "); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
   switch ( ss_type(ss_expr) ) {
   case ss_t_quote:
@@ -778,7 +797,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     /* FALL THROUGH */
   case ss_t_vector: {
     ss op;
-    if ( ss_vector_l(ss_expr) < 1 ) return(ss_error("apply empty-vector"));
+    if ( ss_vector_l(ss_expr) < 1 ) return(ss_error("apply empty-vector", ss_expr));
     op = ss_exec(ss_vector_v(ss_expr)[0]);
     if ( ss_constantExprQ )
       ss_vector_v(ss_expr)[0] = ss_box_quote(op);
@@ -796,10 +815,10 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
         ss_s_environment *env;
         if ( self->rest_i >= 0 ) {
           if ( ss_argc < self->rest_i )
-            return(ss_error("apply wrong-number-of-arguments given %lu, expected at least %lu", (unsigned long) ss_argc, (unsigned long) self->rest_i));
+            return(ss_error("apply wrong-number-of-arguments given %lu, expected at least %lu", self, (unsigned long) ss_argc, (unsigned long) self->rest_i));
         } else {
           if ( ss_argc != ss_vector_l(self->params) )
-            return(ss_error("apply wrong-number-of-arguments given %lu, expected %lu", (unsigned long) ss_argc, (unsigned long) ss_vector_l(self->params)));
+            return(ss_error("apply wrong-number-of-arguments given %lu, expected %lu", self, (unsigned long) ss_argc, (unsigned long) ss_vector_l(self->params)));
         }
         env = ss_m_environment(self->env);
         env->argc = ss_argc;
@@ -811,7 +830,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
           env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
         ss_constantExprQ = 0;
         if ( ss_exec_verbose ) {
-          fprintf(stdout, ";; apply closure "); ss_write(self->params); ss_write(ss_expr); fprintf(stdout, "\n");
+          fprintf(*ss_stderr, ";; apply closure "); ss_write(self->params, ss_stderr); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
         }
         rtn = ss_unspec;
         for ( i = 0; i < ss_vector_l(self->body) - 1; ++ i ) {
@@ -825,7 +844,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       }
       break;
     default:
-      return(ss_error("apply cannot apply type=%d", (int) ss_type(op)));
+      return(ss_error("apply cannot apply type=%d", op, (int) ss_type(op)));
     }
   }
   default:
@@ -834,8 +853,8 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
 #undef return
   _return:
   if ( ss_exec_verbose ) {
-    fprintf(stdout, ";; exec result expr: "); ss_write(ss_expr); fprintf(stdout, "\n");
-    fprintf(stdout, ";; exec result  val: "); ss_write(rtn); fprintf(stdout, "\n");
+    fprintf(*ss_stderr, ";; exec result expr: "); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, ";; exec result  val: "); ss_write(rtn, ss_stderr); fprintf(*ss_stderr, "\n");
   }
   return rtn;
 }
@@ -901,7 +920,7 @@ void ss_init_cfunc(ss_s_environment *ss_env);
 
 ss ss_prompt()
 {
-  fprintf(stderr, " ss> ");
+  fprintf(*ss_stderr, " ss> ");
   return ss_read(&stdin);
 }
 
@@ -911,16 +930,36 @@ void ss_repl(ss_s_environment *ss_env)
   ss_constantExprQ = 0;
   while ( (expr = ss_prompt()) != ss_eos ) {
     value = ss_exec(expr);
-    printf(";; => "); ss_write(expr); printf("\n");
+    fprintf(*ss_stderr, ";; => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
     if ( value != ss_undef ) {
-      ss_write(value); fprintf(stdout, "\n");
-      printf(";; %lld (%p)\n", (long long) ss_unbox(integer, value), (void*) value);
-      printf(";; %llu bytes %llu objects\n",
+      ss_write(value, ss_stdout); fprintf(*ss_stdout, "\n");
+      fprintf(*ss_stderr, ";; %lld (%p)\n", (long long) ss_unbox(integer, value), (void*) value);
+      fprintf(*ss_stderr, ";; %llu bytes %llu objects\n",
              (unsigned long long) ss_malloc_bytes,
              (unsigned long long) ss_malloc_objects);
 
     }
   }
+}
+
+ss ss_m_port(FILE *fp, const char *name, const char *mode)
+{
+  ss_s_port *self = ss_alloc(ss_t_port, sizeof(*self));
+  self->fp = fp;
+  self->name = ss_s((void*) name);
+  self->mode = ss_s((void*) mode);
+  return self;
+}
+
+void ss_init_port(ss_s_environment *ss_env)
+{
+#define P(NAME,MODE)                                    \
+  ss_##NAME = ss_m_port(NAME, "<" #NAME ">", MODE);     \
+  ss_define(ss_env, ss_sym(ss_##NAME), ss_m_global(ss_sym(ss_##NAME), &ss_##NAME));
+  P(stdin, "r");
+  P(stdout, "w");
+  P(stderr, "w");
+#undef P
 }
 
 int main(int argc, char **argv)
@@ -930,6 +969,7 @@ int main(int argc, char **argv)
   ss_env = ss_m_environment(0);
   ss_init_const(ss_env);
   ss_init_symbol(ss_env);
+  ss_init_port(ss_env);
   ss_init_prim(ss_env);
   ss_init_cfunc(ss_env);
   ss_repl(ss_env);
@@ -939,7 +979,6 @@ int main(int argc, char **argv)
 #define VALUE ss
 #define READ_DECL ss ss_read(ss stream)
 #define READ_CALL() ss_read(stream)
-#define FP(stream) (*(FILE**)stream)
 #define GETC(stream) getc(FP(stream))
 #define UNGETC(stream,c) ungetc(c, FP(stream))
 #define EQ(X,Y) ((X) == (Y))
@@ -959,7 +998,7 @@ int main(int argc, char **argv)
 #define SYMBOL(N) ss_sym(N)
 #define STRING_2_NUMBER(s, radix) ss_string_TO_number(s, radix)
 #define STRING_2_SYMBOL(s) ss_box(symbol, ss_string_v(s))
-#define ERROR(msg,args...) ss_error("read: " msg, ##args)
+#define ERROR(msg,args...) ss_error("read: " msg, stream, ##args)
 #define RETURN(X) return X
 #if 0
 #define MALLOC(S) GC_malloc_atomic(S)
