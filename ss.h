@@ -179,7 +179,7 @@ typedef ss_s_prim ss_s_syntax;
 #define ss_end                                                       \
   }                                                                  \
 _ss_rtn:                                                             \
- if ( ss_constantFold && ss_constantExprQAll )                       \
+ if ( (ss_constantExprQ = ss_constantFold && ss_constantExprQAll) )  \
    ss_rewrite_expr(ss_box(quote, ss_rtn), "constant folding");       \
  return(ss_rtn);                                                     \
  }
