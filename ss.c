@@ -937,10 +937,6 @@ ss ss_m_cfunc(void *ptr, const char *name, const char *docstr)
   return self;
 }
 
-ss_prim(ss_symbols,0,0,0,"")
-  ss_return(ss_symbols);
-ss_end
-
 void ss_init_const(ss_s_environment *ss_env)
 {
   ss_undef  = ss_alloc(ss_t_undef, 0);
@@ -1013,6 +1009,11 @@ void ss_init_port(ss_s_environment *ss_env)
 #undef P
 }
 
+void ss_init_global(ss_s_environment *ss_env)
+{
+  ss_define(ss_env, ss_sym(ss_symbols), ss_m_global(ss_sym(ss_symbols), &ss_symbols));
+}
+
 int main(int argc, char **argv)
 {
   ss_s_environment *ss_env;
@@ -1021,6 +1022,7 @@ int main(int argc, char **argv)
   ss_init_const(ss_env);
   ss_init_symbol(ss_env);
   ss_init_port(ss_env);
+  ss_init_global(ss_env);
   ss_init_prim(ss_env);
   ss_init_cfunc(ss_env);
   if ( 1 ) {
