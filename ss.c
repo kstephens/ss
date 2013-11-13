@@ -28,7 +28,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_exec(X) _ss_exec(ss_env, &(X))
 #define ss_constantExprQ ss_env->constantExprQ
 #define ss_rewrite_verbose 1
-#define ss_exec_verbose 1
+#define ss_exec_verbose    0
 static inline
 void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, int line)
 {
@@ -471,6 +471,11 @@ ss ss_define(ss_s_environment *env, ss sym, ss val)
   env->argv[env->argc] = val;
   ++ env->argc;
 
+  ss_write(sym, ss_stderr);
+  fprintf(*ss_stderr, " = ");
+  ss_write(val, ss_stderr);
+  fprintf(*ss_stderr, " @%d\n", (int) env->argc);
+ 
   return sym;
 }
 
@@ -675,49 +680,38 @@ void ss_number_coerce_2(ss *argv)
 
 ss_syntax(ADD,0,-1,1,"+ z...")
   switch ( ss_argc ) {
-  case 0:
-    ss_return(ss_box(integer,0));
-  case 1:
-    ss_return(ss_argv[0]);
-  case 2:
-    ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0], ss_argv[1]));
-  default:
-    ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+  case 0:  ss_return(ss_box(integer,0));
+  case 1:  ss_return(ss_argv[0]);
+  case 2:  ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0], ss_argv[1]));
+  default: ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0],
+                            ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
 ss_syntax(SUB,1,-1,1,"- z...")
   switch ( ss_argc ) {
-  case 1:
-    ss_return(ss_vec(2, ss_sym(_NEG), ss_argv[0]));
-  case 2:
-    ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[0], ss_argv[1]));
-  default:
-    ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[0], ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+  case 1:  ss_return(ss_vec(2, ss_sym(_NEG), ss_argv[0]));
+  case 2:  ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[0], ss_argv[1]));
+  default: ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[0],
+                            ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
 ss_syntax(MUL,0,-1,1,"* z...")
   switch ( ss_argc ) {
-  case 0:
-    ss_return(ss_box(integer,1));
-  case 1:
-    ss_return(ss_argv[0]);
-  case 2:
-    ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0], ss_argv[1]));
-  default:
-    ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+  case 0:  ss_return(ss_box(integer,1));
+  case 1:  ss_return(ss_argv[0]);
+  case 2:  ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0], ss_argv[1]));
+  default: ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0],
+                            ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
 ss_syntax(DIV,1,-1,1,"/ z...")
   switch ( ss_argc ) {
-  case 1:
-    ss_return(ss_vec(2, ss_sym(_DIV), ss_box(real, 1.0), ss_argv[0]));
-  case 2:
-    ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_argv[1]));
-  default:
-    ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+  case 1:  ss_return(ss_vec(2, ss_sym(_DIV), ss_box(real, 1.0), ss_argv[0]));
+  case 2:  ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_argv[1]));
+  default: ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 

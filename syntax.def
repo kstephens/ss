@@ -1,0 +1,10 @@
+ss_syntax_def(ADD,0,-1,1,"+ z...")
+ss_syntax_def(DIV,1,-1,1,"/ z...")
+ss_syntax_def(MUL,0,-1,1,"* z...")
+ss_syntax_def(SUB,1,-1,1,"- z...")
+ss_syntax_def(define,1,-1,1,"define name value")
+ss_syntax_def(if,2,3,1,"if pred true ?false?")
+ss_syntax_def(lambda,1,-1,1,"lambda formals body...")
+ss_syntax_def(let,1,-1,1,"let bindings body...")
+ss_syntax_def(quote,1,1,1,"quote value")
+#undef ss_syntax_def

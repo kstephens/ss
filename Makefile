@@ -1,5 +1,5 @@
 CFLAGS = -g
-CFLAGS += -O3
+# CFLAGS += -O3
 CFLAGS += -I.
 CFLAGS += -Iboot
 CFLAGS += -I/opt/local/include

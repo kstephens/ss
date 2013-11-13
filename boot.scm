@@ -25,6 +25,11 @@
 (define + _ADD) ;; FIXME
 (define * _MUL) ;; FIXME
 
+
+(define g (lambda (x) (if (> x 0) (f (- x 1)) 'g)))
+(define f (lambda (x) (if (> x 0) (g (- x 1)) 'f)))
+(g 10000)
+
 ;;;;
 
 ;; #|
@@ -39,3 +44,22 @@
   ;;  => (1 4 7 10)
 (map (geometric 1 2) '(1 2 3 4))
   ;; => (1 2 4 8)
+
+#|
+(define g (sequence _MUL))
+(define a (sequence _ADD))
+(define as (a 1 3))
+(define gs (g 1 5))
+(gs)
+(gs)
+(gs)
+gs
+(as)
+(as)
+(as)
+as
+(define my_op as)
+(my_op)
+|#
+
+;;|#
