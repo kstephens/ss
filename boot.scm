@@ -16,6 +16,8 @@
 (define (pair? x) (eq? %type(x) <pair>))
 (C_ss_make_constant 'pair?)
 
+(define (list . l) l)
+
 (define (map proc args)
   (if (null? args)
     '()
@@ -34,15 +36,17 @@
 
 ;; #|
 
-(define (((sequence op) start constant) . rest)
+(define ((constant value) . rest) value)
+
+(define (((sequence op) start value) . rest)
   (let ((result start))
-    (set! start (op start constant))
+    (set! start (op start (value)))
     result))
 (define arithmetic (sequence +))
 (define geometric (sequence *))
-(map (arithmetic 1 3) '(1 2 3 4))
+(map (arithmetic 1 (constant 3)) '(1 2 3 4))
   ;;  => (1 4 7 10)
-(map (geometric 1 2) '(1 2 3 4))
+(map (geometric 1 (constant 2)) '(1 2 3 4))
   ;; => (1 2 4 8)
 
 #|
