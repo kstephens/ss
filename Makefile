@@ -1,35 +1,37 @@
-CFLAGS += -g
 CFLAGS += -std=c99 
-# CFLAGS += -O3
+CFLAGS += -g
+CFLAGS += -O3
 CFLAGS += -I.
+CFLAGS += -Igen
 CFLAGS += -Iboot
 CFLAGS += -I/opt/local/include
 
-LIBS = -L/opt/local/lib -lgc
+LIBS += -L/opt/local/lib
+LIBS += -lgc
 
 CFILES = \
   ss.c
 
 HFILES = \
   ss.h \
-  sym.def \
-  prim.def \
-  cfunc.def \
-  syntax.def
+  gen/sym.def \
+  gen/prim.def \
+  gen/cfunc.def \
+  gen/syntax.def
 
 all : ss
 
-sym.def : Makefile symdef.pl $(CFILES) prim.def syntax.def cfunc.def
-	$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | perl symdef.pl > $@
+gen/sym.def : Makefile gen/symdef.pl $(CFILES) gen/prim.def gen/syntax.def gen/cfunc.def
+	$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | perl gen/symdef.pl > $@
 #	open $@
 
-prim.def : Makefile primdef.pl $(CFILES)
-	$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) | perl primdef.pl > $@
+gen/prim.def : Makefile gen/primdef.pl $(CFILES)
+	$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) | perl gen/primdef.pl > $@
 
-syntax.def : Makefile syntax.def.pl $(CFILES)
+gen/syntax.def : Makefile gen/syntax.def.pl $(CFILES)
 	$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) | perl $@.pl > $@
 
-cfunc.def : Makefile cfunc.def.pl $(CFILES)
+gen/cfunc.def : Makefile gen/cfunc.def.pl $(CFILES)
 	$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | perl $@.pl > $@
 #	cat $(CFILES) | perl $@.pl > $@
 
