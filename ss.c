@@ -179,6 +179,7 @@ ss ss_write(ss v, ss port)
   return ss_undef;
 }
 
+#undef ss_sym_def
 #define ss_sym_def(X) ss ss_PASTE2(_ss_sym_,X);
 #include "sym.def"
 
@@ -309,6 +310,7 @@ ss ss_box_symbol(const char *name)
 
 void ss_init_symbol(ss_s_environment *ss_env)
 {
+#undef ss_sym_def
 #define ss_sym_def(X) ss_PASTE2(_ss_sym_, X) = ss_box_symbol(#X);
 #include "sym.def"
 #define BOP(NAME,OP) ss_sym(NAME) = ss_box_symbol(#OP);

@@ -1,4 +1,5 @@
-CFLAGS = -g
+CFLAGS += -g
+CFLAGS += -std=c99 
 # CFLAGS += -O3
 CFLAGS += -I.
 CFLAGS += -Iboot
@@ -44,5 +45,5 @@ ss.i : $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -E -o $@ $(CFILES) $(LIBS)
 
 clean:
-	rm -f ss *.o *.s *.i *.tmp sym.def prim.def cfunc.def
+	rm -f ss *.o *.s *.i *.tmp sym.def prim.def syntax.def cfunc.def
 

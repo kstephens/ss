@@ -4,6 +4,10 @@
 #include "gc/gc.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h> /* ssize_t */
+#include <string.h> /* strcasecmp */
+#include <strings.h> /* strcasecmp */
+#include <alloca.h>
 
 #define _ss_PASTE2(A,B)A##B
 #define ss_PASTE2(A,B)_ss_PASTE2(A,B)
