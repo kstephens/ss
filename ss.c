@@ -221,11 +221,11 @@ ss ss_R(ss v)
   return rtn;
 }
 
-ss ss_GI(ss o, ss i)
+ss ss_get(ss o, ss i)
 {
   return ((ss*) o)[ss_I(i)];
 }
-ss ss_SI(ss o, ss i, ss v)
+ss ss_set(ss o, ss i, ss v)
 {
   return ((ss*) o)[ss_I(i)] = v;
 }
@@ -526,13 +526,13 @@ ss* ss_bind(ss_s_environment *ss_env, ss *_ss_expr, ss var, int set)
   return ref;
 }
 
-ss ss_set(void *env, ss *_ss_expr, ss var, ss val)
+ss ss_var_set(void *env, ss *_ss_expr, ss var, ss val)
 {
   *ss_bind(env, _ss_expr, var, 1) = val;
   return var;
 }
 
-ss ss_get(void *env, ss *_ss_expr, ss var)
+ss ss_var_get(void *env, ss *_ss_expr, ss var)
 {
   return *ss_bind(env, _ss_expr, var, 0);
 }
@@ -568,7 +568,7 @@ ss_prim(_define,2,2,0,"define name value") {
 } ss_end
 
 ss_prim(setE,2,2,0,"set! name value") {
-  ss_return(ss_set(ss_env, &ss_argv[0], ss_argv[0], ss_exec(ss_argv[1])));
+  ss_return(ss_var_set(ss_env, &ss_argv[0], ss_argv[0], ss_exec(ss_argv[1])));
 } ss_end
 
 ss ss_read(ss port);
@@ -807,14 +807,13 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
   if ( ss_exec_verbose ) {
     fprintf(*ss_stderr, ";; exec: @%p ", _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
-  if ( expr == ss_sym(my_op) ) ss_break_at();
   switch ( ss_type(expr) ) {
   case ss_t_quote:
     ss_constantExprQ = 1;
     return(ss_UNBOX(quote, expr));
   case ss_t_symbol:
   case ss_t_var:
-    return(ss_get(ss_env, _ss_expr, expr));
+    return(ss_var_get(ss_env, _ss_expr, expr));
   case ss_t_global:
     return(ss_UNBOX(global, expr));
   case ss_t_if: {
