@@ -586,7 +586,7 @@ ss_prim(write,1,2,1,"write object")
 ss_end
 
 ss_prim(newline,0,1,1,"newline")
-  FILE **out = ss_argc > 0 ? ss_argv[0] : ss_stdin;
+  FILE **out = ss_argc > 0 ? ss_argv[0] : ss_stdout;
   fprintf(*out, "\n");
 ss_end
 
