@@ -16,10 +16,7 @@ void* ss_malloc(size_t s)
   return GC_malloc(s);
 }
 
-ss ss_eqQ(ss a, ss b)
-{
-  return a == b ? ss_t : ss_f;
-}
+ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 
 ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 
@@ -286,13 +283,11 @@ static ss ss_symbols;
 ss ss_box_symbol(const char *name)
 {
   ss_s_symbol *sym;
-  {
-    ss l;
-    for ( l = ss_symbols; l != ss_nil; l = ss_cdr(l) ) {
-      sym = (ss_s_symbol*) ss_car(l);
-      if ( strcmp(name, ss_string_v(sym->name)) == 0 )
-        goto rtn;
-    }
+
+  for ( ss l = ss_symbols; l != ss_nil; l = ss_cdr(l) ) {
+    sym = (ss_s_symbol*) ss_car(l);
+    if ( strcmp(name, ss_string_v(sym->name)) == 0 )
+      goto rtn;
   }
 
   sym = ss_alloc(ss_t_symbol, sizeof(*sym));
@@ -300,7 +295,6 @@ ss ss_box_symbol(const char *name)
   sym->docstring = ss_f;
   sym->syntax = ss_f;
   sym->is_const = 0;
-
   ss_symbols = ss_cons(sym, ss_symbols);
 
  rtn:
@@ -374,12 +368,9 @@ size_t ss_list_length(ss x)
     x = ss_CDR(x);
     l ++;
     goto again;
-  case ss_t_null:
-    return l;
-  case ss_t_vector:
-    return l + ss_vector_l(x);
-  default:
-    return l + 1;
+  case ss_t_null:    return l;
+  case ss_t_vector:  return l + ss_vector_l(x);
+  default:           return l + 1;
   }
 }
 
@@ -791,11 +782,6 @@ ss ss_apply(ss_s_environment *ss_env, ss func, ss args)
 ss_prim(apply,2,2,1,"apply func args") {
   ss_return(ss_apply(ss_env, ss_argv[0], ss_argv[1]));
 } ss_end
-
-ss ss_break_at()
-{
-  return ss_f;
-}
 
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
 {
