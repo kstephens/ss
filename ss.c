@@ -27,7 +27,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
 #define ss_constantExprQ ss_env->constantExprQ
-#define ss_rewrite_verbose 1
+#define ss_rewrite_verbose 0
 #define ss_exec_verbose    0
 static inline
 void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, int line)
@@ -473,10 +473,7 @@ ss ss_define(ss_s_environment *env, ss sym, ss val)
   env->argv[env->argc] = val;
   ++ env->argc;
 
-  ss_write(sym, ss_stderr);
-  fprintf(*ss_stderr, " = ");
-  ss_write(val, ss_stderr);
-  fprintf(*ss_stderr, " @%d\n", (int) env->argc);
+  // ss_write(sym, ss_stderr); fprintf(*ss_stderr, " = "); ss_write(val, ss_stderr); fprintf(*ss_stderr, " @%d\n", (int) env->argc);
  
   return sym;
 }
