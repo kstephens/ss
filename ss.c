@@ -967,24 +967,31 @@ void ss_init_prim(ss_s_environment *ss_env)
 }
 void ss_init_cfunc(ss_s_environment *ss_env);
 
-ss ss_prompt(ss input)
+ss ss_prompt(ss input, ss prompt)
 {
-  fprintf(*ss_stderr, " ss> ");
+  if ( prompt != ss_f )
+    fprintf(*ss_stderr, " ss> ");
   return ss_read(input);
 }
 
-void ss_repl(ss_s_environment *ss_env, ss input)
+void ss_repl(ss_s_environment *ss_env, ss input, ss output, ss prompt)
 {
   ss expr, value = ss_undef;
-  while ( (expr = ss_prompt(input)) != ss_eos ) {
+  while ( (expr = ss_prompt(input, prompt)) != ss_eos ) {
     value = ss_exec(expr);
-    fprintf(*ss_stderr, ";; => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    if ( prompt != ss_f ) {
+      fprintf(*ss_stderr, ";; => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    }
     if ( value != ss_undef ) {
-      ss_write(value, ss_stdout); fprintf(*ss_stdout, "\n");
-      fprintf(*ss_stderr, ";; %lld (%p)\n", (long long) ss_unbox(integer, value), (void*) value);
-      fprintf(*ss_stderr, ";; %llu bytes %llu objects\n",
-             (unsigned long long) ss_malloc_bytes,
-             (unsigned long long) ss_malloc_objects);
+      if ( output != ss_f ) {
+        ss_write(value, ss_stdout); fprintf(*ss_stdout, "\n");
+      }
+      if ( 0 ) {
+        fprintf(*ss_stderr, ";; %lld (%p)\n", (long long) ss_unbox(integer, value), (void*) value);
+        fprintf(*ss_stderr, ";; %llu bytes %llu objects\n",
+                (unsigned long long) ss_malloc_bytes,
+                (unsigned long long) ss_malloc_objects);
+      }
     }
   }
 }
@@ -1027,10 +1034,10 @@ int main(int argc, char **argv)
   ss_init_cfunc(ss_env);
   if ( 1 ) {
     FILE *fp = fopen("boot.scm", "r");
-    ss_repl(ss_env, &fp);
+    ss_repl(ss_env, &fp, ss_f, ss_f);
     fclose(fp);
   }
-  ss_repl(ss_env, ss_stdin);
+  ss_repl(ss_env, ss_stdin, ss_stdout, ss_stderr);
   return 0;
 }
 
