@@ -7,7 +7,11 @@ CFLAGS += -Iboot
 CFLAGS += -I/opt/local/include
 
 LIBS += -L/opt/local/lib
+ifneq "$(NO_GC)" ""
+CFLAGS += -DNO_GC=$(NO_GC)
+else
 LIBS += -lgc
+endif
 
 CFILES = \
   ss.c

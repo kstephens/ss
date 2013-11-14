@@ -9,7 +9,16 @@
 #include <string.h> /* strcasecmp */
 #include <alloca.h>
 #endif
+
+#ifdef NO_GC
+#define GC_malloc(X) malloc(X)
+#define GC_malloc_atomic(X) malloc(X)
+#define GC_realloc(X,Y) realloc(X,Y)
+#define GC_free(X) free(X)
+#define GC_INIT() ((void) 0)
+#else
 #include "gc/gc.h"
+#endif
 
 #define _ss_PASTE2(A,B)A##B
 #define ss_PASTE2(A,B)_ss_PASTE2(A,B)

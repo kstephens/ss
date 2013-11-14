@@ -1131,11 +1131,9 @@ int main(int argc, char **argv)
 #define STRING_2_SYMBOL(s) ss_box(symbol, ss_string_v(s))
 #define ERROR(msg,args...) ss_error(ss_env, "read: " msg, stream, ##args)
 #define RETURN(X) return X
-#if 0
 #define MALLOC(S) GC_malloc_atomic(S)
 #define REALLOC(P,S) GC_realloc(P,S)
 #define FREE(P) GC_free(P)
-#endif
 #include "lispread/lispread.c"
 
 void ss_init_cfunc(ss_s_environment *ss_env)
