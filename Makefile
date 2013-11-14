@@ -21,7 +21,8 @@ HFILES = \
   gen/sym.def \
   gen/prim.def \
   gen/cfunc.def \
-  gen/syntax.def
+  gen/syntax.def \
+  lispread/lispread.c
 
 all : ss
 
@@ -37,6 +38,10 @@ gen/syntax.def : Makefile gen/syntax.def.pl $(CFILES)
 
 gen/cfunc.def : Makefile gen/cfunc.def.pl $(CFILES)
 	$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | perl $@.pl > $@
+
+lispread/lispread.c:
+	git submodule init
+	git submodule update
 
 ss : $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -o $@ $(CFILES) $(LIBS)
