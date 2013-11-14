@@ -23,14 +23,13 @@ ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
-#define ss_constantExprQ ss_env->constantExprQ
-#define ss_rewrite_verbose 0
-#define ss_exec_verbose    0
+#define ss_rewrite_verbose 1
+#define ss_exec_verbose    1
 static inline
 void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, int line)
 {
   if ( ss_rewrite_verbose ) {
-    fprintf(*ss_stderr, "\n;; rewrite: ");
+    fprintf(*ss_stderr, ";; rewrite: ");
     ss_write(ss_expr, ss_stderr);
     fprintf(*ss_stderr, "\n;;      at: @%p", _ss_expr);
     fprintf(*ss_stderr, "\n;;      in: %s line:%d", func, line);
@@ -40,7 +39,7 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
   if ( ss_rewrite_verbose ) {
     fprintf(*ss_stderr, ";;      as: ");
     ss_write(ss_expr, ss_stderr);
-    fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, "\n\n");
   }
 }
 #if ss_rewrite_verbose == 0
@@ -48,6 +47,12 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
 #else
 #define ss_rewrite_expr(X,REASON) _ss_rewrite_expr(&ss_expr, (X), REASON, __FUNCTION__, __LINE__)
 #endif
+
+ss ss_set_type(ss_e_type type, ss obj)
+{
+  ((ss_integer_t *) obj)[-1] = type;
+  return obj;
+}
 
 ss ss_alloc(ss_e_type type, size_t size)
 {
@@ -426,11 +431,13 @@ ss ss_vec(int n, ...)
 ss ss_m_environment(ss_s_environment *parent)
 {
   ss_s_environment *env = ss_alloc(ss_t_environment, sizeof(*env));
-  env->constantExprQ = 0;
   env->argc = 0;
   env->symv = env->argv = 0;
   env->parent = parent;
   env->top_level = parent ? parent->top_level : env;
+  env->depth     = parent ? parent->depth     : 0;
+  env->constantExprQ = env->constantExprQAll = 0;
+  env->expr      = ss_undef;
   return env;
 }
 
@@ -545,12 +552,12 @@ ss ss_make_constant(ss sym)
   return sym;
 }
 
-ss_syntax(define,1,-1,1,"define name value") {
+ss_syntax(define,1,-1,0,"define name value") {
   ss name = ss_argv[0];
   if ( ss_type(name) == ss_t_pair ) {
     ss_return(ss_cons(ss_sym(define), ss_cons(ss_car(name), ss_cons(ss_cons(ss_sym(lambda), ss_cons(ss_cdr(name), ss_listnv(ss_argc - 1, ss_argv + 1))), ss_nil))));
   } else {
-    ss_return(ss_cons(ss_sym(_define), ss_cons(name, ss_cons(ss_argv[1], ss_nil))));
+    ss_return(ss_cons(ss_sym(_define), ss_cons(ss_box_quote(name), ss_cons(ss_argv[1], ss_nil))));
   }
 } ss_end
 
@@ -558,31 +565,38 @@ ss_prim(_define,2,2,0,"define name value") {
   ss_return(ss_define(ss_env->top_level, ss_argv[0], ss_exec(ss_argv[1])));
 } ss_end
 
-ss_prim(setE,2,2,0,"set! name value") {
-  ss_return(ss_var_set(ss_env, &ss_argv[0], ss_argv[0], ss_exec(ss_argv[1])));
+ss_syntax(setE,2,2,0,"set! name value") {
+  ss_s_var_set *self = ss_alloc(ss_t_var_set, sizeof(*self));
+  self->var = ss_argv[0];
+  ss_return(ss_cons(ss_sym(_setE), ss_cons(self, ss_cons(ss_argv[1], ss_nil))));
 } ss_end
 
-ss ss_read(ss port);
-ss_prim(read,0,1,1,"_read port")
+ss_prim(_setE,2,2,0,"set! name value") {
+  ss_s_var_set *self = ss_argv[0];
+  ss_return(ss_var_set(ss_env, &self->var, self->var, ss_argv[1]));
+} ss_end
+
+ss ss_read(ss_s_env *ss_env, ss port);
+ss_prim(read,0,1,0,"_read port")
 {
-  ss_return(ss_read(ss_argc > 0 ? ss_argv[0] : ss_stdin));
+  ss_return(ss_read(ss_env, ss_argc > 0 ? ss_argv[0] : ss_stdin));
 }
 ss_end
 
-ss_prim(write,1,2,1,"write object")
+ss_prim(write,1,2,0,"write object")
   ss_write(ss_argv[0], ss_argc > 1 ? ss_argv[1] : ss_stdout);
 ss_end
 
-ss_prim(newline,0,1,1,"newline")
+ss_prim(newline,0,1,0,"newline")
   FILE **out = ss_argc > 0 ? ss_argv[0] : ss_stdout;
   fprintf(*out, "\n");
 ss_end
 
-ss_syntax(quote,1,1,1,"quote value")
+ss_syntax(quote,1,1,0,"quote value")
   ss_return(ss_box_quote(ss_argv[0]));
 ss_end
 
-ss_syntax(if,2,3,1,"if pred true ?false?") {
+ss_syntax(if,2,3,0,"if pred true ?false?") {
   ss_s_if *self = ss_alloc(ss_t_if, sizeof(*self));
   self->t = ss_argv[0];
   self->a = ss_argv[1];
@@ -590,7 +604,7 @@ ss_syntax(if,2,3,1,"if pred true ?false?") {
   ss_return(self);
 } ss_end
 
-ss_syntax(lambda,1,-1,1,"lambda formals body...") {
+ss_syntax(lambda,1,-1,0,"lambda formals body...") {
   ss rest; int rest_i;
   ss_s_closure *self = ss_alloc(ss_t_closure, sizeof(*self));
   self->formals = ss_argv[0];
@@ -605,11 +619,11 @@ ss_syntax(lambda,1,-1,1,"lambda formals body...") {
       ss_vector_v(self->params)[rest_i] = self->rest = ss_cdr(rest);
     }
   }
-  self->body = ss_vecnv(ss_argc - 1, ss_argv + 1);
+  self->body = ss_cons(ss_sym(begin), ss_listnv(ss_argc - 1, ss_argv + 1));
   ss_return(self);
 } ss_end
 
-ss_syntax(let,1,-1,1,"let bindings body...") {
+ss_syntax(let,1,-1,0,"let bindings body...") {
   ss params = ss_nil, *pp = &params;
   ss args = ss_nil, *ap = &args;
   ss body = ss_listnv(ss_argc - 1, ss_argv + 1);
@@ -625,18 +639,27 @@ ss_syntax(let,1,-1,1,"let bindings body...") {
   ss_return(ss_cons(ss_cons(ss_sym(lambda), ss_cons(params, body)), args));
 } ss_end
 
-ss_prim(cons,2,2,1,"cons car cdr")
+ss_syntax(begin,0,-1,0,"begin body...") {
+  switch ( ss_argc ) {
+  case 0:
+    ss_return(ss_undef);
+  case 1:
+    ss_return(ss_argv[0]);
+  default:
+    ss_return(ss_set_type(ss_t_begin, ss_vecnv(ss_argc, ss_argv)));
+  }
+} ss_end
+
+ss_prim(cons,2,2,0,"cons car cdr")
   ss_return(ss_cons(ss_argv[0], ss_argv[1]));
 ss_end
 
 ss_prim(car,1,1,1,"car pair")
-  ss_constantFold = 1;
   ss_typecheck(ss_t_pair,ss_argv[0]);
   ss_return(ss_CAR(ss_argv[0]));
 ss_end
 
 ss_prim(cdr,1,1,1,"cdr pair")
-  ss_constantFold = 1;
   ss_typecheck(ss_t_pair,ss_argv[0]);
   ss_return(ss_CDR(ss_argv[0]));
 ss_end
@@ -687,7 +710,7 @@ ss_syntax(SUB,1,-1,1,"- z...")
   }
 ss_end
 
-ss_syntax(MUL,0,-1,1,"* z...")
+ss_syntax(MUL,0,-1,0,"* z...")
   switch ( ss_argc ) {
   case 0:  ss_return(ss_box(integer,1));
   case 1:  ss_return(ss_argv[0]);
@@ -697,7 +720,7 @@ ss_syntax(MUL,0,-1,1,"* z...")
   }
 ss_end
 
-ss_syntax(DIV,1,-1,1,"/ z...")
+ss_syntax(DIV,1,-1,0,"/ z...")
   switch ( ss_argc ) {
   case 1:  ss_return(ss_vec(2, ss_sym(_DIV), ss_box(real, 1.0), ss_argv[0]));
   case 2:  ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_argv[1]));
@@ -708,7 +731,6 @@ ss_end
 #define BOP(NAME,OP)                                                    \
   ss_prim(_##NAME,2,2,1,#OP " z...")                                    \
   {                                                                     \
-    ss_constantFold = 1;                                                \
     ss_number_coerce_2(ss_argv);                                        \
     switch ( ss_type(ss_argv[0]) ) {                                    \
     case ss_t_integer:                                                  \
@@ -723,7 +745,6 @@ ss_end
 #define UOP(NAME,OP)                                                    \
   ss_prim(NAME,1,1,1,#OP " z")                                          \
   {                                                                     \
-    ss_constantFold = 1;                                                \
     switch ( ss_type(ss_argv[0]) ) {                                    \
     case ss_t_integer:                                                  \
       ss_return(ss_box(integer, OP ss_UNBOX(integer,ss_argv[0])));      \
@@ -737,7 +758,6 @@ ss_end
 #define ROP(NAME,OP)                                                    \
   ss_prim(NAME,2,2,1,#OP " x y")                                        \
   {                                                                     \
-    ss_constantFold = 1;                                                \
     ss_number_coerce_2(ss_argv);                                        \
     switch ( ss_type(ss_argv[0]) ) {                                    \
     case ss_t_integer:                                                  \
@@ -752,7 +772,6 @@ ss_end
 #define IBOP(NAME,OP)                                                   \
   ss_prim(NAME,2,2,1,#OP " i j")                                        \
   {                                                                     \
-    ss_constantFold = 1;                                                \
     ss_typecheck(ss_t_integer, ss_argv[0]);                             \
     ss_typecheck(ss_t_integer, ss_argv[1]);                             \
     ss_return(ss_box(integer, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
@@ -762,7 +781,6 @@ ss_end
 #define IUOP(NAME,OP)                                                   \
   ss_prim(NAME,1,1,1,#OP " i")                                          \
   {                                                                     \
-    ss_constantFold = 1;                                                \
     ss_typecheck(ss_t_integer, ss_argv[0]);                             \
     ss_return(ss_box(integer, OP ss_UNBOX(integer,ss_argv[1])));        \
   }                                                                     \
@@ -779,20 +797,26 @@ ss ss_apply(ss_s_environment *ss_env, ss func, ss args)
   return(ss_exec(args));
 }
 
-ss_prim(apply,2,2,1,"apply func args") {
+ss_prim(apply,2,2,0,"apply func args") {
   ss_return(ss_apply(ss_env, ss_argv[0], ss_argv[1]));
 } ss_end
 
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
 {
-  ss rtn, expr, var;
+  ss rtn, expr;
 #define return(X) do { rtn = (X); goto _return; } while(0)
   expr = ss_expr;
+  ++ ss_env->depth;
   again:
+#define ss_exec_tail(X) do {     \
+    expr = *(_ss_expr = &(X));   \
+    goto again;                  \
+  } while(0)
   ss_constantExprQ = 0;
   if ( ss_exec_verbose ) {
-    fprintf(*ss_stderr, ";; exec: @%p ", _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, ";; exec %3d @%p ", (int) ss_env->depth, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
+  if ( ss_type(expr) >= ss_t_LAST ) abort();
   switch ( ss_type(expr) ) {
   case ss_t_quote:
     ss_constantExprQ = 1;
@@ -800,21 +824,30 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
   case ss_t_symbol:
   case ss_t_var:
     return(ss_var_get(ss_env, _ss_expr, expr));
+  case ss_t_var_set:
+    return(expr);
   case ss_t_global:
     return(ss_UNBOX(global, expr));
-  case ss_t_if: {
-    ss_s_if *self = ss_expr;
-    ss *subexpr;
-    rtn = ss_exec(self->t);
-    subexpr = rtn != ss_f ? &self->a : &self->b;
-    if ( ss_constantExprQ ) {
-      ss_rewrite_expr(*subexpr, rtn != ss_f ? "constant test is true" : "constant test is false");
-    } else {
-      _ss_expr = subexpr;
+  case ss_t_if:
+    {
+      ss_s_if *self = ss_expr;
+      ss *subexpr;
+      rtn = ss_exec(self->t);
+      subexpr = rtn != ss_f ? &self->a : &self->b;
+      if ( ss_constantExprQ )
+        ss_rewrite_expr(*subexpr, rtn != ss_f ? "constant test is true" : "constant test is false");
+      else
+        _ss_expr = subexpr;
+      expr = *subexpr;
+      goto again;
     }
-    expr = *subexpr;
-    goto again;
-  }
+  case ss_t_begin:
+    {
+      size_t i;
+      for ( i = 0; i < ss_vector_l(expr) - 1; ++ i )
+        ss_exec(ss_vector_v(expr)[i]);
+      ss_exec_tail(ss_vector_v(expr)[i]);
+    }
   case ss_t_closure:
     {
       ss_s_closure *self = ss_alloc_copy(ss_t_closure, sizeof(*self), ss_expr);
@@ -822,9 +855,9 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       return(self);
     }
   case ss_t_pair:
-    var = ss_car(expr);
-    if ( ss_type(var) == ss_t_symbol && (var = ss_UNBOX(symbol, var).syntax) != ss_f ) {
-      expr = ss_apply(ss_env, var, ss_cdr(expr));
+    rtn = ss_car(expr);
+    if ( ss_type(rtn) == ss_t_symbol && (rtn = ss_UNBOX(symbol, rtn).syntax) != ss_f ) {
+      expr = ss_apply(ss_env, rtn, ss_cdr(expr));
       ss_rewrite_expr(expr, "syntax rewrite");
       goto again;
     }
@@ -832,17 +865,37 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     ss_rewrite_expr(expr, "application vector");
     /* FALL THROUGH */
   case ss_t_vector: {
-    if ( ss_vector_l(expr) < 1 ) return(ss_error("apply empty-vector", expr));
-    var = ss_exec(ss_vector_v(expr)[0]);
-    switch ( ss_type(var) ) {
+    size_t ss_argc = ss_vector_l(expr) - 1;
+    ss    *ss_argv;
+
+    if ( ss_vector_l(expr) < 1 ) return(ss_error(ss_env, "apply empty-vector", expr));
+
+    rtn = ss_exec(ss_vector_v(expr)[0]);
+    ss_constantExprQAll = ss_constantExprQ;
+
+    ss_argv = ss_malloc(sizeof(ss_argv[0]) * (ss_argc + 1)); // +1 restarg.
+    for ( size_t i = 0; i < ss_argc; i ++ ) {
+      ss_argv[i] = ss_exec(ss_vector_v(expr)[i + 1]);
+      ss_constantExprQAll &= ss_constantExprQ;
+    }
+    ss_constantExprQ = 0;
+
+    switch ( ss_type(rtn) ) {
     case ss_t_prim:
-      return((ss_UNBOX(prim,var)->func)(ss_env, _ss_expr, var, ss_vector_l(expr) - 1, ss_vector_v(expr) + 1));
+      {
+        ss result = (ss_UNBOX(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
+
+        if ( (ss_constantExprQ = ss_UNBOX(prim, rtn)->no_side_effect && ss_constantExprQAll) )
+          ss_rewrite_expr(ss_box_quote(result), "constant folding");
+        return(result);
+      }
+
     case ss_t_closure:
       {
-        ss_s_closure *self = (ss_s_closure*) var;
-        size_t i, ss_argc = ss_vector_l(expr) - 1;
-        ss *ss_argv = ss_vector_v(expr) + 1;
+        ss_s_closure *self = (ss_s_closure*) rtn;
         ss_s_environment *env;
+        size_t i;
+
         if ( self->rest_i >= 0 ) {
           if ( ss_argc < self->rest_i )
             return(ss_error("apply wrong-number-of-arguments given %lu, expected at least %lu", self, (unsigned long) ss_argc, (unsigned long) self->rest_i));
@@ -850,28 +903,36 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
           if ( ss_argc != ss_vector_l(self->params) )
             return(ss_error("apply wrong-number-of-arguments given %lu, expected %lu", self, (unsigned long) ss_argc, (unsigned long) ss_vector_l(self->params)));
         }
+
         env = ss_m_environment(self->env);
+        env->expr = ss_expr;
         env->argc = ss_argc;
         env->symv = ss_vector_v(self->params);
-        env->argv = ss_malloc(sizeof(env->argv[0]) * (ss_argc + 1));
-        for ( i = 0; i < ss_argc; ++ i )
-          env->argv[i] = ss_exec(ss_argv[i]);
+        env->argv = ss_argv;
         if ( self->rest_i >= 0 )
           env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
-        ss_constantExprQ = 0;
         if ( ss_exec_verbose ) {
-          fprintf(*ss_stderr, ";; apply closure "); ss_write(self->params, ss_stderr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+          fprintf(*ss_stderr, "  ;; apply closure:\n");
+          fprintf(*ss_stderr, "  ;;   args: (");
+          ss_write_vec(env->argc, env->argv, ss_stderr);
+          fprintf(*ss_stderr, ")\n  ;;     to: ");
+          ss_write(self, ss_stderr);
+          fprintf(*ss_stderr, "\n");
         }
-        rtn = ss_unspec;
-        for ( i = 0; i < ss_vector_l(self->body) - 1; ++ i ) {
-          rtn = _ss_exec(env, &ss_vector_v(self->body)[i]);
+
+        if ( 1 ) {
+          fprintf(*ss_stderr, "  ;; binding:\n");
+          for ( i  = 0; i < env->argc; ++ i ) {
+            fprintf(*ss_stderr, "    ");
+            ss_write(env->symv[i], ss_stderr);
+            fprintf(*ss_stderr, " => ");
+            ss_write(env->argv[i], ss_stderr);
+            fprintf(*ss_stderr, "\n");
+          }
         }
-        if ( i < ss_vector_l(self->body) ) {
-          ss_env = env;
-          _ss_expr = &ss_vector_v(self->body)[i];
-          expr = *_ss_expr;
-          goto again; // tail recursion.
-        }
+
+        ss_env = env;
+        ss_exec_tail(self->body);
       }
       break;
     default:
@@ -883,11 +944,13 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     ss_constantExprQ = ss_literalQ(expr);
   }
 #undef return
+#undef ss_exec_tail
   _return:
   if ( ss_exec_verbose ) {
-    fprintf(*ss_stderr, ";; exec result expr: "); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
-    fprintf(*ss_stderr, ";; exec result  val: "); ss_write(rtn, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, ";; exec %3d result expr: ", (int) ss_env->depth); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, ";; exec %3d result  val: ", (int) ss_env->depth); ss_write(rtn, ss_stderr); fprintf(*ss_stderr, "\n");
   }
+  -- ss_env->depth;
   return rtn;
 }
 
@@ -915,8 +978,8 @@ ss ss_m_cfunc(void *ptr, const char *name, const char *docstr)
 {
   ss_s_prim *self = ss_alloc(ss_t_prim, sizeof(*self));
   self->func = _ss_pf_ss_call_cfunc;
-  self->minargs = 0; self->maxargs = 5;
-  self->evalq = 1;
+  self->min_args = 0; self->max_args = 5;
+  self->no_side_effect = 0;
   self->name = name;
   self->docstring = docstr ? docstr : name;
   self->c_func = ptr;
@@ -938,7 +1001,7 @@ void ss_init_const(ss_s_environment *ss_env)
 void ss_init_prim(ss_s_environment *ss_env)
 {
   ss sym;
-#define ss_prim_def(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)               \
+#define ss_prim_def(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)               \
   sym = ss_sym(NAME);                                                   \
   ss_PASTE2(ss_p_,NAME) =                                               \
     ss_alloc_copy(ss_t_prim, sizeof(ss_s_prim), &ss_PASTE2(_ss_p_,NAME)); \
