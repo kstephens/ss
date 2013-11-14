@@ -70,7 +70,7 @@ ss ss_alloc_copy(ss_e_type type, size_t size, void *ptr)
 }
 
 #define FP(port) (*(FILE**) (port))
-ss ss_error(const char *format, ss obj, ...)
+ss ss_error(ss_s_environment *ss_env, const char *format, ss obj, ...)
 {
   va_list vap;
   va_start(vap, obj);
@@ -80,6 +80,11 @@ ss ss_error(const char *format, ss obj, ...)
   ss_write(obj, ss_stderr);
   fprintf(FP(ss_stderr), "\n");
   va_end(vap);
+  for ( ss_s_environment *env = ss_env; env; env = env->parent ) {
+    fprintf(FP(ss_stderr), "  ss: %3d ", (int) env->depth);
+    ss_write(env->expr, ss_stderr);
+    fprintf(FP(ss_stderr), "\n");
+  }
   abort();
   return 0;
 }
@@ -92,6 +97,16 @@ void ss_write_real(ss v, ss port)
     strcat(buf, ".0");
   }
   fprintf(FP(port), "%s", buf);
+}
+
+void ss_write_vec(size_t n, const ss *v, ss port)
+{
+  size_t i = 0;
+  while ( i < n ) {
+    ss_write(v[i], port);
+    if ( ++ i < n )
+      fprintf(FP(port), " ");
+  }
 }
 
 ss ss_write(ss v, ss port)
@@ -123,6 +138,11 @@ ss ss_write(ss v, ss port)
     ss_write(ss_UNBOX(var, v).name, port);
     fprintf(out, " %d %d>", (int) ss_UNBOX(var, v).up, (int) ss_UNBOX(var, v).over);
     break;
+  case ss_t_var_set:
+    fprintf(out, "#<v! ");
+    ss_write(ss_UNBOX(var_set, v).var, port);
+    fprintf(out, ">");
+    break;
   case ss_t_global:
     fprintf(out, "#<g ");
     ss_write(((ss_s_global*) v)->name, port);
@@ -132,7 +152,7 @@ ss ss_write(ss v, ss port)
   case ss_t_eos:     fprintf(out, "#<eos>"); break;
   case ss_t_null:    fprintf(out, "()"); break;
   case ss_t_closure:
-    fprintf(out, "#<closure ");
+    fprintf(out, "#<closure @%p ", v);
     ss_write(ss_UNBOX(closure, v).formals, port);
     fprintf(out, " ");
     ss_write(ss_UNBOX(closure, v).body, port);
@@ -165,17 +185,14 @@ ss ss_write(ss v, ss port)
     }
     fprintf(out, ")");
     break;
+  case ss_t_begin:
+    fprintf(out, "(");
+    goto vector_body;
   case ss_t_vector:
-    {
-      size_t i = 0;
-      fprintf(out, "#(");
-      while ( i < ss_vector_l(v) ) {
-        ss_write(ss_vector_v(v)[i], port);
-        if ( ++ i < ss_vector_l(v) )
-          fprintf(out, " ");
-      }
-      fprintf(out, ")");
-    }
+    fprintf(out, "#(");
+  vector_body:
+    ss_write_vec(ss_vector_l(v), ss_vector_v(v), port);
+    fprintf(out, ")");
     break;
   }
   return ss_undef;
@@ -506,7 +523,7 @@ ss* ss_bind(ss_s_environment *ss_env, ss *_ss_expr, ss var, int set)
     goto rtn;
   default: break;
   }
-  return(ss_error("unbound", var));
+  return(ss_error(ss_env, "unbound", var));
 
  rtn:
   ref = &env->argv[over];
@@ -516,7 +533,7 @@ ss* ss_bind(ss_s_environment *ss_env, ss *_ss_expr, ss var, int set)
     ref = &ss_UNBOX(global, *ref);
   }
   if ( ss_UNBOX(symbol, sym).is_const && env->parent == 0) {
-    if ( set ) return(ss_error("constant-variable", sym));
+    if ( set ) return(ss_error(ss_env, "constant-variable", sym));
     ss_constantExprQ = 1;
     ss_rewrite_expr(ss_box_quote(*ref), "variable constant in top-level");
   }
@@ -535,14 +552,14 @@ ss ss_var_get(void *env, ss *_ss_expr, ss var)
   return *ss_bind(env, _ss_expr, var, 0);
 }
 
-void _ss_min_args_error(ss op, const char *DOCSTRING, int ss_argc, int MINARGS)
+void _ss_min_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_argc, int MINARGS)
 {
-  ss_error("apply not-enough-args (%s) got %d expected %d", op, DOCSTRING, ss_argc, MINARGS);
+  ss_error(ss_env, "apply not-enough-args (%s) got %d expected %d", op, DOCSTRING, ss_argc, MINARGS);
 }
 
-void _ss_max_args_error(ss op, const char *DOCSTRING, int ss_argc, int MAXARGS)
+void _ss_max_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_argc, int MAXARGS)
 {
-  ss_error("apply too-many-args (%s) got %d expected %d", op, DOCSTRING, ss_argc, MAXARGS);
+  ss_error(ss_env, "apply too-many-args (%s) got %d expected %d", op, DOCSTRING, ss_argc, MAXARGS);
 }
 
 ss ss_make_constant(ss sym)
@@ -898,10 +915,10 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
 
         if ( self->rest_i >= 0 ) {
           if ( ss_argc < self->rest_i )
-            return(ss_error("apply wrong-number-of-arguments given %lu, expected at least %lu", self, (unsigned long) ss_argc, (unsigned long) self->rest_i));
+            return(ss_error(ss_env, "apply wrong-number-of-arguments given %lu, expected at least %lu", self, (unsigned long) ss_argc, (unsigned long) self->rest_i));
         } else {
           if ( ss_argc != ss_vector_l(self->params) )
-            return(ss_error("apply wrong-number-of-arguments given %lu, expected %lu", self, (unsigned long) ss_argc, (unsigned long) ss_vector_l(self->params)));
+            return(ss_error(ss_env, "apply wrong-number-of-arguments given %lu, expected %lu", self, (unsigned long) ss_argc, (unsigned long) ss_vector_l(self->params)));
         }
 
         env = ss_m_environment(self->env);
@@ -936,7 +953,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       }
       break;
     default:
-      return(ss_error("apply cannot apply type=%d", var, (int) ss_type(var)));
+      return(ss_error(ss_env, "apply cannot apply type=%d", rtn, (int) ss_type(rtn)));
     }
   }
   default:
@@ -1009,24 +1026,24 @@ void ss_init_prim(ss_s_environment *ss_env)
   ss_UNBOX(symbol, sym).is_const = 1;
 #include "prim.def"
 
-#define ss_syntax_def(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)     \
+#define ss_syntax_def(NAME,MINARGS,MAXARGS,NO_SIDE_EFFFECT,DOCSTRING)     \
   sym = ss_sym(NAME);                                           \
   ss_UNBOX(symbol, sym).syntax = ss_PASTE2(ss_p_ss_syn_,NAME);
 #include "syntax.def"
 }
 void ss_init_cfunc(ss_s_environment *ss_env);
 
-ss ss_prompt(ss input, ss prompt)
+ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
 {
   if ( prompt != ss_f )
     fprintf(*ss_stderr, " ss> ");
-  return ss_read(input);
+  return ss_read(ss_env, input);
 }
 
 void ss_repl(ss_s_environment *ss_env, ss input, ss output, ss prompt)
 {
   ss expr, value = ss_undef;
-  while ( (expr = ss_prompt(input, prompt)) != ss_eos ) {
+  while ( (expr = ss_prompt(ss_env, input, prompt)) != ss_eos ) {
     value = ss_exec(expr);
     if ( prompt != ss_f ) {
       fprintf(*ss_stderr, ";; => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
@@ -1091,8 +1108,8 @@ int main(int argc, char **argv)
 }
 
 #define VALUE ss
-#define READ_DECL ss ss_read(ss stream)
-#define READ_CALL() ss_read(stream)
+#define READ_DECL ss ss_read(ss_s_env *ss_env, ss stream)
+#define READ_CALL() ss_read(ss_env, stream)
 #define GETC(stream) getc(FP(stream))
 #define UNGETC(stream,c) ungetc(c, FP(stream))
 #define EQ(X,Y) ((X) == (Y))
@@ -1112,7 +1129,7 @@ int main(int argc, char **argv)
 #define SYMBOL(N) ss_sym(N)
 #define STRING_2_NUMBER(s, radix) ss_string_TO_number(s, radix)
 #define STRING_2_SYMBOL(s) ss_box(symbol, ss_string_v(s))
-#define ERROR(msg,args...) ss_error("read: " msg, stream, ##args)
+#define ERROR(msg,args...) ss_error(ss_env, "read: " msg, stream, ##args)
 #define RETURN(X) return X
 #if 0
 #define MALLOC(S) GC_malloc_atomic(S)
