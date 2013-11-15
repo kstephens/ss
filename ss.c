@@ -1035,8 +1035,8 @@ void ss_init_cfunc(ss_s_environment *ss_env);
 
 ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
 {
-  if ( prompt != ss_f )
-    fprintf(*ss_stderr, " ss> ");
+  if ( ! feof(FP(input)) && prompt != ss_f )
+    fprintf(FP(prompt), " ss> ");
   return ss_read(ss_env, input);
 }
 
