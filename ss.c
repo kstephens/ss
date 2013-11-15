@@ -682,6 +682,16 @@ ss_prim(cdr,1,1,1,"cdr pair")
 ss_end
 
 static
+ss ss_to_real(ss x)
+{
+  switch ( ss_type(x)) {
+  case ss_t_real: return x;
+  case ss_t_integer: return ss_box(real, ss_I(x));
+  default: abort();
+  }
+}
+
+static
 void ss_number_coerce_2(ss *argv)
 {
   switch ( ss_type(argv[0]) ) {
@@ -1019,7 +1029,7 @@ void ss_init_const(ss_s_environment *ss_env)
 void ss_init_prim(ss_s_environment *ss_env)
 {
   ss sym;
-#define ss_prim_def(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)               \
+#define ss_prim_def(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)      \
   sym = ss_sym(NAME);                                                   \
   ss_PASTE2(ss_p_,NAME) =                                               \
     ss_alloc_copy(ss_t_prim, sizeof(ss_s_prim), &ss_PASTE2(_ss_p_,NAME)); \

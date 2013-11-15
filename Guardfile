@@ -10,7 +10,7 @@ guard :shell do
   end
   watch 'Makefile' do | m |
     $gq.go "make clean"
-    $gq.fo "make test"
+    $gq.go "make test"
   end
 end
 
@@ -23,17 +23,18 @@ class GuardQueue
   end
 
   def msg msg
-    $stderr.puts "  #{self.class} #{msg}"
+    $stderr.puts "  GQ #{$$} #{Thread.current.object_id} #{msg}"
   end
 
   def go cmd
     if @stage.include? cmd
-      msg "ALREADY #{cmd.inspect}"
+      msg "ALREADY  #{cmd.inspect}"
     else
       @stage.unshift cmd
+      msg "STAGE    #{@stage.inspect}"
     end
     if @working
-      msg "WORKING #{@working.inspect}" unless @working == cmd
+      msg "WORKING  #{@working.inspect}" unless @working == cmd
     else
       while cmd = @stage.pop
         msg "QUEUEING #{cmd.inspect}"
