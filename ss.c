@@ -760,7 +760,7 @@ ss_end
   ss_end
 
 #define UOP(NAME,OP)                                                    \
-  ss_prim(NAME,1,1,1,#OP " z")                                          \
+  ss_prim(_##NAME,1,1,1,#OP " z")                                       \
   {                                                                     \
     switch ( ss_type(ss_argv[0]) ) {                                    \
     case ss_t_integer:                                                  \
@@ -773,7 +773,7 @@ ss_end
   ss_end
 
 #define ROP(NAME,OP)                                                    \
-  ss_prim(NAME,2,2,1,#OP " x y")                                        \
+  ss_prim(_##NAME,2,2,1,#OP " x y")                                     \
   {                                                                     \
     ss_number_coerce_2(ss_argv);                                        \
     switch ( ss_type(ss_argv[0]) ) {                                    \
@@ -787,7 +787,7 @@ ss_end
   ss_end
 
 #define IBOP(NAME,OP)                                                   \
-  ss_prim(NAME,2,2,1,#OP " i j")                                        \
+  ss_prim(_##NAME,2,2,1,#OP " i j")                                     \
   {                                                                     \
     ss_typecheck(ss_t_integer, ss_argv[0]);                             \
     ss_typecheck(ss_t_integer, ss_argv[1]);                             \
@@ -796,7 +796,7 @@ ss_end
   ss_end
 
 #define IUOP(NAME,OP)                                                   \
-  ss_prim(NAME,1,1,1,#OP " i")                                          \
+  ss_prim(_##NAME,1,1,1,#OP " i")                                       \
   {                                                                     \
     ss_typecheck(ss_t_integer, ss_argv[0]);                             \
     ss_return(ss_box(integer, OP ss_UNBOX(integer,ss_argv[1])));        \
