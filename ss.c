@@ -479,8 +479,10 @@ ss ss_define(ss_s_environment *env, ss sym, ss val)
 {
   int i;
   for ( i = 0; i < env->argc; ++ i )
-    if ( ss_EQ(sym, env->symv[i]) )
-      return env->argv[i] = val;
+    if ( ss_EQ(sym, env->symv[i]) ) {
+      env->argv[i] = val;
+      return sym;
+    }
 
   env->symv = memcpy(ss_malloc(sizeof(env->symv) * (env->argc + 1)), env->symv, sizeof(env->symv[0]) * env->argc);
   env->symv[env->argc] = sym;
