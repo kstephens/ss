@@ -739,7 +739,7 @@ ss_end
 
 ss_syntax(DIV,1,-1,0,"/ z...")
   switch ( ss_argc ) {
-  case 1:  ss_return(ss_vec(2, ss_sym(_DIV), ss_box(real, 1.0), ss_argv[0]));
+  case 1:  ss_return(ss_vec(3, ss_sym(_DIV), ss_box(real, 1.0), ss_argv[0]));
   case 2:  ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_argv[1]));
   default: ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
