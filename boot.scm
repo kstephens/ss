@@ -1,3 +1,6 @@
+(define + _ADD) ;; FIXME
+(define * _MUL) ;; FIXME
+
 (define eq? C_ss_eqQ)
 (C_ss_make_constant 'eq?)
 
