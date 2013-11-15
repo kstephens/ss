@@ -54,6 +54,20 @@ ss.s : $(CFILES) $(HFILES)
 ss.i : $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -E -o $@ $(CFILES) $(LIBS)
 
+TEST_FILE = t/test*.scm
+test : all
+	errors=0; for f in $(TEST_FILE) ;\
+	do \
+          cmd="./ss < $$f" ;\
+	  echo " + $${cmd}" ;\
+	  if ! eval $$cmd ;\
+	  then \
+            echo " ! $${cmd}" ;\
+	    errors=1 ;\
+	  fi; \
+	done ;\
+	exit $$errors
+
 clean:
 #	rm -f ss *.o *.s *.i *.tmp sym.def prim.def syntax.def cfunc.def
 	rm -f ss *.o *.s *.i *.tmp gen/*.def

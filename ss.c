@@ -23,8 +23,8 @@ ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
-#define ss_rewrite_verbose 1
-#define ss_exec_verbose    1
+#define ss_rewrite_verbose 0
+#define ss_exec_verbose    0
 static inline
 void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, int line)
 {
@@ -937,7 +937,8 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
           fprintf(*ss_stderr, "\n");
         }
 
-        if ( 1 ) {
+
+        if ( 0 ) {
           fprintf(*ss_stderr, "  ;; binding:\n");
           for ( i  = 0; i < env->argc; ++ i ) {
             fprintf(*ss_stderr, "    ");
