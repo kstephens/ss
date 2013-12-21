@@ -570,6 +570,17 @@ ss ss_make_constant(ss sym)
   ss_UNBOX(symbol, sym).is_const = 1;
   return sym;
 }
+ss ss_constantQ(ss sym)
+{
+  ss_typecheck(ss_t_symbol, sym);
+  return ss_BOX(boolean, ss_UNBOX(symbol, sym).is_const);
+}
+ss ss_make_syntax(ss sym, ss proc)
+{
+  ss_typecheck(ss_t_symbol, sym);
+  ss_UNBOX(symbol, sym).syntax = proc;
+  return sym;
+}
 
 ss_syntax(define,1,-1,0,"define name value") {
   ss name = ss_argv[0];
@@ -687,9 +698,9 @@ static
 ss ss_to_real(ss x)
 {
   switch ( ss_type(x)) {
-  case ss_t_real: return x;
+  case ss_t_real:    return x;
   case ss_t_integer: return ss_box(real, ss_I(x));
-  default: abort();
+  default:            abort();
   }
 }
 
@@ -845,7 +856,6 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
   if ( ss_exec_verbose ) {
     fprintf(*ss_stderr, ";; exec %3d @%p ", (int) ss_env->depth, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
-  if ( ss_type(expr) >= ss_t_LAST ) abort();
   switch ( ss_type(expr) ) {
   case ss_t_quote:
     ss_constantExprQ = 1;
@@ -948,7 +958,6 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
           ss_write(self, ss_stderr);
           fprintf(*ss_stderr, "\n");
         }
-
 
         if ( 0 ) {
           fprintf(*ss_stderr, "  ;; binding:\n");
