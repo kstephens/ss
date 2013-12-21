@@ -23,8 +23,17 @@ ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
+#if 1
+int ss_rewrite_verbose;
+int ss_exec_verbose;
+ss ss_set_exec_verbose(ss x)
+{
+  ss_exec_verbose = ss_unbox(integer, x);
+}
+#else
 #define ss_rewrite_verbose 0
 #define ss_exec_verbose    0
+#endif
 static inline
 void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, int line)
 {
@@ -119,7 +128,7 @@ ss ss_write(ss v, ss port)
   case ss_t_string:  fprintf(out, "\"%s\"", ss_string_v(v)); break;
   case ss_t_char:    fprintf(out, "#\\%c",  ss_unbox(char, v)); break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
-  case ss_t_prim:    fprintf(out, "#<prim %s>",   ss_UNBOX(prim, v)->name); break;
+  case ss_t_prim:    fprintf(out, "#<p %s>",   ss_UNBOX(prim, v)->name); break;
   case ss_t_symbol:  fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v).name)); break;
   case ss_t_if:
     {
@@ -152,7 +161,7 @@ ss ss_write(ss v, ss port)
   case ss_t_eos:     fprintf(out, "#<eos>"); break;
   case ss_t_null:    fprintf(out, "()"); break;
   case ss_t_closure:
-    fprintf(out, "#<closure @%p ", v);
+    fprintf(out, "#<c @%p ^@%p ", v, ss_UNBOX(closure, v).env);
     ss_write(ss_UNBOX(closure, v).formals, port);
     fprintf(out, " ");
     ss_write(ss_UNBOX(closure, v).body, port);
@@ -164,6 +173,9 @@ ss ss_write(ss v, ss port)
     fprintf(out, " ");
     ss_write(ss_UNBOX(port, v).mode, port);
     fprintf(out, ">");
+    break;
+  case ss_t_environment:
+    fprintf(out, "#<env @%p ^@%p %d>", v, ((ss_s_environment*) v)->parent, ((ss_s_environment*) v)->depth);
     break;
   default:           fprintf(out, "#<??? %d @%p>", ss_type(v), (void*) v); break;
   case ss_t_pair:
@@ -236,7 +248,7 @@ ss_real_t ss_unbox_real(ss v)
 ss ss_R(ss v)
 {
   ss rtn;
-  *((double*) &rtn) = ss_unbox_real(v);
+  *((ss_real_t*) &rtn) = ss_unbox_real(v);
   return rtn;
 }
 
@@ -455,8 +467,23 @@ ss ss_m_environment(ss_s_environment *parent)
   env->depth     = parent ? parent->depth     : 0;
   env->constantExprQ = env->constantExprQAll = 0;
   env->expr      = ss_undef;
+  fprintf(stderr, "  ss_m_env(%p) => #<c @%p ^@%p>\n", parent, env, env->parent);
   return env;
 }
+
+#if 1
+ss ss_env_symv(ss _o)
+{
+  ss_s_environment *o = _o;
+  return ss_vecnv(o->argc, o->symv);
+}
+
+ss ss_closure_env(ss _o)
+{
+  ss_s_closure *o = _o;
+  return o->env;
+}
+#endif
 
 ss ss_m_var(ss sym, int up, int over)
 {
@@ -841,7 +868,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
   } while(0)
   ss_constantExprQ = 0;
   if ( ss_exec_verbose ) {
-    fprintf(*ss_stderr, ";; exec %3d @%p ", (int) ss_env->depth, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, ";; exec %3d E%p @%p ", (int) ss_env->depth, ss_env, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
   if ( ss_type(expr) >= ss_t_LAST ) abort();
   switch ( ss_type(expr) ) {
@@ -877,8 +904,9 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     }
   case ss_t_closure:
     {
-      ss_s_closure *self = ss_alloc_copy(ss_t_closure, sizeof(*self), ss_expr);
+      ss_s_closure *self = ss_alloc_copy(ss_t_closure, sizeof(*self), expr);
       self->env = ss_env;
+      fprintf(stderr, "  @%p => #<c @%p ^@%p>\n", expr, self, self->env);
       return(self);
     }
   case ss_t_pair:
@@ -921,7 +949,6 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
       {
         ss_s_closure *self = (ss_s_closure*) rtn;
         ss_s_environment *env;
-        size_t i;
 
         if ( self->rest_i >= 0 ) {
           if ( ss_argc < self->rest_i )
@@ -946,12 +973,11 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
           ss_write(self, ss_stderr);
           fprintf(*ss_stderr, "\n");
         }
-
-
-        if ( 0 ) {
+        if ( 1 ) {
+          size_t i;
           fprintf(*ss_stderr, "  ;; binding:\n");
-          for ( i  = 0; i < env->argc; ++ i ) {
-            fprintf(*ss_stderr, "    ");
+          for ( i = 0; i < env->argc; ++ i ) {
+            fprintf(*ss_stderr, "  ;;  ");
             ss_write(env->symv[i], ss_stderr);
             fprintf(*ss_stderr, " => ");
             ss_write(env->argv[i], ss_stderr);
