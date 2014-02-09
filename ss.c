@@ -13,8 +13,8 @@ size_t ss_string_l(ss x) { return ((ss_s_string*)(x))->l; }
 ss ss_car(ss a) { return *_ss_car(a); }
 ss ss_cdr(ss a) { return *_ss_cdr(a); }
 
-#if 0
 size_t ss_malloc_bytes, ss_malloc_objects;
+#if 0
 #undef ss_malloc
 void* ss_malloc(size_t s)
 {
@@ -511,7 +511,8 @@ ss ss_m_env(ss_s_env *parent)
   env->depth     = parent ? parent->depth     : 0;
   env->constantExprQ = env->constantExprQAll = 0;
   env->expr      = ss_undef;
-  fprintf(stderr, "  ss_m_env(#@%p) => #<c E#@%p -> E#@%p>\n", parent, env, env->parent);
+  env->error_jmp = 0; env->error_val = ss_undef;
+  // fprintf(stderr, "  ss_m_env(#@%p) => #<c E#@%p -> E#@%p>\n", parent, env, env->parent);
   return env;
 }
 
@@ -963,7 +964,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
     {
       ss_s_closure *self = ss_alloc_copy(ss_t_closure, sizeof(*self), expr);
       self->env = ss_env;
-      fprintf(stderr, "  #@%p => #<c #@%p E#@%p>\n", expr, self, self->env);
+      // fprintf(stderr, "  #@%p => #<c #@%p E#@%p>\n", expr, self, self->env);
       return(self);
     }
   case ss_t_pair:
@@ -1030,8 +1031,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
           ss_write(self, ss_stderr);
           fprintf(*ss_stderr, "\n");
         }
-
-        if ( 1 ) {
+        if ( ss_exec_verbose ) {
           size_t i;
           fprintf(*ss_stderr, "  ;; binding:\n");
           for ( i = 0; i < env->argc; ++ i ) {
