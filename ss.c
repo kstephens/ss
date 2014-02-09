@@ -332,12 +332,12 @@ ss ss_string_TO_number(ss s, int radix)
   return ss_f;
 }
 
-static ss ss_symbols;
+static ss symbols;
 ss ss_box_symbol(const char *name)
 {
   ss_s_symbol *sym;
 
-  for ( ss l = ss_symbols; l != ss_nil; l = ss_cdr(l) ) {
+  for ( ss l = symbols; l != ss_nil; l = ss_cdr(l) ) {
     sym = (ss_s_symbol*) ss_car(l);
     if ( strcmp(name, ss_string_v(sym->name)) == 0 )
       goto rtn;
@@ -348,12 +348,14 @@ ss ss_box_symbol(const char *name)
   sym->docstring = ss_f;
   sym->syntax = ss_f;
   sym->is_const = 0;
-  ss_symbols = ss_cons(sym, ss_symbols);
+  symbols = ss_cons(sym, symbols);
 
  rtn:
   // fprintf(stderr, "  symbol(%s) => %p\n", name, sym);
   return sym;
 }
+
+ss ss_symbols() { return symbols; }
 
 void ss_init_symbol(ss_s_env *ss_env)
 {
@@ -1083,7 +1085,7 @@ void ss_init_const(ss_s_env *ss_env)
   ss_f      = ss_alloc(ss_t_boolean, 0);
   ss_eos    = ss_alloc(ss_t_eos, 0);
 
-  ss_symbols = ss_nil;
+  symbols = ss_nil;
 }
 
 void ss_init_prim(ss_s_env *ss_env)
@@ -1161,7 +1163,6 @@ void ss_init_port(ss_s_env *ss_env)
 
 void ss_init_global(ss_s_env *ss_env)
 {
-  ss_define(ss_env, ss_sym(ss_symbols), ss_m_global(ss_sym(ss_symbols), &ss_symbols));
 }
 
 int main(int argc, char **argv)
