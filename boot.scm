@@ -11,6 +11,8 @@
 (define eq? C_ss_eqQ)
 (C_ss_make_constant 'eq?)
 
+(define (not x) (if x #f #t))
+
 (define (%type x) (C_ss_i (C_ss_type x)))
 (C_ss_make_constant '%type)
 
