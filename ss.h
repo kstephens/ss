@@ -140,8 +140,6 @@ ss ss_cons(ss _car, ss _cdr);
 #define ss_CDR(X) (((ss_s_cons*) (X))->d)
 ss* _ss_car(ss a);
 ss* _ss_cdr(ss a);
-#define ss_car(X) (*_ss_car(X))
-#define ss_cdr(X) (*_ss_cdr(X))
 
 typedef struct ss_s_vector {
   ss *v;
@@ -157,8 +155,6 @@ typedef struct ss_s_string {
   ss_string_t *v;
   size_t l;
 } ss_s_string;
-#define ss_string_v(X) ((ss_s_string*)(X))->v
-#define ss_string_l(X) ((ss_s_string*)(X))->l
 ss ss_strn(size_t l);
 
 typedef struct ss_s_symbol {

@@ -7,6 +7,12 @@
 FILE **ss_stdin = &stdin, **ss_stdout = &stdout, **ss_stderr = &stderr;
 ss ss_write(ss obj, ss port);
 
+char  *ss_string_v(ss x) { return ((ss_s_string*)(x))->v; }
+size_t ss_string_l(ss x) { return ((ss_s_string*)(x))->l; }
+ss ss_car(ss a) { return *_ss_car(a); }
+ss ss_cdr(ss a) { return *_ss_cdr(a); }
+
+#if 0
 size_t ss_malloc_bytes, ss_malloc_objects;
 #undef ss_malloc
 void* ss_malloc(size_t s)
