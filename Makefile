@@ -24,15 +24,13 @@ HFILES = \
   gen/syntax.def \
   lispread/lispread.c
 
-BOOT_DEF = \
+EARLY_FILES = \
 boot/sym.def    \
 boot/prim.def   \
 boot/syntax.def \
 boot/cfunc.def
 
 all : ss
-
-EARLY_FILES = $(BOOT_DEF)
 
 boot/sym.def    : gen/sym.def.pl
 	perl $< /dev/null >$@
