@@ -1147,12 +1147,23 @@ void ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt)
   }
 }
 
+static void ss_m_port_finalize(void *port, void *arg)
+{
+  ss_s_port *self = (ss_s_port*) port;
+  if ( self-> fp ) {
+    fprintf(stderr, "  CLOSING #@%p %s\n", self, ss_string_v(self->name));
+    fclose(self->fp);
+    self->fp = 0;
+  }
+}
+
 ss ss_m_port(FILE *fp, const char *name, const char *mode)
 {
   ss_s_port *self = ss_alloc(ss_t_port, sizeof(*self));
   self->fp = fp;
   self->name = ss_s((void*) name);
   self->mode = ss_s((void*) mode);
+  GC_register_finalizer(self, ss_m_port_finalize, 0, 0, 0);
   return self;
 }
 
