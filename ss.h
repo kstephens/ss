@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <setjmp.h>
 #ifndef __APPLE__
 #include <unistd.h> /* ssize_t */
 #include <strings.h> /* strcasecmp */
@@ -176,8 +177,9 @@ typedef struct ss_s_env {
   ss_integer_t constantExprQ, constantExprQAll;
   ss_integer_t depth;
   ss expr;
+  jmp_buf *error_jmp;
+  ss error_val;
 } ss_s_env;
-typedef ss_s_env ss_s_env;
 
 #define ss_constantExprQ    ss_env->constantExprQ
 #define ss_constantExprQAll ss_env->constantExprQAll

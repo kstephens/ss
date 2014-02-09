@@ -83,6 +83,20 @@ ss ss_alloc_copy(ss_e_type type, size_t size, void *ptr)
   return self;
 }
 
+void ss_error_init(ss_s_env *ss_env, jmp_buf *jb)
+{
+  ss_env->error_jmp = jb;
+  ss_env->error_val = ss_undef;
+}
+
+ss ss_error_raise(ss_s_env *ss_env, ss val)
+{
+  ss_s_env *e = ss_env;
+  while ( ! e->error_jmp ) e = e->parent;
+  e->error_val = val;
+  longjmp(*e->error_jmp, 1);
+}
+
 #define FP(port) (*(FILE**) (port))
 ss ss_error(ss_s_env *ss_env, const char *format, ss obj, ...)
 {
@@ -99,7 +113,7 @@ ss ss_error(ss_s_env *ss_env, const char *format, ss obj, ...)
     ss_write(env->expr, ss_stderr);
     fprintf(FP(ss_stderr), "\n");
   }
-  abort();
+  ss_error_raise(ss_env, ss_undef);
   return 0;
 }
 
@@ -1097,9 +1111,14 @@ ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
 
 void ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt)
 {
-  ss expr, value = ss_undef;
+  ss expr, value;
   while ( (expr = ss_prompt(ss_env, input, prompt)) != ss_eos ) {
+    jmp_buf jb;
+    value = ss_undef;
+    if ( ! setjmp(jb) ) {
+      ss_error_init(ss_env, &jb);
     value = ss_exec(expr);
+
     if ( prompt != ss_f ) {
       fprintf(*ss_stderr, ";; => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
     }
@@ -1113,6 +1132,7 @@ void ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt)
                 (unsigned long long) ss_malloc_bytes,
                 (unsigned long long) ss_malloc_objects);
       }
+    }
     }
   }
 }
