@@ -99,9 +99,17 @@ void ss_error_init(ss_s_env *ss_env, jmp_buf *jb)
 ss ss_error_raise(ss_s_env *ss_env, ss val)
 {
   ss_s_env *e = ss_env;
-  while ( ! e->error_jmp ) e = e->parent;
+  while ( e && ! e->error_jmp ) e = e->parent;
+  if ( ! e ) {
+    fprintf(*ss_stderr, "ss: no error catch: aborting\n");
+    abort();
+  }
   e->error_val = val;
-  longjmp(*e->error_jmp, 1);
+  {
+    jmp_buf *tmp = e->error_jmp;
+    e->error_jmp = 0;
+    longjmp(*tmp, 1);
+  }
 }
 
 #define FP(port) (*(FILE**) (port))
