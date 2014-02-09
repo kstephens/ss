@@ -35,7 +35,7 @@ all : ss
 EARLY_FILES = $(BOOT_DEF)
 
 boot/sym.def    : gen/sym.def.pl
-	perl $ < /dev/null >$@
+	perl $< /dev/null >$@
 boot/prim.def   : gen/prim.def.pl
 	perl $< /dev/null >$@
 boot/syntax.def : gen/syntax.def.pl
@@ -86,6 +86,5 @@ test : all
 	exit $$errors
 
 clean:
-#	rm -f ss *.o *.s *.i *.tmp sym.def prim.def syntax.def cfunc.def
-	rm -f ss *.o *.s *.i *.tmp gen/*.def
+	rm -f ss *.o *.s *.i *.tmp gen/*.def boot/*.def
 
