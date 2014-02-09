@@ -127,4 +127,26 @@
     (cons (proc (car args))
        (map proc (cdr args)))))
 
+(define (error code . other)
+  (C_ss_error &env "" (cons code other)))
+
+(define (%open-file func file mode)
+  (let ((port (C_ss_m_port
+                (C_fopen (C_ss_string_v file) (C_ss_string_v mode))
+                (C_ss_string_v file) (C_ss_string_v mode))))
+    (if port port
+      (error func "cannot open" file (C_ss_errstr #f)))))
+
+(define (open-read-file file)
+  (%open-file 'open-read-file file "r"))
+
+(define (%write-port port str)
+  (C_fwrite (C_ss_string_v str) (C_ss_string_l str) (C_ss_unbox_integer 1) (C_ss_car port)))
+
+(define (load file)
+  (let ((port (open-read-file file)))
+    (let ((result (C_ss_repl &env port ss_stderr #f)))
+      (C_ss_port_close port)
+      result)))
+
 (write ";; ss - boot.scm loaded")(newline)
