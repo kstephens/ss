@@ -1,6 +1,7 @@
 #include "ss.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <errno.h>
 #include <string.h> /* memcpy() */
 #include <assert.h>
 
@@ -336,6 +337,21 @@ ss ss_string_TO_number(ss s, int radix)
   if ( ! *endp )
     return ss_box(real, d);
   return ss_f;
+}
+
+ss ss_errno() { return ss_BOX_integer(errno); }
+ss ss_errstr(ss en)
+{
+  int i;
+  if ( en == ss_f ) en = ss_errno();
+  i = ss_UNBOX_integer(en);
+  if ( 0 <= i && i < sys_nerr ) {
+    return ss_s(sys_errlist[i]);
+  } else {
+    char buf[32];
+    sprintf(buf, "errno_%d", i);
+    return ss_s(buf);
+  }
 }
 
 static ss symbols;
