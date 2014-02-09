@@ -28,7 +28,11 @@ int ss_rewrite_verbose;
 int ss_exec_verbose;
 ss ss_set_exec_verbose(ss x)
 {
-  ss_exec_verbose = ss_unbox(integer, x);
+  ss_exec_verbose = ss_unbox(integer, x); return x;
+}
+ss ss_set_rewrite_verbose(ss x)
+{
+  ss_rewrite_verbose = ss_unbox(integer, x); return x;
 }
 #else
 #define ss_rewrite_verbose 0
