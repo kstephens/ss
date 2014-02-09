@@ -830,7 +830,7 @@ ss_syntax(SUB,1,-1,1,"- z...")
   }
 ss_end
 
-ss_syntax(MUL,0,-1,0,"* z...")
+ss_syntax(MUL,0,-1,1,"* z...")
   switch ( ss_argc ) {
   case 0:  ss_return(ss_box(integer,1));
   case 1:  ss_return(ss_argv[0]);
@@ -840,7 +840,7 @@ ss_syntax(MUL,0,-1,0,"* z...")
   }
 ss_end
 
-ss_syntax(DIV,1,-1,0,"/ z...")
+ss_syntax(DIV,1,-1,1,"/ z...")
   switch ( ss_argc ) {
   case 1:  ss_return(ss_vec(3, ss_sym(_DIV), ss_box(real, 1.0), ss_argv[0]));
   case 2:  ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_argv[1]));
