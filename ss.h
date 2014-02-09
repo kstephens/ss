@@ -55,7 +55,7 @@ typedef enum ss_e_type {
 
   ss_t_port,
   
-  ss_t_environment,
+  ss_t_env,
 
   ss_t_LAST
 } ss_e_type;
@@ -168,21 +168,21 @@ typedef struct ss_s_symbol {
 } ss_s_symbol;
 #define ss_UNBOX_symbol(X) (*((ss_s_symbol*)(X)))
 
-typedef struct ss_s_environment {
+typedef struct ss_s_env {
   ss_integer_t argc;
   ss *symv;
   ss *argv;
-  struct ss_s_environment *parent, *top_level;
+  struct ss_s_env *parent, *top_level;
   ss_integer_t constantExprQ, constantExprQAll;
   ss_integer_t depth;
   ss expr;
-} ss_s_environment;
-typedef ss_s_environment ss_s_env;
+} ss_s_env;
+typedef ss_s_env ss_s_env;
 
 #define ss_constantExprQ    ss_env->constantExprQ
 #define ss_constantExprQAll ss_env->constantExprQAll
 
-#define ss_PROC_DECL(X) ss X (ss_s_environment *ss_env, ss *_ss_expr, struct ss_s_prim *ss_prim, unsigned int ss_argc, ss *ss_argv)
+#define ss_PROC_DECL(X) ss X (ss_s_env *ss_env, ss *_ss_expr, struct ss_s_prim *ss_prim, unsigned int ss_argc, ss *ss_argv)
 typedef struct ss_s_prim {
   ss_PROC_DECL((*func));
   const char *name;
@@ -228,7 +228,7 @@ typedef struct ss_s_closure {
   ss formals;
   ss params;
   ss body;
-  ss_s_environment *env;
+  ss_s_env *env;
   ss rest;
   ss_integer_t rest_i;
 } ss_s_closure;
