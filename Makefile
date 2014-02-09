@@ -24,7 +24,24 @@ HFILES = \
   gen/syntax.def \
   lispread/lispread.c
 
+BOOT_DEF = \
+boot/sym.def    \
+boot/prim.def   \
+boot/syntax.def \
+boot/cfunc.def
+
 all : ss
+
+EARLY_FILES = $(BOOT_DEF)
+
+boot/sym.def    : gen/sym.def.pl
+	perl $ < /dev/null >$@
+boot/prim.def   : gen/prim.def.pl
+	perl $< /dev/null >$@
+boot/syntax.def : gen/syntax.def.pl
+	perl $< /dev/null >$@
+boot/cfunc.def  : gen/cfunc.def.pl
+	perl $< /dev/null >$@
 
 gen/sym.def : Makefile gen/sym.def.pl $(CFILES) gen/prim.def gen/syntax.def gen/cfunc.def
 	$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | perl $@.pl > $@
@@ -43,7 +60,7 @@ lispread/lispread.c:
 	git submodule init
 	git submodule update
 
-ss : $(CFILES) $(HFILES)
+ss : $(EARLY_FILES) $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -o $@ $(CFILES) $(LIBS)
 
 ss.s : $(CFILES) $(HFILES)
