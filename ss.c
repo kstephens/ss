@@ -369,6 +369,7 @@ void ss_init_symbol(ss_s_env *ss_env)
   ss_sym(DOT) = ss_box_symbol(".");
   ss_sym(setE) = ss_box_symbol("set!");
   ss_sym(_rest) = ss_box_symbol("&rest");
+  ss_sym(_env) = ss_box_symbol("&env");
   ss_sym(unquote_splicing) = ss_box_symbol("unquote-splicing");
 }
 
@@ -907,6 +908,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
     ss_constantExprQ = 1;
     return(ss_UNBOX(quote, expr));
   case ss_t_symbol:
+    if ( expr == ss_sym(_env) ) return(ss_env);
   case ss_t_var:
     return(ss_var_get(ss_env, _ss_expr, expr));
   case ss_t_var_set:
