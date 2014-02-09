@@ -15,12 +15,13 @@ void* ss_malloc(size_t s)
   ss_malloc_objects ++;
   return GC_malloc(s);
 }
+#endif
 
 ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 
 ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 
-ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr);
+ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
 #if 1
@@ -83,7 +84,7 @@ ss ss_alloc_copy(ss_e_type type, size_t size, void *ptr)
 }
 
 #define FP(port) (*(FILE**) (port))
-ss ss_error(ss_s_environment *ss_env, const char *format, ss obj, ...)
+ss ss_error(ss_s_env *ss_env, const char *format, ss obj, ...)
 {
   va_list vap;
   va_start(vap, obj);
@@ -93,7 +94,7 @@ ss ss_error(ss_s_environment *ss_env, const char *format, ss obj, ...)
   ss_write(obj, ss_stderr);
   fprintf(FP(ss_stderr), "\n");
   va_end(vap);
-  for ( ss_s_environment *env = ss_env; env; env = env->parent ) {
+  for ( ss_s_env *env = ss_env; env; env = env->parent ) {
     fprintf(FP(ss_stderr), "  ss: %3d ", (int) env->depth);
     ss_write(env->expr, ss_stderr);
     fprintf(FP(ss_stderr), "\n");
@@ -178,8 +179,8 @@ ss ss_write(ss v, ss port)
     ss_write(ss_UNBOX(port, v).mode, port);
     fprintf(out, ">");
     break;
-  case ss_t_environment:
-    fprintf(out, "#<env #@%p E#@%p %ld>", v, ((ss_s_environment*) v)->parent, (long) ((ss_s_environment*) v)->depth);
+  case ss_t_env:
+    fprintf(out, "#<env #@%p E#@%p %ld>", v, ((ss_s_env*) v)->parent, (long) ((ss_s_env*) v)->depth);
     break;
   default:           fprintf(out, "#<??? %d #@%p>", ss_type(v), (void*) v); break;
   case ss_t_pair:
@@ -340,7 +341,7 @@ ss ss_box_symbol(const char *name)
   return sym;
 }
 
-void ss_init_symbol(ss_s_environment *ss_env)
+void ss_init_symbol(ss_s_env *ss_env)
 {
 #undef ss_sym_def
 #define ss_sym_def(X) ss_PASTE2(_ss_sym_, X) = ss_box_symbol(#X);
@@ -461,9 +462,9 @@ ss ss_vec(int n, ...)
   return x;
 }
 
-ss ss_m_environment(ss_s_environment *parent)
+ss ss_m_env(ss_s_env *parent)
 {
-  ss_s_environment *env = ss_alloc(ss_t_environment, sizeof(*env));
+  ss_s_env *env = ss_alloc(ss_t_env, sizeof(*env));
   env->argc = 0;
   env->symv = env->argv = 0;
   env->parent = parent;
@@ -478,7 +479,7 @@ ss ss_m_environment(ss_s_environment *parent)
 #if 1
 ss ss_env_symv(ss _o)
 {
-  ss_s_environment *o = _o;
+  ss_s_env *o = _o;
   return ss_vecnv(o->argc, o->symv);
 }
 
@@ -506,7 +507,7 @@ ss ss_m_global(ss sym, ss ref)
   return self;
 }
 
-ss ss_define(ss_s_environment *env, ss sym, ss val)
+ss ss_define(ss_s_env *env, ss sym, ss val)
 {
   int i;
   for ( i = 0; i < env->argc; ++ i )
@@ -526,9 +527,9 @@ ss ss_define(ss_s_environment *env, ss sym, ss val)
   return sym;
 }
 
-ss* ss_bind(ss_s_environment *ss_env, ss *_ss_expr, ss var, int set)
+ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
 {
-  ss_s_environment *env = ss_env;
+  ss_s_env *env = ss_env;
   int up, over;
   ss sym, *ref;
   ss_constantExprQ = 0;
@@ -859,7 +860,7 @@ ss_end
 
 #include "cops.def"
 
-ss ss_apply(ss_s_environment *ss_env, ss func, ss args)
+ss ss_apply(ss_s_env *ss_env, ss func, ss args)
 {
   args = ss_cons(func, args);
   args = ss_list_to_vector(args);
@@ -872,7 +873,7 @@ ss_prim(apply,2,2,0,"apply func args") {
   ss_return(ss_apply(ss_env, ss_argv[0], ss_argv[1]));
 } ss_end
 
-ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
+ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
 {
   ss rtn, expr;
 #define return(X) do { rtn = (X); goto _return; } while(0)
@@ -964,7 +965,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
     case ss_t_closure:
       {
         ss_s_closure *self = (ss_s_closure*) rtn;
-        ss_s_environment *env;
+        ss_s_env *env;
 
         if ( self->rest_i >= 0 ) {
           if ( ss_argc < self->rest_i )
@@ -974,7 +975,7 @@ ss _ss_exec(ss_s_environment *ss_env, ss *_ss_expr)
             return(ss_error(ss_env, "apply wrong-number-of-arguments given %lu, expected %lu", self, (unsigned long) ss_argc, (unsigned long) ss_vector_l(self->params)));
         }
 
-        env = ss_m_environment(self->env);
+        env = ss_m_env(self->env);
         env->expr = ss_expr;
         env->argc = ss_argc;
         env->symv = ss_vector_v(self->params);
@@ -1057,7 +1058,7 @@ ss ss_m_cfunc(void *ptr, const char *name, const char *docstr)
   return self;
 }
 
-void ss_init_const(ss_s_environment *ss_env)
+void ss_init_const(ss_s_env *ss_env)
 {
   ss_undef  = ss_alloc(ss_t_undef, 0);
   ss_unspec = ss_alloc(ss_t_unspec, 0);
@@ -1069,7 +1070,7 @@ void ss_init_const(ss_s_environment *ss_env)
   ss_symbols = ss_nil;
 }
 
-void ss_init_prim(ss_s_environment *ss_env)
+void ss_init_prim(ss_s_env *ss_env)
 {
   ss sym;
 #define ss_prim_def(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)      \
@@ -1085,7 +1086,7 @@ void ss_init_prim(ss_s_environment *ss_env)
   ss_UNBOX(symbol, sym).syntax = ss_PASTE2(ss_p_ss_syn_,NAME);
 #include "syntax.def"
 }
-void ss_init_cfunc(ss_s_environment *ss_env);
+void ss_init_cfunc(ss_s_env *ss_env);
 
 ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
 {
@@ -1094,7 +1095,7 @@ ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
   return ss_read(ss_env, input);
 }
 
-void ss_repl(ss_s_environment *ss_env, ss input, ss output, ss prompt)
+void ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt)
 {
   ss expr, value = ss_undef;
   while ( (expr = ss_prompt(ss_env, input, prompt)) != ss_eos ) {
@@ -1125,7 +1126,7 @@ ss ss_m_port(FILE *fp, const char *name, const char *mode)
   return self;
 }
 
-void ss_init_port(ss_s_environment *ss_env)
+void ss_init_port(ss_s_env *ss_env)
 {
 #define P(NAME,MODE)                                    \
   ss_##NAME = ss_m_port(NAME, "<" #NAME ">", MODE);     \
@@ -1136,16 +1137,16 @@ void ss_init_port(ss_s_environment *ss_env)
 #undef P
 }
 
-void ss_init_global(ss_s_environment *ss_env)
+void ss_init_global(ss_s_env *ss_env)
 {
   ss_define(ss_env, ss_sym(ss_symbols), ss_m_global(ss_sym(ss_symbols), &ss_symbols));
 }
 
 int main(int argc, char **argv)
 {
-  ss_s_environment *ss_env;
+  ss_s_env *ss_env;
   GC_INIT();
-  ss_env = ss_m_environment(0);
+  ss_env = ss_m_env(0);
   ss_init_const(ss_env);
   ss_init_symbol(ss_env);
   ss_init_port(ss_env);
@@ -1190,7 +1191,7 @@ int main(int argc, char **argv)
 #define FREE(P) GC_free(P)
 #include "lispread/lispread.c"
 
-void ss_init_cfunc(ss_s_environment *ss_env)
+void ss_init_cfunc(ss_s_env *ss_env)
 {
   ss sym;
 #define ss_cfunc_def(TYPE,NAME,ARGS)                                    \
