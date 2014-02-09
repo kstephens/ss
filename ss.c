@@ -49,7 +49,7 @@ ss ss_set_rewrite_verbose(ss x)
 static inline
 void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, int line)
 {
-  if ( ss_rewrite_verbose ) {
+  if ( ss_rewrite_verbose || ss_exec_verbose ) {
     fprintf(*ss_stderr, ";; rewrite: ");
     ss_write(ss_expr, ss_stderr);
     fprintf(*ss_stderr, "\n;;      at: #@%p", _ss_expr);
@@ -57,13 +57,13 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
     fprintf(*ss_stderr, "\n;;  reason: %s\n", (REASON));
   }
   ss_expr = X;
-  if ( ss_rewrite_verbose ) {
+  if ( ss_rewrite_verbose || ss_exec_verbose ) {
     fprintf(*ss_stderr, ";;      as: ");
     ss_write(ss_expr, ss_stderr);
     fprintf(*ss_stderr, "\n\n");
   }
 }
-#if ss_rewrite_verbose == 0
+#if 0 // ss_rewrite_verbose == 0
 #define ss_rewrite_expr(X,REASON) (ss_expr = (X))
 #else
 #define ss_rewrite_expr(X,REASON) _ss_rewrite_expr(&ss_expr, (X), REASON, __FUNCTION__, __LINE__)
@@ -934,7 +934,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
   } while(0)
   ss_constantExprQ = 0;
   if ( ss_exec_verbose ) {
-    fprintf(*ss_stderr, ";; exec %3d E#@%p #@%p ", (int) ss_env->depth, ss_env, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, "  ;; exec %3d E#@%p #@%p ", (int) ss_env->depth, ss_env, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
   switch ( ss_type(expr) ) {
   case ss_t_quote:
@@ -988,16 +988,17 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
   case ss_t_vector: {
     size_t ss_argc = ss_vector_l(expr) - 1;
     ss    *ss_argv;
+    int const_argsQ;
 
     if ( ss_vector_l(expr) < 1 ) return(ss_error(ss_env, "apply empty-vector", expr));
 
     rtn = ss_exec(ss_vector_v(expr)[0]);
-    ss_constantExprQAll = ss_constantExprQ;
 
+    const_argsQ = 1;
     ss_argv = ss_malloc(sizeof(ss_argv[0]) * (ss_argc + 1)); // +1 restarg.
     for ( size_t i = 0; i < ss_argc; i ++ ) {
       ss_argv[i] = ss_exec(ss_vector_v(expr)[i + 1]);
-      ss_constantExprQAll &= ss_constantExprQ;
+      const_argsQ &= ss_constantExprQ;
     }
     ss_constantExprQ = 0;
 
@@ -1005,8 +1006,10 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
     case ss_t_prim:
       {
         ss result = (ss_UNBOX(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
-
-        if ( (ss_constantExprQ = ss_UNBOX(prim, rtn)->no_side_effect && ss_constantExprQAll) )
+        if ( ss_exec_verbose ) {
+          if ( const_argsQ ) fprintf(*ss_stderr, "    ;; const_argsQ %s\n", ss_UNBOX(prim, rtn)->no_side_effect ? "no-side-effect" : "");
+        }
+        if ( (ss_constantExprQ = const_argsQ && ss_UNBOX(prim, rtn)->no_side_effect) )
           ss_rewrite_expr(ss_box_quote(result), "constant folding");
         return(result);
       }
@@ -1032,18 +1035,18 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
         if ( self->rest_i >= 0 )
           env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
         if ( ss_exec_verbose ) {
-          fprintf(*ss_stderr, "  ;; apply closure:\n");
-          fprintf(*ss_stderr, "  ;;   args: (");
+          fprintf(*ss_stderr, "    ;; apply closure:\n");
+          fprintf(*ss_stderr, "    ;;   args: (");
           ss_write_vec(env->argc, env->argv, ss_stderr);
-          fprintf(*ss_stderr, ")\n  ;;     to: ");
+          fprintf(*ss_stderr, ")\n    ;;     to: ");
           ss_write(self, ss_stderr);
           fprintf(*ss_stderr, "\n");
         }
         if ( ss_exec_verbose ) {
           size_t i;
-          fprintf(*ss_stderr, "  ;; binding:\n");
+          fprintf(*ss_stderr, "    ;; binding:\n");
           for ( i = 0; i < env->argc; ++ i ) {
-            fprintf(*ss_stderr, "  ;;  ");
+            fprintf(*ss_stderr, "    ;;   ");
             ss_write(env->symv[i], ss_stderr);
             fprintf(*ss_stderr, " => ");
             ss_write(env->argv[i], ss_stderr);
@@ -1067,8 +1070,11 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
 #undef ss_exec_tail
   _return:
   if ( ss_exec_verbose ) {
-    fprintf(*ss_stderr, ";; exec %3d result expr: ", (int) ss_env->depth); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
-    fprintf(*ss_stderr, ";; exec %3d result  val: ", (int) ss_env->depth); ss_write(rtn, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, "  ;; exec %3d result expr: ", (int) ss_env->depth); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, "  ;; exec %3d result  val: ", (int) ss_env->depth);
+    ss_write(rtn, ss_stderr);
+    fprintf(*ss_stderr, " (%s) ", ss_constantExprQ ? "const" : "non-const");
+    fprintf(*ss_stderr, "\n");
   }
   -- ss_env->depth;
   return rtn;
@@ -1149,12 +1155,18 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt)
   while ( (expr = ss_prompt(ss_env, input, prompt)) != ss_eos ) {
     jmp_buf jb;
     value = ss_undef;
+
     if ( ! setjmp(jb) ) {
       ss_error_init(ss_env, &jb);
+
+    if ( prompt != ss_f ) {
+      fprintf(*ss_stderr, ";; read => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    }
+
     value = ss_exec(expr);
 
     if ( prompt != ss_f ) {
-      fprintf(*ss_stderr, ";; => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+      fprintf(*ss_stderr, ";; rewrite => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
     }
     if ( value != ss_undef ) {
       if ( output != ss_f ) {
