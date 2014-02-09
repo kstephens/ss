@@ -1135,9 +1135,9 @@ ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
   return ss_read(ss_env, input);
 }
 
-void ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt)
+ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt)
 {
-  ss expr, value;
+  ss expr, value = ss_undef;
   while ( (expr = ss_prompt(ss_env, input, prompt)) != ss_eos ) {
     jmp_buf jb;
     value = ss_undef;
