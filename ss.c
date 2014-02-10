@@ -70,9 +70,11 @@ ss ss_set_type(ss_e_type type, ss obj)
 
 ss ss_alloc(ss_e_type type, size_t size)
 {
-  void *ptr = ss_malloc(sizeof(ss_integer_t) + size);
-  *((ss_integer_t*) ptr) = type;
-  ptr += sizeof(ss_integer_t);
+  void *ptr = ss_malloc(sizeof(ss) + size);
+  // *((ss*) ptr) = 0;
+  // ptr += sizeof(ss);
+  *((ss*) ptr) = (ss) type;
+  ptr += sizeof(ss);
   return ptr;
 }
 
@@ -1231,6 +1233,7 @@ int main(int argc, char **argv)
 {
   ss_s_env *ss_env;
   GC_INIT();
+  // GC_register_displacement(sizeof(ss) * 2);
   ss_env = ss_m_env(0);
   ss_init_const(ss_env);
   ss_init_symbol(ss_env);
