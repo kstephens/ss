@@ -1278,7 +1278,7 @@ int main(int argc, char **argv)
   ss_init_prim(ss_env);
   ss_init_cfunc(ss_env);
   if ( 1 ) {
-    FILE *fp = fopen("boot.scm", "r");
+    FILE *fp = fopen("lib/boot.scm", "r");
     ss_repl(ss_env, &fp, ss_f, ss_f, ss_f);
     fclose(fp);
   }
