@@ -61,12 +61,12 @@ lispread/lispread.c:
 ss : $(EARLY_FILES) $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -o $@ $(CFILES) $(LIBS)
 
-ss.s : $(CFILES) $(HFILES)
+ss.s : $(EARLY_FILES) $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -S -o $@.tmp $(CFILES) $(LIBS)
 	tool/asm-source $@.tmp > $@
 	rm $@.tmp
 
-ss.i : $(CFILES) $(HFILES)
+ss.i : $(EARLY_FILES) $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -E -o $@ $(CFILES) $(LIBS)
 
 TEST_FILE = t/test*.scm
