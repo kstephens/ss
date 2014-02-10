@@ -210,8 +210,8 @@ ss ss_write(ss v, ss port)
     while ( v != ss_nil ) {
       switch ( ss_type(v) ) {
       case ss_t_pair:
-        ss_write(ss_car(v), port);
-        v = ss_cdr(v);
+        ss_write(ss_CAR(v), port);
+        v = ss_CDR(v);
         if ( v != ss_nil )
           fprintf(out, " ");
         break;
@@ -422,14 +422,14 @@ inline
 ss ss_car(ss a)
 {
   ss_typecheck(ss_t_pair,a);
-  return &ss_CAR(a);
+  return ss_CAR(a);
 }
 
 inline
 ss ss_cdr(ss a)
 {
   ss_typecheck(ss_t_pair,a);
-  return &ss_CDR(a);
+  return ss_CDR(a);
 }
 
 ss ss_listnv(size_t n, const ss *v)
@@ -722,9 +722,9 @@ ss_syntax(lambda,1,-1,0,"lambda formals body...") {
   if ( ss_vector_l(self->params) > 0 ) {
     rest_i = ss_vector_l(self->params) - 1;
     rest = ss_vector_v(self->params)[rest_i];
-    if ( ss_type(rest) == ss_t_pair && ss_car(rest) == ss_sym(_rest) ) {
+    if ( ss_type(rest) == ss_t_pair && ss_CAR(rest) == ss_sym(_rest) ) {
       self->rest_i = rest_i;
-      ss_vector_v(self->params)[rest_i] = self->rest = ss_cdr(rest);
+      ss_vector_v(self->params)[rest_i] = self->rest = ss_CDR(rest);
     }
   }
   self->body = ss_cons(ss_sym(begin), ss_listnv(ss_argc - 1, ss_argv + 1));
@@ -1261,7 +1261,7 @@ int main(int argc, char **argv)
 #define F ss_f
 #define E ss_eos
 #define BRACKET_LISTS 1
-#define SET_CDR(C,R) ss_CDR(C) = (R)
+#define SET_CDR(C,R) (ss_CDR(C) = (R))
 #define MAKE_CHAR(I) ss_box(char, (I))
 #define LIST_2_VECTOR(X) ss_list_to_vector(X)
 #define STRING(S,L) ss_strnv((L), (S))
