@@ -30,11 +30,11 @@ int ss_rewrite_verbose;
 int ss_exec_verbose;
 ss ss_set_exec_verbose(ss x)
 {
-  ss_exec_verbose = ss_unbox(integer, x); return x;
+  ss_exec_verbose = ss_unbox(fixnum, x); return x;
 }
 ss ss_set_rewrite_verbose(ss x)
 {
-  ss_rewrite_verbose = ss_unbox(integer, x); return x;
+  ss_rewrite_verbose = ss_unbox(fixnum, x); return x;
 }
 #else
 #define ss_rewrite_verbose 0
@@ -65,7 +65,7 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
 
 ss ss_set_type(ss_e_type type, ss obj)
 {
-  ((ss_integer_t *) obj)[-1] = type;
+  ((ss_fixnum_t *) obj)[-1] = type;
   return obj;
 }
 
@@ -159,7 +159,7 @@ ss ss_write_3(ss v, ss port, ss mode)
   FILE *out = FP(port);
   switch ( ss_type(v) ) {
   case ss_t_undef:   fprintf(out, "#<undef>"); break;
-  case ss_t_integer: fprintf(out, "%lld",   (long long) ss_unbox(integer, v)); break;
+  case ss_t_fixnum:  fprintf(out, "%lld", (long long) ss_UNBOX(fixnum, v)); break;
   case ss_t_flonum:  ss_write_flonum(v, port); break;
   case ss_t_string:
     if ( mode == ss_sym(display) ) {
@@ -176,7 +176,7 @@ ss ss_write_3(ss v, ss port, ss mode)
     }
     break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
-  case ss_t_prim:    fprintf(out, "#<p %s>",   ss_UNBOX(prim, v)->name); break;
+  case ss_t_prim:    fprintf(out, "#<p %s>", ss_UNBOX(prim, v)->name); break;
   case ss_t_symbol:
     if ( ss_UNBOX(symbol, v).name == ss_f ) {
       fprintf(out, "#<symbol #@%p>", v);
@@ -278,18 +278,18 @@ ss ss_write_3(ss v, ss port, ss mode)
 
 #define ss_typecheck(T,V)((void)0)
 
-ss ss_box_integer(ss_integer_t v)
+ss ss_box_fixnum(ss_fixnum_t v)
 {
-  return ss_BOX_integer(v);
+  return ss_BOX_fixnum(v);
 }
-ss ss_i(ss_integer_t v) { return ss_box_integer(v); }
+ss ss_i(ss_fixnum_t v) { return ss_box_fixnum(v); }
 
-ss_integer_t ss_unbox_integer(ss v)
+ss_fixnum_t ss_unbox_fixnum(ss v)
 {
-  ss_typecheck(ss_t_integer,v);
-  return ss_UNBOX_integer(v);
+  ss_typecheck(ss_t_fixnum,v);
+  return ss_UNBOX_fixnum(v);
 }
-ss_integer_t ss_I(ss v) { return ss_UNBOX_integer(v); }
+ss_fixnum_t ss_I(ss v) { return ss_UNBOX_fixnum(v); }
 
 ss ss_box_flonum(ss_flonum_t v)
 {
@@ -368,19 +368,19 @@ ss ss_string_TO_number(ss s, int radix)
 
   ll = strtoll(ss_string_v(s), &endp, radix);
   if ( ! *endp )
-    return ss_box(integer, ll);
+    return ss_box(fixnum, ll);
   d = strtod(ss_string_v(s), &endp);
   if ( ! *endp )
     return ss_box(flonum, d);
   return ss_f;
 }
 
-ss ss_errno() { return ss_BOX_integer(errno); }
+ss ss_errno() { return ss_BOX_fixnum(errno); }
 ss ss_errstr(ss en)
 {
   int i;
   if ( en == ss_f ) en = ss_errno();
-  i = ss_UNBOX_integer(en);
+  i = ss_UNBOX_fixnum(en);
   if ( 0 <= i && i < sys_nerr ) {
     return ss_s(sys_errlist[i]);
   } else {
@@ -814,9 +814,9 @@ static
 ss ss_to_flonum(ss x)
 {
   switch ( ss_type(x)) {
-  case ss_t_flonum:   return x;
-  case ss_t_integer:  return ss_box(flonum, ss_I(x));
-  default:            abort();
+  case ss_t_flonum:  return x;
+  case ss_t_fixnum:  return ss_box(flonum, ss_I(x));
+  default:           abort();
   }
 }
 
@@ -824,20 +824,20 @@ static
 void ss_number_coerce_2(ss *argv)
 {
   switch ( ss_type(argv[0]) ) {
-  case ss_t_integer:
+  case ss_t_fixnum:
     switch ( ss_type(argv[1]) ) {
     case ss_t_flonum:
-      argv[0] = ss_box(flonum, ss_UNBOX(integer, argv[0]));
+      argv[0] = ss_box(flonum, ss_UNBOX(fixnum, argv[0]));
       break;
-    case ss_t_integer:
+    case ss_t_fixnum:
       break;
     default: abort();
     }
     break;
   case ss_t_flonum:
     switch ( ss_type(argv[1]) ) {
-    case ss_t_integer:
-      argv[1] = ss_box(flonum, ss_UNBOX(integer, argv[1]));
+    case ss_t_fixnum:
+      argv[1] = ss_box(flonum, ss_UNBOX(fixnum, argv[1]));
       break;
     case ss_t_flonum: break;
     default: abort();
@@ -849,7 +849,7 @@ void ss_number_coerce_2(ss *argv)
 
 ss_syntax(ADD,0,-1,1,"+ z...")
   switch ( ss_argc ) {
-  case 0:  ss_return(ss_box(integer,0));
+  case 0:  ss_return(ss_box(fixnum,0));
   case 1:  ss_return(ss_argv[0]);
   case 2:  ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0], ss_argv[1]));
   default: ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0],
@@ -868,7 +868,7 @@ ss_end
 
 ss_syntax(MUL,0,-1,1,"* z...")
   switch ( ss_argc ) {
-  case 0:  ss_return(ss_box(integer,1));
+  case 0:  ss_return(ss_box(fixnum,1));
   case 1:  ss_return(ss_argv[0]);
   case 2:  ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0], ss_argv[1]));
   default: ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0],
@@ -889,9 +889,9 @@ ss_end
   {                                                                     \
     ss_number_coerce_2(ss_argv);                                        \
     switch ( ss_type(ss_argv[0]) ) {                                    \
-    case ss_t_integer:                                                  \
-      ss_return(ss_box(integer, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
-    case ss_t_flonum:                                                     \
+    case ss_t_fixnum:                                                   \
+      ss_return(ss_box(fixnum, ss_UNBOX(fixnum,ss_argv[0]) OP ss_UNBOX(fixnum,ss_argv[1]))); \
+    case ss_t_flonum:                                                   \
       ss_return(ss_box(flonum, ss_UNBOX(flonum,ss_argv[0]) OP ss_UNBOX(flonum,ss_argv[1]))); \
     default: abort();                                                   \
     }                                                                   \
@@ -902,10 +902,10 @@ ss_end
   ss_prim(_##NAME,1,1,1,#OP " z")                                       \
   {                                                                     \
     switch ( ss_type(ss_argv[0]) ) {                                    \
-    case ss_t_integer:                                                  \
-      ss_return(ss_box(integer, OP ss_UNBOX(integer,ss_argv[0])));      \
-    case ss_t_flonum:                                                     \
-      ss_return(ss_box(flonum, OP ss_UNBOX(flonum,ss_argv[0])));            \
+    case ss_t_fixnum:                                                   \
+      ss_return(ss_box(fixnum, OP ss_UNBOX(fixnum,ss_argv[0])));        \
+    case ss_t_flonum:                                                   \
+      ss_return(ss_box(flonum, OP ss_UNBOX(flonum,ss_argv[0])));        \
     default: abort();                                                   \
     }                                                                   \
   }                                                                     \
@@ -916,10 +916,10 @@ ss_end
   {                                                                     \
     ss_number_coerce_2(ss_argv);                                        \
     switch ( ss_type(ss_argv[0]) ) {                                    \
-    case ss_t_integer:                                                  \
-      ss_return(ss_box(boolean, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
-    case ss_t_flonum:                                                     \
-      ss_return(ss_box(boolean, ss_UNBOX(flonum,ss_argv[0])  OP ss_UNBOX(flonum,ss_argv[1]))); \
+    case ss_t_fixnum:                                                   \
+      ss_return(ss_box(boolean, ss_UNBOX(fixnum,ss_argv[0]) OP ss_UNBOX(fixnum,ss_argv[1]))); \
+    case ss_t_flonum:                                                   \
+      ss_return(ss_box(boolean, ss_UNBOX(flonum,ss_argv[0]) OP ss_UNBOX(flonum,ss_argv[1]))); \
     default: abort();                                                   \
     }                                                                   \
   }                                                                     \
@@ -928,17 +928,17 @@ ss_end
 #define IBOP(NAME,OP)                                                   \
   ss_prim(_##NAME,2,2,1,#OP " i j")                                     \
   {                                                                     \
-    ss_typecheck(ss_t_integer, ss_argv[0]);                             \
-    ss_typecheck(ss_t_integer, ss_argv[1]);                             \
-    ss_return(ss_box(integer, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
+    ss_typecheck(ss_t_fixnum, ss_argv[0]);                              \
+    ss_typecheck(ss_t_fixnum, ss_argv[1]);                              \
+    ss_return(ss_box(fixnum, ss_UNBOX(fixnum,ss_argv[0]) OP ss_UNBOX(fixnum,ss_argv[1]))); \
   }                                                                     \
   ss_end
 
 #define IUOP(NAME,OP)                                                   \
   ss_prim(_##NAME,1,1,1,#OP " i")                                       \
   {                                                                     \
-    ss_typecheck(ss_t_integer, ss_argv[0]);                             \
-    ss_return(ss_box(integer, OP ss_UNBOX(integer,ss_argv[1])));        \
+    ss_typecheck(ss_t_fixnum, ss_argv[0]);                              \
+    ss_return(ss_box(fixnum, OP ss_UNBOX(fixnum,ss_argv[1])));          \
   }                                                                     \
   ss_end
 
@@ -1218,7 +1218,7 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
         ss_write(value, ss_stdout); fprintf(*ss_stdout, "\n");
       }
       if ( 0 ) {
-        fprintf(*ss_stderr, ";; %lld (%p)\n", (long long) ss_unbox(integer, value), (void*) value);
+        fprintf(*ss_stderr, ";; %lld (%p)\n", (long long) ss_unbox(fixnum, value), (void*) value);
         fprintf(*ss_stderr, ";; %llu bytes %llu objects\n",
                 (unsigned long long) ss_malloc_bytes,
                 (unsigned long long) ss_malloc_objects);

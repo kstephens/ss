@@ -34,7 +34,7 @@ typedef enum ss_e_type {
   ss_t_LITERAL_MIN,
   ss_t_undef = ss_t_LITERAL_MIN,
   ss_t_unspec,
-  ss_t_integer,
+  ss_t_fixnum,
   ss_t_flonum,
   ss_t_string,
   ss_t_char,
@@ -64,7 +64,7 @@ typedef enum ss_e_type {
 } ss_e_type;
 
 typedef void *ss;
-typedef ssize_t ss_integer_t;
+typedef ssize_t ss_fixnum_t;
 
 extern ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 
@@ -76,17 +76,17 @@ ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 #define ss_unbox(T,X)ss_PASTE2(ss_unbox_,T)(X)
 #define ss_UNBOX(T,X)ss_PASTE2(ss_UNBOX_,T)(X)
 
-#define ss_UNBOX_char(X)        (((ss_integer_t) (X)) >> 1)
-#define ss_BOX_char(X)   ((ss) ((((ss_integer_t) (X)) & 0xff) << 1))
+#define ss_UNBOX_char(X)        (((ss_fixnum_t) (X)) >> 1)
+#define ss_BOX_char(X)   ((ss) ((((ss_fixnum_t) (X)) & 0xff) << 1))
 ss  ss_box_char(int _v);
 int ss_unbox_char(ss v);
 
 static inline
 ss_e_type ss_type(ss x)
 {
-  return ((ss_integer_t) x) & 1 ? ss_t_integer : 
+  return ((ss_fixnum_t) x) & 1 ? ss_t_fixnum : 
           x <= ss_BOX_char(255) ? ss_t_char :
-                                  (ss_integer_t) (((ss*) x)[-1]);
+                                  (ss_fixnum_t) (((ss*) x)[-1]);
 }
 static inline
 int ss_literalQ(ss X)
@@ -94,10 +94,10 @@ int ss_literalQ(ss X)
   return ss_t_LITERAL_MIN <= ss_type(X) && ss_type(X) <= ss_t_LITERAL_MAX;
 }
 
-#define ss_UNBOX_integer(X)        (((ss_integer_t)(X)) >> 1)
-#define ss_BOX_integer(X)   ((ss) ((((ss_integer_t)(X)) << 1) | 1))
-ss ss_box_integer(ss_integer_t _v);
-ss_integer_t ss_unbox_integer(ss v);
+#define ss_UNBOX_fixnum(X)        (((ss_fixnum_t)(X)) >> 1)
+#define ss_BOX_fixnum(X)   ((ss) ((((ss_fixnum_t)(X)) << 1) | 1))
+ss ss_box_fixnum(ss_fixnum_t _v);
+ss_fixnum_t ss_unbox_fixnum(ss v);
 
 typedef double ss_flonum_t;
 typedef struct ss_s_flonum {
@@ -117,7 +117,7 @@ typedef struct ss_s_quote {
 
 typedef struct ss_s_var {
   ss name;
-  ss_integer_t up, over;
+  ss_fixnum_t up, over;
 } ss_s_var;
 #define ss_UNBOX_var(X) (*(ss_s_var*)(X))
 
@@ -172,17 +172,17 @@ typedef struct ss_s_symbol {
   ss name;
   ss docstring;
   ss syntax;
-  ss_integer_t is_const;
+  ss_fixnum_t is_const;
 } ss_s_symbol;
 #define ss_UNBOX_symbol(X) (*((ss_s_symbol*)(X)))
 
 typedef struct ss_s_env {
-  ss_integer_t argc;
+  ss_fixnum_t argc;
   ss *symv;
   ss *argv;
   struct ss_s_env *parent, *top_level;
-  ss_integer_t constantExprQ, constantExprQAll;
-  ss_integer_t depth;
+  ss_fixnum_t constantExprQ, constantExprQAll;
+  ss_fixnum_t depth;
   ss expr;
   jmp_buf *error_jmp;
   ss error_val;
@@ -195,7 +195,7 @@ typedef struct ss_s_env {
 typedef struct ss_s_prim {
   ss_PROC_DECL((*func));
   const char *name;
-  ss_integer_t min_args, max_args, no_side_effect;
+  ss_fixnum_t min_args, max_args, no_side_effect;
   const char *docstring;
   void *c_func;
 } ss_s_prim;
@@ -237,7 +237,7 @@ typedef struct ss_s_lambda {
   ss params;
   ss body;
   ss rest;
-  ss_integer_t rest_i;
+  ss_fixnum_t rest_i;
 } ss_s_lambda;
 #define ss_UNBOX_lambda(X) (*(ss_s_lambda*)(X))
 
