@@ -1,6 +1,6 @@
 CFLAGS += -std=c99 
 CFLAGS += -g
-#CFLAGS += -O3
+CFLAGS += -O3
 CFLAGS += -I.
 CFLAGS += -Igen
 CFLAGS += -Iboot
