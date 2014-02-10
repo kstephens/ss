@@ -1,6 +1,12 @@
+(define (test-error . args)
+  (display "test-error: ")
+  (write args)
+  (newline)
+  (C_abort))
+
 (define (test cmp a b)
   (if (cmp a b) a
-    (error 'test " expected:" b " given:" a)))
+    (test-error 'expected: b 'given: a)))
 
 (define (epsilon? e)
   (lambda (a b)
@@ -16,5 +22,7 @@
 
 (test-file "t/test-math.scm")
 (test-file "t/test-deep-closure.scm")
+
+;; (test eq? 'a 'b)
 
 'ok
