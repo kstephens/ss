@@ -13,16 +13,18 @@
 
 (define g (sequence _MUL))
 (define a (sequence _ADD))
-(define as (a 1 3))
-(define gs (g 1 5))
-(gs)
-(gs)
-(gs)
-gs
-(as)
-(as)
-(as)
-as
-(define my_op as)
-(my_op)
+(define as (a 1 (constant 3)))
+(define gs (g 1 (constant 3)))
+;; (C_set_exec_verbose 10)
+(test eq? (gs) 1)
+(test eq? (gs) 3)
+(test eq? (gs) 9)
 
+(test eq? (as) 1)
+(test eq? (as) 4)
+(test eq? (as) 7)
+
+(define my_op as)
+(test eq? (my_op) 10)
+
+'ok
