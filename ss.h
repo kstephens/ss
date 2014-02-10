@@ -64,8 +64,10 @@ typedef enum ss_e_type {
 typedef void *ss;
 typedef ssize_t ss_integer_t;
 
-#define ss_EQ(X,Y)((X)==(Y))
-#define ss_NE(X,Y)!ss_EQ(X,Y)
+extern ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
+
+static inline
+ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 
 #define ss_box(T,X)ss_PASTE2(ss_box_,T)(X)
 #define ss_BOX(T,X)ss_PASTE2(ss_BOX_,T)(X)
@@ -135,18 +137,20 @@ typedef struct ss_s_if {
 typedef struct ss_s_cons {
   ss a, d;
 } ss_s_cons;
-ss ss_cons(ss _car, ss _cdr);
 #define ss_CAR(X) (((ss_s_cons*) (X))->a)
 #define ss_CDR(X) (((ss_s_cons*) (X))->d)
-ss* _ss_car(ss a);
-ss* _ss_cdr(ss a);
+ss ss_cons(ss _car, ss _cdr);
+ss ss_car(ss c);
+ss ss_cdr(ss c);
 
 typedef struct ss_s_vector {
   ss *v;
   size_t l;
 } ss_s_vector;
-#define ss_vector_v(X) ((ss_s_vector*)(X))->v
-#define ss_vector_l(X) ((ss_s_vector*)(X))->l
+static inline
+ss    *ss_vector_v(ss x) { return ((ss_s_vector*)(x))->v; }
+static inline
+size_t ss_vector_l(ss x) { return ((ss_s_vector*)(x))->l; }
 ss ss_vecn(size_t l);
 ss ss_vec(int n, ...);
 
@@ -155,6 +159,10 @@ typedef struct ss_s_string {
   ss_string_t *v;
   size_t l;
 } ss_s_string;
+static inline
+char  *ss_string_v(ss x) { return ((ss_s_string*)(x))->v; }
+static inline
+size_t ss_string_l(ss x) { return ((ss_s_string*)(x))->l; }
 ss ss_strn(size_t l);
 
 typedef struct ss_s_symbol {
