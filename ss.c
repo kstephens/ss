@@ -651,7 +651,7 @@ ss ss_make_constant(ss sym)
 ss ss_constantQ(ss sym)
 {
   ss_typecheck(ss_t_symbol, sym);
-  return ss_BOX(boolean, ss_UNBOX(symbol, sym).is_const);
+  return ss_box(boolean, ss_UNBOX(symbol, sym).is_const);
 }
 ss ss_make_syntax(ss sym, ss proc)
 {
@@ -879,9 +879,9 @@ ss_end
     ss_number_coerce_2(ss_argv);                                        \
     switch ( ss_type(ss_argv[0]) ) {                                    \
     case ss_t_integer:                                                  \
-      ss_return(ss_BOX(boolean, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
+      ss_return(ss_box(boolean, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
     case ss_t_real:                                                     \
-      ss_return(ss_BOX(boolean, ss_UNBOX(real,ss_argv[0])    OP ss_UNBOX(real,ss_argv[1]))); \
+      ss_return(ss_box(boolean, ss_UNBOX(real,ss_argv[0])    OP ss_UNBOX(real,ss_argv[1]))); \
     default: abort();                                                   \
     }                                                                   \
   }                                                                     \

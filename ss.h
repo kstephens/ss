@@ -105,8 +105,8 @@ typedef struct ss_s_real {
 ss ss_box_real(ss_real_t _v);
 ss_real_t ss_unbox_real(ss v);
 
-#define ss_BOX_boolean(X) ((X) ? ss_t : ss_f)
-#define ss_UNBOX_boolean(X) ((X) != ss_f)
+#define ss_box_boolean(X) ((X) ? ss_t : ss_f)
+#define ss_unbox_boolean(X) ((X) != ss_f)
 
 typedef struct ss_s_quote {
   ss value;
