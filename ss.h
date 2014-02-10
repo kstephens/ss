@@ -35,7 +35,7 @@ typedef enum ss_e_type {
   ss_t_undef = ss_t_LITERAL_MIN,
   ss_t_unspec,
   ss_t_integer,
-  ss_t_real,
+  ss_t_flonum,
   ss_t_string,
   ss_t_char,
   ss_t_boolean,
@@ -99,13 +99,13 @@ int ss_literalQ(ss X)
 ss ss_box_integer(ss_integer_t _v);
 ss_integer_t ss_unbox_integer(ss v);
 
-typedef double ss_real_t;
-typedef struct ss_s_real {
-  ss_real_t value;
-} ss_s_real;
-#define ss_UNBOX_real(X)((ss_s_real*)(X))->value
-ss ss_box_real(ss_real_t _v);
-ss_real_t ss_unbox_real(ss v);
+typedef double ss_flonum_t;
+typedef struct ss_s_flonum {
+  ss_flonum_t value;
+} ss_s_flonum;
+#define ss_UNBOX_flonum(X)((ss_s_flonum*)(X))->value
+ss ss_box_flonum(ss_flonum_t _v);
+ss_flonum_t ss_unbox_flonum(ss v);
 
 #define ss_box_boolean(X) ((X) ? ss_t : ss_f)
 #define ss_unbox_boolean(X) ((X) != ss_f)
