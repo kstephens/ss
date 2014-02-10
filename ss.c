@@ -227,7 +227,7 @@ ss ss_write(ss v, ss port)
     fprintf(out, ")");
     break;
   case ss_t_begin:
-    fprintf(out, "(");
+    fprintf(out, "(begin ");
     goto vector_body;
   case ss_t_vector:
     fprintf(out, "#(");
