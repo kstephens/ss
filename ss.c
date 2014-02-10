@@ -128,10 +128,10 @@ ss ss_error(ss_s_env *ss_env, const char *format, ss obj, ...)
   return 0;
 }
 
-void ss_write_real(ss v, ss port)
+void ss_write_flonum(ss v, ss port)
 {
   char buf[64];
-  snprintf(buf, 63, "%.22g", ss_unbox(real, v));
+  snprintf(buf, 63, "%.22g", ss_unbox(flonum, v));
   if ( ! (strchr(buf, 'e') || strchr(buf, '.')) ) {
     strcat(buf, ".0");
   }
@@ -160,7 +160,7 @@ ss ss_write_3(ss v, ss port, ss mode)
   switch ( ss_type(v) ) {
   case ss_t_undef:   fprintf(out, "#<undef>"); break;
   case ss_t_integer: fprintf(out, "%lld",   (long long) ss_unbox(integer, v)); break;
-  case ss_t_real:    ss_write_real(v, port); break;
+  case ss_t_flonum:  ss_write_flonum(v, port); break;
   case ss_t_string:
     if ( mode == ss_sym(display) ) {
       fwrite(ss_string_v(v), ss_string_l(v), 1, out);
@@ -291,26 +291,26 @@ ss_integer_t ss_unbox_integer(ss v)
 }
 ss_integer_t ss_I(ss v) { return ss_UNBOX_integer(v); }
 
-ss ss_box_real(ss_real_t v)
+ss ss_box_flonum(ss_flonum_t v)
 {
-  ss_s_real *self = ss_alloc(ss_t_real, sizeof(*self));
+  ss_s_flonum *self = ss_alloc(ss_t_flonum, sizeof(*self));
   self->value = v;
   return self;
 }
 ss ss_r(ss v)
 {
-  return ss_box_real(*(double*) &v);
+  return ss_box_flonum(*(double*) &v);
 }
 
-ss_real_t ss_unbox_real(ss v)
+ss_flonum_t ss_unbox_flonum(ss v)
 {
-  ss_typecheck(ss_t_real, v);
-  return ss_UNBOX_real(v);
+  ss_typecheck(ss_t_flonum, v);
+  return ss_UNBOX_flonum(v);
 }
 ss ss_R(ss v)
 {
   ss rtn;
-  *((ss_real_t*) &rtn) = ss_unbox_real(v);
+  *((ss_flonum_t*) &rtn) = ss_unbox_flonum(v);
   return rtn;
 }
 
@@ -371,7 +371,7 @@ ss ss_string_TO_number(ss s, int radix)
     return ss_box(integer, ll);
   d = strtod(ss_string_v(s), &endp);
   if ( ! *endp )
-    return ss_box(real, d);
+    return ss_box(flonum, d);
   return ss_f;
 }
 
@@ -811,11 +811,11 @@ ss_prim(cdr,1,1,1,"cdr pair")
 ss_end
 
 static
-ss ss_to_real(ss x)
+ss ss_to_flonum(ss x)
 {
   switch ( ss_type(x)) {
-  case ss_t_real:    return x;
-  case ss_t_integer: return ss_box(real, ss_I(x));
+  case ss_t_flonum:   return x;
+  case ss_t_integer:  return ss_box(flonum, ss_I(x));
   default:            abort();
   }
 }
@@ -826,20 +826,20 @@ void ss_number_coerce_2(ss *argv)
   switch ( ss_type(argv[0]) ) {
   case ss_t_integer:
     switch ( ss_type(argv[1]) ) {
-    case ss_t_real:
-      argv[0] = ss_box(real, ss_UNBOX(integer, argv[0]));
+    case ss_t_flonum:
+      argv[0] = ss_box(flonum, ss_UNBOX(integer, argv[0]));
       break;
     case ss_t_integer:
       break;
     default: abort();
     }
     break;
-  case ss_t_real:
+  case ss_t_flonum:
     switch ( ss_type(argv[1]) ) {
     case ss_t_integer:
-      argv[1] = ss_box(real, ss_UNBOX(integer, argv[1]));
+      argv[1] = ss_box(flonum, ss_UNBOX(integer, argv[1]));
       break;
-    case ss_t_real: break;
+    case ss_t_flonum: break;
     default: abort();
     }
     break;
@@ -878,7 +878,7 @@ ss_end
 
 ss_syntax(DIV,1,-1,1,"/ z...")
   switch ( ss_argc ) {
-  case 1:  ss_return(ss_vec(3, ss_sym(_DIV), ss_box(real, 1.0), ss_argv[0]));
+  case 1:  ss_return(ss_vec(3, ss_sym(_DIV), ss_box(flonum, 1.0), ss_argv[0]));
   case 2:  ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_argv[1]));
   default: ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
@@ -891,8 +891,8 @@ ss_end
     switch ( ss_type(ss_argv[0]) ) {                                    \
     case ss_t_integer:                                                  \
       ss_return(ss_box(integer, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
-    case ss_t_real:                                                     \
-      ss_return(ss_box(real, ss_UNBOX(real,ss_argv[0]) OP ss_UNBOX(real,ss_argv[1]))); \
+    case ss_t_flonum:                                                     \
+      ss_return(ss_box(flonum, ss_UNBOX(flonum,ss_argv[0]) OP ss_UNBOX(flonum,ss_argv[1]))); \
     default: abort();                                                   \
     }                                                                   \
   }                                                                     \
@@ -904,8 +904,8 @@ ss_end
     switch ( ss_type(ss_argv[0]) ) {                                    \
     case ss_t_integer:                                                  \
       ss_return(ss_box(integer, OP ss_UNBOX(integer,ss_argv[0])));      \
-    case ss_t_real:                                                     \
-      ss_return(ss_box(real, OP ss_UNBOX(real,ss_argv[0])));            \
+    case ss_t_flonum:                                                     \
+      ss_return(ss_box(flonum, OP ss_UNBOX(flonum,ss_argv[0])));            \
     default: abort();                                                   \
     }                                                                   \
   }                                                                     \
@@ -918,8 +918,8 @@ ss_end
     switch ( ss_type(ss_argv[0]) ) {                                    \
     case ss_t_integer:                                                  \
       ss_return(ss_box(boolean, ss_UNBOX(integer,ss_argv[0]) OP ss_UNBOX(integer,ss_argv[1]))); \
-    case ss_t_real:                                                     \
-      ss_return(ss_box(boolean, ss_UNBOX(real,ss_argv[0])    OP ss_UNBOX(real,ss_argv[1]))); \
+    case ss_t_flonum:                                                     \
+      ss_return(ss_box(boolean, ss_UNBOX(flonum,ss_argv[0])  OP ss_UNBOX(flonum,ss_argv[1]))); \
     default: abort();                                                   \
     }                                                                   \
   }                                                                     \
