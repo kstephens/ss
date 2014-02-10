@@ -7,6 +7,7 @@
 
 FILE **ss_stdin = &stdin, **ss_stdout = &stdout, **ss_stderr = &stderr;
 ss ss_write(ss obj, ss port);
+ss ss_write_3(ss v, ss port, ss mode);
 
 size_t ss_malloc_bytes, ss_malloc_objects;
 #if 0
@@ -149,13 +150,31 @@ void ss_write_vec(size_t n, const ss *v, ss port)
 
 ss ss_write(ss v, ss port)
 {
+  return ss_write_3(v, port, ss_sym(write));
+}
+
+ss ss_write_3(ss v, ss port, ss mode)
+{
+#define ss_write(v,p) ss_write_3(v, p, mode)
   FILE *out = FP(port);
   switch ( ss_type(v) ) {
   case ss_t_undef:   fprintf(out, "#<undef>"); break;
   case ss_t_integer: fprintf(out, "%lld",   (long long) ss_unbox(integer, v)); break;
   case ss_t_real:    ss_write_real(v, port); break;
-  case ss_t_string:  fprintf(out, "\"%s\"", ss_string_v(v)); break;
-  case ss_t_char:    fprintf(out, "#\\%c",  ss_unbox(char, v)); break;
+  case ss_t_string:
+    if ( mode == ss_sym(display) ) {
+      fwrite(ss_string_v(v), ss_string_l(v), 1, out);
+    } else {
+      fprintf(out, "\"%s\"", ss_string_v(v));
+    }
+    break;
+  case ss_t_char:
+    if ( mode == ss_sym(display) ) {
+      fprintf(out, "%c",  ss_unbox(char, v));
+    } else {
+      fprintf(out, "#\\%c",  ss_unbox(char, v));
+    }
+    break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
   case ss_t_prim:    fprintf(out, "#<p %s>",   ss_UNBOX(prim, v)->name); break;
   case ss_t_symbol:  fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v).name)); break;
@@ -243,6 +262,7 @@ ss ss_write(ss v, ss port)
     fprintf(out, ")");
     break;
   }
+#undef ss_write
   return ss_undef;
 }
 
@@ -697,7 +717,11 @@ ss_prim(read,0,1,0,"_read port")
 ss_end
 
 ss_prim(write,1,2,0,"write object")
-  ss_write(ss_argv[0], ss_argc > 1 ? ss_argv[1] : ss_stdout);
+  ss_write_3(ss_argv[0], ss_argc > 1 ? ss_argv[1] : ss_stdout, ss_sym(write));
+ss_end
+
+ss_prim(display,1,2,0,"display object")
+  ss_write_3(ss_argv[0], ss_argc > 1 ? ss_argv[1] : ss_stdout, ss_sym(display));
 ss_end
 
 ss_prim(newline,0,1,0,"newline")
