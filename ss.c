@@ -638,6 +638,14 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     over = ss_UNBOX(var, var).over;
     while ( up -- > 0 ) env = env->parent;
     assert(env);
+#if 0
+    // Does not work because env->argv can grow.
+    if ( ! env->parent ) {
+      ref = &env->argv[over];
+      ss_rewrite_expr(ss_m_global(sym, ref), "var is global");
+      goto ref;
+    }
+#endif
     goto rtn;
   default: break;
   }
@@ -645,6 +653,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
 
  rtn:
   ref = &env->argv[over];
+ ref:
   if ( ss_type(*ref) == ss_t_global ) {
     sym = ((ss_s_global*) *ref)->name;
     ss_rewrite_expr(*ref, "global binding is known");
@@ -708,7 +717,7 @@ ss_syntax(define,1,-1,0,"define name value") {
 } ss_end
 
 ss_prim(_define,2,2,0,"define name value") {
-  ss_return(ss_define(ss_env->top_level, ss_argv[0], ss_exec(ss_argv[1])));
+  ss_return(ss_define(ss_env->top_level, ss_argv[0], ss_argv[1]));
 } ss_end
 
 ss_syntax(setE,2,2,0,"set! name value") {
@@ -995,7 +1004,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
       ss *subexpr;
       rtn = ss_exec(self->t);
       subexpr = rtn != ss_f ? &self->a : &self->b;
-      if ( ss_constantExprQ )
+      if ( 0 && ss_constantExprQ )
         ss_rewrite_expr(*subexpr, rtn != ss_f ? "constant test is true" : "constant test is false");
       else
         _ss_expr = subexpr;
