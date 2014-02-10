@@ -11,10 +11,8 @@
 (map (geometric 1 (constant 2)) '(1 2 3 4))
   ;; => (1 2 4 8)
 
-(define a (sequence _ADD))
-(define g (sequence _MUL))
-(define as (a 1 (constant 3)))
-(define gs (g 1 as))
+(define as (arithmetic 1 (constant 3)))
+(define gs (geometric 1 as))
 
 ;; (set! *test-verbose* #t)
 
