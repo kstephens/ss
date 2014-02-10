@@ -1032,8 +1032,10 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
         env->argc = ss_argc;
         env->symv = ss_vector_v(self->params);
         env->argv = ss_argv;
-        if ( self->rest_i >= 0 )
+        if ( self->rest_i >= 0 ) {
           env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
+          env->argc ++;
+        }
         if ( ss_exec_verbose ) {
           fprintf(*ss_stderr, "    ;; apply closure:\n");
           fprintf(*ss_stderr, "    ;;   args: (");
