@@ -1198,7 +1198,7 @@ ss ss_port_close(ss port)
   return ss_undef;
 }
 
-static void ss_m_port_finalize(void *port, void *arg)
+void ss_s_port_finalize(void *port, void *arg)
 {
   ss_port_close(port);
 }
@@ -1211,7 +1211,7 @@ ss ss_m_port(FILE *fp, const char *name, const char *mode)
   self->fp = fp;
   self->name = ss_s((void*) name);
   self->mode = ss_s((void*) mode);
-  GC_register_finalizer(self, ss_m_port_finalize, 0, 0, 0);
+  GC_register_finalizer(self, ss_s_port_finalize, 0, 0, 0);
   return self;
 }
 
