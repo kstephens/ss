@@ -1189,7 +1189,6 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
   ss expr, value = ss_undef;
   while ( 1 ) {
     jmp_buf jb;
-    value = ss_undef;
 
     if ( ! setjmp(jb) ) {
       if ( trap_error != ss_f ) ss_error_init(ss_env, &jb);
@@ -1199,6 +1198,7 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
       fprintf(*ss_stderr, ";; read => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
     }
 
+    value = ss_undef;
     value = ss_exec(expr);
 
     if ( prompt != ss_f ) {
