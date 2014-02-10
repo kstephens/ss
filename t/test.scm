@@ -21,9 +21,9 @@
       #f)))
 
 (define (test-file name)
-  (display ";; testing ")(display name)(display "...")(newline)
+  (display ";; testing ")(display name)(display " ...")(newline)
   (test eq? (load name) 'ok)
-  (display ";; testing ")(display name)(display "... ok.")(newline)
+  (display ";; testing ")(display name)(display "  OK")(newline)
   )
 
 (test-file "t/test-equal.scm")

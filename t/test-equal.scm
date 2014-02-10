@@ -13,6 +13,8 @@
 (test eq? (equal? "a" "a") #t)
 (test eq? (equal? "a" "ab") #f)
 (test eq? (equal? "abc" "abc") #t)
+(test eq? (equal? "abc" "abd") #f)
+(test eq? (equal? "abc" "xbc") #f)
 
 (test eq? (equal? (cons 1 1) (cons 1 1)) #t)
 (test eq? (equal? (cons 2 1) (cons 1 1)) #f)
