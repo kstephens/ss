@@ -143,9 +143,10 @@
 (define (%write-port port str)
   (C_fwrite (C_ss_string_v str) (C_ss_string_l str) (C_ss_unbox_integer 1) (C_ss_car port)))
 
+(define *load-verbose* #f)
 (define (load file)
   (let ((port (open-read-file file)))
-    (let ((result (C_ss_repl &env port ss_stderr #f)))
+    (let ((result (C_ss_repl &env port (if *load-verbose* ss_stderr #f) #f #f)))
       (C_ss_port_close port)
       result)))
 
