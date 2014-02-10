@@ -1184,7 +1184,7 @@ ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
   return ss_read(ss_env, input);
 }
 
-ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt)
+ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
 {
   ss expr, value = ss_undef;
   while ( (expr = ss_prompt(ss_env, input, prompt)) != ss_eos ) {
@@ -1192,7 +1192,7 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt)
     value = ss_undef;
 
     if ( ! setjmp(jb) ) {
-      ss_error_init(ss_env, &jb);
+      if ( trap_error != ss_f ) ss_error_init(ss_env, &jb);
 
     if ( prompt != ss_f ) {
       fprintf(*ss_stderr, ";; read => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
@@ -1223,7 +1223,6 @@ ss ss_port_close(ss port)
 {
   ss_s_port *self = (ss_s_port*) port;
   if ( self->fp ) {
-    fprintf(stderr, "  CLOSING #@%p %s\n", self, ss_string_v(self->name));
     fclose(self->fp);
     self->fp = 0;
   }
@@ -1232,6 +1231,10 @@ ss ss_port_close(ss port)
 
 void ss_s_port_finalize(void *port, void *arg)
 {
+  ss_s_port *self = (ss_s_port*) port;
+  if ( self->fp ) {
+    fprintf(stderr, "  ;; finalizing #@%p %s\n", self, ss_string_v(self->name));
+  }
   ss_port_close(port);
 }
 
@@ -1276,10 +1279,10 @@ int main(int argc, char **argv)
   ss_init_cfunc(ss_env);
   if ( 1 ) {
     FILE *fp = fopen("boot.scm", "r");
-    ss_repl(ss_env, &fp, ss_f, ss_f);
+    ss_repl(ss_env, &fp, ss_f, ss_f, ss_f);
     fclose(fp);
   }
-  ss_repl(ss_env, ss_stdin, ss_stdout, ss_stderr);
+  ss_repl(ss_env, ss_stdin, ss_stdout, ss_stderr, ss_t);
   return 0;
 }
 
