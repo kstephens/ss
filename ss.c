@@ -8,11 +8,6 @@
 FILE **ss_stdin = &stdin, **ss_stdout = &stdout, **ss_stderr = &stderr;
 ss ss_write(ss obj, ss port);
 
-char  *ss_string_v(ss x) { return ((ss_s_string*)(x))->v; }
-size_t ss_string_l(ss x) { return ((ss_s_string*)(x))->l; }
-ss ss_car(ss a) { return *_ss_car(a); }
-ss ss_cdr(ss a) { return *_ss_cdr(a); }
-
 size_t ss_malloc_bytes, ss_malloc_objects;
 #if 0
 #undef ss_malloc
@@ -23,8 +18,6 @@ void* ss_malloc(size_t s)
   return GC_malloc(s);
 }
 #endif
-
-ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 
 ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 
@@ -416,6 +409,7 @@ ss ss_box_quote(ss v)
   }
 }
 
+inline
 ss ss_cons(ss a, ss d)
 {
   ss_s_cons *self = ss_alloc(ss_t_pair, sizeof(*self));
@@ -423,12 +417,16 @@ ss ss_cons(ss a, ss d)
   self->d = d;
   return self;
 }
-ss* _ss_car(ss a)
+
+inline
+ss ss_car(ss a)
 {
   ss_typecheck(ss_t_pair,a);
   return &ss_CAR(a);
 }
-ss* _ss_cdr(ss a)
+
+inline
+ss ss_cdr(ss a)
 {
   ss_typecheck(ss_t_pair,a);
   return &ss_CDR(a);
@@ -559,7 +557,7 @@ ss ss_define(ss_s_env *env, ss sym, ss val)
 {
   int i;
   for ( i = 0; i < env->argc; ++ i )
-    if ( ss_EQ(sym, env->symv[i]) ) {
+    if ( sym == env->symv[i] ) {
       env->argv[i] = val;
       return sym;
     }
@@ -587,7 +585,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     up = 0;
     while ( env ) {
       for ( over = 0; over < env->argc; ++ over ) {
-        if ( ss_EQ(var, env->symv[over]) ) {
+        if ( var == env->symv[over] ) {
           ss_rewrite_expr(ss_m_var(var, up, over), "var binding is known");
           goto rtn;
         }
