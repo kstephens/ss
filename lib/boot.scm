@@ -31,9 +31,15 @@
 (define (flonum? x) (eq? (%type x) <flonum>))
 (C_ss_make_constant 'flonum?)
 
-(define (number? x)
+(define integer? fixnum?)
+(C_ss_make_constant 'integer?)
+
+(define (real? x)
   (if (fixnum? x) #t (flonum? x)))
 (C_ss_make_constant 'number?)
+
+(define number? real?)
+(C_ss_make_constant 'real?)
 
 (define <pair> (%type '(a cons)))
 (C_ss_make_constant '<pair>)
