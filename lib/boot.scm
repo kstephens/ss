@@ -98,7 +98,7 @@
 (define (load file)
   (let ((port (open-read-file file)))
     (let ((result (C_ss_repl &env port (if *load-verbose* ss_stderr #f) #f #f)))
-      (C_ss_port_close port)
+      (close-port port)
       result)))
 
 (define (%define-macro name . form)
