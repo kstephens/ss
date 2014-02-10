@@ -130,7 +130,7 @@
     (if (fixnum? y)
       (if (_EQ (_MOD x y) 0)
         (_DIV2 x y)
-        (_DIV2 (C_ss_to_real x) y))
+        (_DIV2 (C_ss_to_flonum x) y))
       (_DIV2 x y))
     (_DIV2 x y)))
 
