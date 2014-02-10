@@ -33,6 +33,7 @@
 
 (define (number? x)
   (if (fixnum? x) #t (flonum? x)))
+(C_ss_make_constant 'number?)
 
 (define <pair> (%type '(a cons)))
 (C_ss_make_constant '<pair>)
@@ -61,9 +62,6 @@
 
 (define (list . l) l)
 (C_ss_make_constant 'list)
-(define (caar x) (car (car x)))
-(define (cadr x) (car (cdr x)))
-(define (cadar x) (car (cdr (car x))))
 (define (%append-2 a b)
   (if (null? a) b
     (cons (car a) (%append-2 (cdr a) b))))
@@ -90,6 +88,8 @@
 
 (define (open-read-file file)
   (%open-file 'open-read-file file "r"))
+(define (close-port port)
+  (C_ss_port_close port))
 
 (define (%write-port port str)
   (C_fwrite (C_ss_string_v str) (C_ss_string_l str) (C_ss_unbox_integer 1) (C_ss_car port)))
