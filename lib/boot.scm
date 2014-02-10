@@ -128,4 +128,7 @@
       (_DIV2 x y))
     (_DIV2 x y)))
 
-(write ";; ss - boot.scm loaded")(newline)
+(define (ss_call_macro_char c port)
+  (error 'read "invalid read macro char" c))
+
+(display ";; ss - boot.scm loaded.")(newline)
