@@ -26,6 +26,7 @@
   (display ";; testing ")(display name)(display "... ok.")(newline)
   )
 
+(test-file "t/test-equal.scm")
 (test-file "t/test-math.scm")
 (test-file "t/test-deep-closure.scm")
 (test-file "t/test-tail-recursion.scm")

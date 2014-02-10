@@ -217,7 +217,6 @@
                           ,(%cond (cdr cases))))))))))
     (%cond cases)))
 
-
 (define (equal? a b)
   (cond
     ((eq? a b)
