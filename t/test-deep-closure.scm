@@ -11,20 +11,23 @@
 (map (geometric 1 (constant 2)) '(1 2 3 4))
   ;; => (1 2 4 8)
 
-(define g (sequence _MUL))
 (define a (sequence _ADD))
+(define g (sequence _MUL))
 (define as (a 1 (constant 3)))
-(define gs (g 1 (constant 3)))
-;; (C_set_exec_verbose 10)
-(test eq? (gs) 1)
-(test eq? (gs) 3)
-(test eq? (gs) 9)
+(define gs (g 1 as))
+
+;; (set! *test-verbose* #t)
 
 (test eq? (as) 1)
 (test eq? (as) 4)
 (test eq? (as) 7)
 
+(test eq? (gs) 1)
+(test eq? (gs) 10)
+(test eq? (gs) 130)
+(test eq? (gs) 2080)
+
 (define my_op as)
-(test eq? (my_op) 10)
+(test eq? (my_op) 22)
 
 'ok
