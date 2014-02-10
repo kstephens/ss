@@ -1287,6 +1287,12 @@ int main(int argc, char **argv)
   return 0;
 }
 
+ss ss_call_macro_char(ss_s_env *ss_env, int c, ss port)
+{
+  ss expr = ss_cons(ss_sym(ss_call_macro_char), ss_cons(ss_box_char(c), ss_cons(port, ss_nil)));
+  return ss_exec(expr);
+}
+
 #define VALUE ss
 #define READ_DECL ss ss_read(ss_s_env *ss_env, ss stream)
 #define READ_CALL() ss_read(ss_env, stream)
@@ -1314,6 +1320,7 @@ int main(int argc, char **argv)
 #define MALLOC(S) GC_malloc_atomic(S)
 #define REALLOC(P,S) GC_realloc(P,S)
 #define FREE(P) GC_free(P)
+#define CALL_MACRO_CHAR(c) ss_call_macro_char(ss_env, c, stream)
 #include "lispread/lispread.c"
 
 void ss_init_cfunc(ss_s_env *ss_env)
