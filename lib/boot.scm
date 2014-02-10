@@ -102,9 +102,9 @@
       result)))
 
 (define (%define-macro name . form)
-  (if (symbol? name)
-    (list 'C_ss_make_syntax (list 'quote name) (car form))
-    (list 'C_ss_make_syntax (list 'quote (car name)) (list 'lambda (cdr name) (cons 'begin form)))))
+  (if (pair? name)
+    (list 'C_ss_make_syntax (list 'quote (car name)) (list 'lambda (cdr name) (cons 'begin form)))
+    (list 'C_ss_make_syntax (list 'quote name) (car form))))
 (C_ss_make_syntax 'define-macro %define-macro)
 
 (load "lib/cxr.scm")
