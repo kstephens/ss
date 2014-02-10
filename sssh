@@ -1,0 +1,2 @@
+#!/bin/sh
+exec rlwrap -p YELLOW "$(dirname "$0")"/ss "$@"
