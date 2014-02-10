@@ -234,7 +234,7 @@ typedef struct ss_s_closure {
   ss_PROC_DECL((*_func));
   ss formals;
   ss params;
-  ss body;
+  ss body, *bodyp;
   ss_s_env *env;
   ss rest;
   ss_integer_t rest_i;

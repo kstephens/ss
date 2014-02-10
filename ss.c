@@ -730,6 +730,7 @@ ss_syntax(lambda,1,-1,0,"lambda formals body...") {
     }
   }
   self->body = ss_cons(ss_sym(begin), ss_listnv(ss_argc - 1, ss_argv + 1));
+  self->bodyp = &self->body;
   ss_return(self);
 } ss_end
 
@@ -1057,7 +1058,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
         }
 
         ss_env = env;
-        ss_exec_tail(self->body);
+        ss_exec_tail(*self->bodyp);
       }
       break;
     default:
