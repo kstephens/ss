@@ -221,9 +221,9 @@ ss ss_write_3(ss v, ss port, ss mode)
     fprintf(out, ")");
     break;
   case ss_t_closure:
-    fprintf(out, "#<c #@%p E#@%p ", v, ss_UNBOX(closure, v).env);
+    // fprintf(out, "#<c #@%p E#@%p ", v, ss_UNBOX(closure, v).env);
     ss_write(ss_UNBOX(closure, v).lambda, port);
-    fprintf(out, ">");
+    // fprintf(out, ">");
     break;
   case ss_t_port:
     fprintf(out, "#<port ");
