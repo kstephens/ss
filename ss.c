@@ -25,7 +25,7 @@ ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
-#if 1
+#if 0
 int ss_rewrite_verbose;
 int ss_exec_verbose;
 ss ss_set_exec_verbose(ss x)
@@ -57,7 +57,7 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
     fprintf(*ss_stderr, "\n\n");
   }
 }
-#if 0 // ss_rewrite_verbose == 0
+#if ss_rewrite_verbose == 0
 #define ss_rewrite_expr(X,REASON) (ss_expr = (X))
 #else
 #define ss_rewrite_expr(X,REASON) _ss_rewrite_expr(&ss_expr, (X), REASON, __FUNCTION__, __LINE__)
