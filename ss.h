@@ -40,6 +40,7 @@ typedef enum ss_e_type {
   ss_t_char,
   ss_t_boolean,
   ss_t_prim,
+  ss_t_lambda,
   ss_t_closure,
   ss_t_quote,
   ss_t_eos,
@@ -230,14 +231,19 @@ _ss_rtn:                                                             \
   _ss_prim(ss_syn_##NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
 #endif
 
-typedef struct ss_s_closure {
-  ss_PROC_DECL((*_func));
+typedef struct ss_s_lambda {
   ss formals;
   ss params;
-  ss body, *bodyp;
-  ss_s_env *env;
+  ss body;
   ss rest;
   ss_integer_t rest_i;
+} ss_s_lambda;
+#define ss_UNBOX_lambda(X) (*(ss_s_lambda*)(X))
+
+typedef struct ss_s_closure {
+  ss_PROC_DECL((*_func));
+  ss_s_lambda *lambda;
+  ss_s_env *env;
 } ss_s_closure;
 #define ss_UNBOX_closure(X) (*(ss_s_closure*)(X))
 

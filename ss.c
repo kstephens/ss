@@ -189,11 +189,16 @@ ss ss_write(ss v, ss port)
   case ss_t_quote:   fprintf(out, "'"); ss_write(ss_UNBOX(quote, v), port); break;
   case ss_t_eos:     fprintf(out, "#<eos>"); break;
   case ss_t_null:    fprintf(out, "()"); break;
+  case ss_t_lambda:
+    fprintf(out, "#<l #@%p ", v);
+    ss_write(ss_UNBOX(lambda, v).formals, port);
+    fprintf(out, " ");
+    ss_write(ss_UNBOX(lambda, v).body, port);
+    fprintf(out, ">");
+    break;
   case ss_t_closure:
     fprintf(out, "#<c #@%p E#@%p ", v, ss_UNBOX(closure, v).env);
-    ss_write(ss_UNBOX(closure, v).formals, port);
-    fprintf(out, " ");
-    ss_write(ss_UNBOX(closure, v).body, port);
+    ss_write(ss_UNBOX(closure, v).lambda, port);
     fprintf(out, ">");
     break;
   case ss_t_port:
@@ -716,7 +721,7 @@ ss_syntax(if,2,3,0,"if pred true ?false?") {
 
 ss_syntax(lambda,1,-1,0,"lambda formals body...") {
   ss rest; int rest_i;
-  ss_s_closure *self = ss_alloc(ss_t_closure, sizeof(*self));
+  ss_s_lambda *self = ss_alloc(ss_t_lambda, sizeof(*self));
   self->formals = ss_argv[0];
   self->params = ss_list_to_vector(ss_argv[0]);
   self->rest = ss_f;
@@ -730,7 +735,6 @@ ss_syntax(lambda,1,-1,0,"lambda formals body...") {
     }
   }
   self->body = ss_cons(ss_sym(begin), ss_listnv(ss_argc - 1, ss_argv + 1));
-  self->bodyp = &self->body;
   ss_return(self);
 } ss_end
 
@@ -969,9 +973,10 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
         ss_exec(ss_vector_v(expr)[i]);
       ss_exec_tail(ss_vector_v(expr)[i]);
     }
-  case ss_t_closure:
+  case ss_t_lambda:
     {
-      ss_s_closure *self = ss_alloc_copy(ss_t_closure, sizeof(*self), expr);
+      ss_s_closure *self = ss_alloc(ss_t_closure, sizeof(*self));
+      self->lambda = expr;
       self->env = ss_env;
       // fprintf(stderr, "  #@%p => #<c #@%p E#@%p>\n", expr, self, self->env);
       return(self);
@@ -1017,7 +1022,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
 
     case ss_t_closure:
       {
-        ss_s_closure *self = (ss_s_closure*) rtn;
+        ss_s_lambda *self = ((ss_s_closure*) rtn)->lambda;
         ss_s_env *env;
 
         if ( self->rest_i >= 0 ) {
@@ -1028,7 +1033,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
             return(ss_error(ss_env, "apply wrong-number-of-arguments given %lu, expected %lu", self, (unsigned long) ss_argc, (unsigned long) ss_vector_l(self->params)));
         }
 
-        env = ss_m_env(self->env);
+        env = ss_m_env(((ss_s_closure*) rtn)->env);
         env->expr = ss_expr;
         env->argc = ss_argc;
         env->symv = ss_vector_v(self->params);
@@ -1058,7 +1063,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
         }
 
         ss_env = env;
-        ss_exec_tail(*self->bodyp);
+        ss_exec_tail(self->body);
       }
       break;
     default:
