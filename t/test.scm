@@ -4,9 +4,15 @@
   (newline)
   (C_abort))
 
-(define (test cmp a b)
+(define *test-verbose* #f)
+(define (%test cmp a b expr)
+  (if *test-verbose*
+    (begin
+      (write expr) (newline)))
   (if (cmp a b) a
-    (test-error 'expected: b 'given: a)))
+    (test-error expr 'given: a 'expected: b)))
+(define-macro (test cmp a b)
+  `(%test ,cmp ,a ,b '(test ,cmp ,a ,b)))
 
 (define (epsilon? e)
   (lambda (a b)
