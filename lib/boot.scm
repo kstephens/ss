@@ -11,6 +11,9 @@
 (define eq? C_ss_eqQ)
 (C_ss_make_constant 'eq?)
 
+(define %unspec (if #f #t))
+(C_ss_make_constant '%unspec)
+
 (define (not x) (if x #f #t))
 
 (define (%type x) (C_ss_i (C_ss_type x)))
@@ -65,6 +68,40 @@
 (C_ss_make_constant '<vector>)
 (define (vector? x) (eq? (%type x) <vector>))
 (C_ss_make_constant 'vector?)
+
+(define (string-length a)
+  (C_ss_i (C_ss_string_l a)))
+(C_ss_make_constant 'string-length)
+(define string-ref C_ss_string_ref)
+(C_ss_make_constant 'string-ref)
+
+(define (vector-length a)
+  (C_ss_i (C_ss_vector_l a)))
+(C_ss_make_constant 'vector-length)
+(define vector-ref C_ss_vector_ref)
+(C_ss_make_constant 'vector-ref)
+
+(define (%string-equal? a b)
+  (let ((i (- (string-length a) 1)) (e? #f))
+    (set! e?
+      (lambda (i)
+        (if (= i 0)
+          (equal? (string-ref a 0) (string-ref b 0))
+          (if (equal? (string-ref a i) (string-ref b i))
+            (e? (- i 1))
+            #f))))
+    (if (>= i 0) (e? i) #t)))
+
+(define (%vector-equal? a b)
+  (let ((i (- (vector-length a) 1)) (e? #f))
+    (set! e?
+      (lambda (i)
+        (if (= i 0)
+          (equal? (vector-ref a 0) (vector-ref b 0))
+          (if (equal? (vector-ref a i) (vector-ref b i))
+            (e? (- i 1))
+            #f))))
+    (if (>= i 0) (e? i) #t)))
 
 (define (list . l) l)
 (C_ss_make_constant 'list)
@@ -146,6 +183,11 @@
        (set! ,tmp ,(car terms))
        (if ,tmp ,tmp ,(%or tmp (cdr terms))))))
 
+(define-macro (letrec bindings . body)
+  `(let ,(map (lambda (b) `(,(car b) ',%unspec)) bindings)
+     ,@(map (lambda (b) `(set! ,(car b) ,@(cdr b))) bindings)
+     ,@body))
+
 (define-macro (or . terms)
   (if (null? terms) #f
     (if (null? (cdr terms)) (car terms)
@@ -157,5 +199,35 @@
   (if (null? terms) #t
     (if (null? (cdr terms)) (car terms)
       `(if ,(car terms) (and ,@(cdr terms)) #f))))
+
+(define-macro (cond . cases)
+  (letrec ((%cond 
+             (lambda (cases)
+               (if (null? cases) `',%unspec
+                 (let ((case (car cases)))
+                   (if (eq? 'else (car case))
+                     `(begin ,@(cdr case))
+                     (if (eq? '=> (cadr case))
+                       (let ((tmp (%gensym 'cond)))
+                         `(let ((,tmp ,(car case)))
+                            (if ,tmp (,(caddr case) ,tmp)
+                              ,(%cond (cdr cases)))))
+                       `(if ,(car case)
+                          (begin ,@(cdr case))
+                          ,(%cond (cdr cases))))))))))
+    (%cond cases)))
+
+
+(define (equal? a b)
+  (cond
+    ((eq? a b)
+      #t)
+    ((and (pair? a) (pair? b))
+      (and (equal? (car a) (car b)) (equal? (cdr a) (cdr b))))
+    ((and (vector? a) (vector? b) (= (vector-length a) (vector-length b)))
+      (%vector-equal? a b))
+    ((and (string? a) (string? b) (= (string-length a) (string-length b)))
+      (%string-equal? a b))
+    (else #f)))
 
 (display ";; ss - boot.scm loaded.")(newline)

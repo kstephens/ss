@@ -25,7 +25,7 @@ ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
 #define ss_exec(X) _ss_exec(ss_env, &(X))
-#if 0
+#if 1
 int ss_rewrite_verbose;
 int ss_exec_verbose;
 ss ss_set_exec_verbose(ss x)
@@ -36,10 +36,6 @@ ss ss_set_rewrite_verbose(ss x)
 {
   ss_rewrite_verbose = ss_unbox(fixnum, x); return x;
 }
-#else
-#define ss_rewrite_verbose 0
-#define ss_exec_verbose    0
-#endif
 static inline
 void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, int line)
 {
@@ -57,10 +53,11 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
     fprintf(*ss_stderr, "\n\n");
   }
 }
-#if ss_rewrite_verbose == 0
-#define ss_rewrite_expr(X,REASON) (ss_expr = (X))
-#else
 #define ss_rewrite_expr(X,REASON) _ss_rewrite_expr(&ss_expr, (X), REASON, __FUNCTION__, __LINE__)
+#else
+#define ss_rewrite_verbose 0
+#define ss_exec_verbose    0
+#define ss_rewrite_expr(X,REASON) (ss_expr = (X))
 #endif
 
 ss ss_set_type(ss_e_type type, ss obj)
@@ -211,17 +208,17 @@ ss ss_write_3(ss v, ss port, ss mode)
   case ss_t_global:
     fprintf(out, "#<g ");
     ss_write(((ss_s_global*) v)->name, port);
-    fprintf(out, ">");
+    fprintf(out, " >");
     break;
   case ss_t_quote:   fprintf(out, "'"); ss_write(ss_UNBOX(quote, v), port); break;
   case ss_t_eos:     fprintf(out, "#<eos>"); break;
   case ss_t_null:    fprintf(out, "()"); break;
   case ss_t_lambda:
-    fprintf(out, "#<l #@%p ", v);
+    fprintf(out, "(lambda ");
     ss_write(ss_UNBOX(lambda, v).formals, port);
     fprintf(out, " ");
     ss_write(ss_UNBOX(lambda, v).body, port);
-    fprintf(out, ">");
+    fprintf(out, ")");
     break;
   case ss_t_closure:
     fprintf(out, "#<c #@%p E#@%p ", v, ss_UNBOX(closure, v).env);
@@ -282,14 +279,12 @@ ss ss_box_fixnum(ss_fixnum_t v)
 {
   return ss_BOX_fixnum(v);
 }
-ss ss_i(ss_fixnum_t v) { return ss_box_fixnum(v); }
 
 ss_fixnum_t ss_unbox_fixnum(ss v)
 {
   ss_typecheck(ss_t_fixnum,v);
   return ss_UNBOX_fixnum(v);
 }
-ss_fixnum_t ss_I(ss v) { return ss_UNBOX_fixnum(v); }
 
 ss ss_box_flonum(ss_flonum_t v)
 {

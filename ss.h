@@ -98,6 +98,10 @@ int ss_literalQ(ss X)
 #define ss_BOX_fixnum(X)   ((ss) ((((ss_fixnum_t)(X)) << 1) | 1))
 ss ss_box_fixnum(ss_fixnum_t _v);
 ss_fixnum_t ss_unbox_fixnum(ss v);
+static inline
+ss ss_i(ss_fixnum_t x) { return ss_BOX_fixnum(x); }
+static inline
+ss_fixnum_t ss_I(ss x) { return ss_UNBOX_fixnum(x); }
 
 typedef double ss_flonum_t;
 typedef struct ss_s_flonum {
@@ -154,6 +158,8 @@ static inline
 ss    *ss_vector_v(ss x) { return ((ss_s_vector*)(x))->v; }
 static inline
 size_t ss_vector_l(ss x) { return ((ss_s_vector*)(x))->l; }
+static inline
+ss     ss_vector_ref(ss x, ss i) { return ((ss_s_vector*)(x))->v[ss_I(i)]; }
 ss ss_vecn(size_t l);
 ss ss_vec(int n, ...);
 
@@ -166,6 +172,9 @@ static inline
 char  *ss_string_v(ss x) { return ((ss_s_string*)(x))->v; }
 static inline
 size_t ss_string_l(ss x) { return ((ss_s_string*)(x))->l; }
+static inline
+ss     ss_string_ref(ss x, ss i) { return ss_box_char(((ss_s_string*)(x))->v[ss_I(i)]); }
+
 ss ss_strn(size_t l);
 
 typedef struct ss_s_symbol {
