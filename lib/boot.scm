@@ -44,6 +44,11 @@
 (define (string? x) (eq? (%type x) <string>))
 (C_ss_make_constant 'string?)
 
+(define <symbol> (%type 'symbol))
+(C_ss_make_constant '<symbol>)
+(define (symbol? x) (eq? (%type x) <symbol>))
+(C_ss_make_constant 'symbol?)
+
 (define <char> (%type #\a))
 (C_ss_make_constant '<char>)
 (define (char? x) (eq? (%type x) <char>))
@@ -66,60 +71,6 @@
   (if (null? lists) l
     (%append-3 (%append-2 l (car lists)) (cdr lists))))
 (define (append l . lists) (%append-3 l lists))
-
-(C_ss_make_syntax 'define-macro
-  (lambda (name . body)
-    (if (pair? name)
-      (cons 'define-macro (cons (car name) (cons (cons 'lambda (cons (cdr name) body)) '())))
-      (list 'C_ss_make_syntax (list 'quote name) (car body)))))
-
-(define *quasiquote-debug* #f)
-(define (%qq o l)
-  (if (pair? o)
-    (let ((l1 (if (eq? (car o) 'quasiquote)           (+ l 1)
-                (if (eq? (car o) 'unquote)            (- l 1)
-                  (if (eq? (car o) 'unquote-splicing) (- l 1)
-                    l)))))
-      (if (= l 0)
-        (if (eq? (car o) 'unquote)
-          (cadr o)
-          (if (pair? (car o))
-            (if (eq? (caar o) 'unquote-splicing)
-              (list 'append (cadar o)        (%qq (cdr o) l ))
-              (list 'cons   (%qq (car o) l1) (%qq (cdr o) l1)))
-            (list   'cons   (%qq (car o) l1) (%qq (cdr o) l1))))
-        (list       'cons   (%qq (car o) l1) (%qq (cdr o) l1))))
-    (if (vector? o)
-      (list 'list->vector (%qq (vector->list o) l))
-      (if (number? o)    o
-        (if (string? o)  o
-          (if (char? o)  o
-            (list 'quote o)))))))
-(define (%quasiquote expr)
-  (if *quasiquote-debug*
-    (begin (display "  (quasiquote ")(write expr)(display ")")(newline)))
-  (let ((result (%qq expr 0)))
-    (if *quasiquote-debug*
-      (begin (display "    => ")(write result)(newline)))
-    result))
-(define-macro quasiquote %quasiquote)
-
-(define-macro (define-constant name . body)
-  (if (pair? name)
-    `(define-constant ,(car name) (lambda ,(cdr name) ,@body))
-    `(begin
-      (define ,name ,@body)
-      (C_ss_make_constant ',name))))
-
-(define-constant _DIV2 _DIV)
-(define-constant (_DIV x y)
-  (if (fixnum? x)
-    (if (fixnum? y)
-      (if (_EQ (_MOD x y) 0)
-        (_DIV2 x y)
-        (_DIV2 (C_ss_to_real x) y))
-      (_DIV2 x y))
-    (_DIV2 x y)))
 
 (define (map proc args)
   (if (null? args)
@@ -149,5 +100,32 @@
     (let ((result (C_ss_repl &env port (if *load-verbose* ss_stderr #f) #f #f)))
       (C_ss_port_close port)
       result)))
+
+(define (%define-macro name . form)
+  (if (symbol? name)
+    (list 'C_ss_make_syntax (list 'quote name) (car form))
+    (list 'C_ss_make_syntax (list 'quote (car name)) (list 'lambda (cdr name) (cons 'begin form)))))
+(C_ss_make_syntax 'define-macro %define-macro)
+
+(load "lib/cxr.scm")
+(load "lib/quasiquote.scm")
+(define-macro quasiquote %quasiquote)
+
+(define-macro (define-constant name . body)
+  (if (pair? name)
+    `(define-constant ,(car name) (lambda ,(cdr name) ,@body))
+    `(begin
+      (define ,name ,@body)
+      (C_ss_make_constant ',name))))
+
+(define-constant _DIV2 _DIV)
+(define-constant (_DIV x y)
+  (if (fixnum? x)
+    (if (fixnum? y)
+      (if (_EQ (_MOD x y) 0)
+        (_DIV2 x y)
+        (_DIV2 (C_ss_to_real x) y))
+      (_DIV2 x y))
+    (_DIV2 x y)))
 
 (write ";; ss - boot.scm loaded")(newline)
