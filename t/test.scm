@@ -22,6 +22,7 @@
 
 (test-file "t/test-math.scm")
 (test-file "t/test-deep-closure.scm")
+(test-file "t/test-tail-recursion.scm")
 
 ;; (test eq? 'a 'b)
 
