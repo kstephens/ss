@@ -16,6 +16,7 @@
 #define GC_malloc_atomic(X) malloc(X)
 #define GC_realloc(X,Y) realloc(X,Y)
 #define GC_free(X) free(X)
+#define GC_register_finalizer(_1,_2,_3,_4,_5) ((void) 0)
 #define GC_INIT() ((void) 0)
 #else
 #include "gc/gc.h"
@@ -84,7 +85,7 @@ ss_e_type ss_type(ss x)
 {
   return ((ss_integer_t) x) & 1 ? ss_t_integer : 
           x <= ss_BOX_char(255) ? ss_t_char :
-                                  ((ss_integer_t*) x)[-1];
+                                  (ss_integer_t) (((ss*) x)[-1]);
 }
 static inline
 int ss_literalQ(ss X)
