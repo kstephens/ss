@@ -177,7 +177,13 @@ ss ss_write_3(ss v, ss port, ss mode)
     break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
   case ss_t_prim:    fprintf(out, "#<p %s>",   ss_UNBOX(prim, v)->name); break;
-  case ss_t_symbol:  fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v).name)); break;
+  case ss_t_symbol:
+    if ( ss_UNBOX(symbol, v).name == ss_f ) {
+      fprintf(out, "#<symbol #@%p>", v);
+    } else {
+      fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v).name));
+    }
+    break;
   case ss_t_if:
     {
       ss_s_if *self = v;
@@ -389,18 +395,21 @@ ss ss_box_symbol(const char *name)
 {
   ss_s_symbol *sym;
 
-  for ( ss l = symbols; l != ss_nil; l = ss_cdr(l) ) {
-    sym = (ss_s_symbol*) ss_car(l);
-    if ( strcmp(name, ss_string_v(sym->name)) == 0 )
-      goto rtn;
+  if ( name ) {
+    for ( ss l = symbols; l != ss_nil; l = ss_cdr(l) ) {
+      sym = (ss_s_symbol*) ss_car(l);
+      if ( strcmp(name, ss_string_v(sym->name)) == 0 )
+        goto rtn;
+    }
   }
 
   sym = ss_alloc(ss_t_symbol, sizeof(*sym));
-  sym->name = ss_strnv(strlen(name), name);
+  sym->name = name ? ss_strnv(strlen(name), name) : ss_f;
   sym->docstring = ss_f;
   sym->syntax = ss_f;
   sym->is_const = 0;
-  symbols = ss_cons(sym, symbols);
+  if ( name )
+    symbols = ss_cons(sym, symbols);
 
  rtn:
   // fprintf(stderr, "  symbol(%s) => %p\n", name, sym);
