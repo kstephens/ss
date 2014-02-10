@@ -123,6 +123,7 @@ typedef struct ss_s_var {
 
 typedef struct ss_s_var_set {
   ss var;
+  ss expr;
 } ss_s_var_set;
 #define ss_UNBOX_var_set(X) (*(ss_s_var_set*)(X))
 

@@ -177,9 +177,11 @@ ss ss_write(ss v, ss port)
     fprintf(out, " %d %d>", (int) ss_UNBOX(var, v).up, (int) ss_UNBOX(var, v).over);
     break;
   case ss_t_var_set:
-    fprintf(out, "#<v! ");
+    fprintf(out, "(set! ");
     ss_write(ss_UNBOX(var_set, v).var, port);
-    fprintf(out, ">");
+    fprintf(out, " ");
+    ss_write(ss_UNBOX(var_set, v).expr, port);
+    fprintf(out, ")");
     break;
   case ss_t_global:
     fprintf(out, "#<g ");
@@ -619,7 +621,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     ss_rewrite_expr(*ref, "global binding is known");
     ref = &ss_UNBOX(global, *ref);
   }
-  if ( ss_UNBOX(symbol, sym).is_const && env->parent == 0) {
+  if ( ss_UNBOX(symbol, sym).is_const && env->parent == 0 ) {
     if ( set ) return(ss_error(ss_env, "constant-variable", sym));
     ss_constantExprQ = 1;
     ss_rewrite_expr(ss_box_quote(*ref), "variable constant in top-level");
@@ -683,12 +685,8 @@ ss_prim(_define,2,2,0,"define name value") {
 ss_syntax(setE,2,2,0,"set! name value") {
   ss_s_var_set *self = ss_alloc(ss_t_var_set, sizeof(*self));
   self->var = ss_argv[0];
-  ss_return(ss_cons(ss_sym(_setE), ss_cons(self, ss_cons(ss_argv[1], ss_nil))));
-} ss_end
-
-ss_prim(_setE,2,2,0,"set! name value") {
-  ss_s_var_set *self = ss_argv[0];
-  ss_return(ss_var_set(ss_env, &self->var, self->var, ss_argv[1]));
+  self->expr = ss_argv[1];
+  ss_return(self);
 } ss_end
 
 ss ss_read(ss_s_env *ss_env, ss port);
@@ -950,7 +948,12 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
   case ss_t_var:
     return(ss_var_get(ss_env, _ss_expr, expr));
   case ss_t_var_set:
-    return(expr);
+    {
+      ss_s_var_set *self = expr;
+      rtn = ss_exec(self->expr);
+      ss_var_set(ss_env, &self->var, self->var, rtn);
+      return(ss_undef);
+    }
   case ss_t_global:
     return(ss_UNBOX(global, expr));
   case ss_t_if:
