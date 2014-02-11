@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
-#include <string.h> /* memcpy() */
+#include <string.h> /* memcpy(), strerror() */
 #include <assert.h>
 
 ss_s_env *ss_top_level_env, *ss_current_env;
@@ -406,13 +406,7 @@ ss ss_errstr(ss en)
   int i;
   if ( en == ss_f ) en = ss_errno();
   i = ss_UNBOX_fixnum(en);
-  if ( 0 <= i && i < sys_nerr ) {
-    return ss_s(sys_errlist[i]);
-  } else {
-    char buf[32];
-    sprintf(buf, "errno_%d", i);
-    return ss_s(buf);
-  }
+  return ss_s(strerror(i));
 }
 
 static ss symbols;
