@@ -127,6 +127,14 @@ ss ss_error(ss_s_env *ss_env, const char *format, ss obj, ...)
   return 0;
 }
 
+static inline
+ss ss_typecheck(ss_e_type t, ss v)
+{
+  if ( ss_type(v) != t )
+    return ss_error(ss_current_env, "typecheck", v);
+  return v;
+}
+
 void ss_write_flonum(ss v, ss port)
 {
   char buf[64];
@@ -277,8 +285,6 @@ ss ss_write_3(ss v, ss port, ss mode)
 #undef ss_sym_def
 #define ss_sym_def(X) ss ss_PASTE2(_ss_sym_,X);
 #include "sym.def"
-
-#define ss_typecheck(T,V)((void)0)
 
 ss ss_box_fixnum(ss_fixnum_t v)
 {
