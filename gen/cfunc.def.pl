@@ -4,6 +4,7 @@ while ( <> ) {
   chomp;
   s/^extern\s+//;
   s/^(inline|__inline)\s+//;
+  s/^(const)\s+//;
   s/^([a-z0-9_]+)\s+(([*]\s*)+)/$1$2 /i;
   # print STDERR $_, "\n" if ( /fopen/ );
   if ( /^([a-z0-9_]{2,}[*]*)\s+([a-z0-9_]{3,})\s*(\([^)]*\)?)/i ) {
