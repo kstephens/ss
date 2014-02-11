@@ -29,7 +29,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr);
 #if 1
 int ss_rewrite_verbose;
 int ss_eval_verbose;
-ss ss_set_exec_verbose(ss x)
+ss ss_set_eval_verbose(ss x)
 {
   ss_eval_verbose = ss_unbox(fixnum, x); return x;
 }
@@ -990,7 +990,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
   } while(0)
   ss_constantExprQ = 0;
   if ( ss_eval_verbose ) {
-    fprintf(*ss_stderr, "  ;; exec %3d E#@%p #@%p ", (int) ss_env->depth, ss_env, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, "  ;; eval %3d E#@%p #@%p ", (int) ss_env->depth, ss_env, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
   switch ( ss_type(expr) ) {
   case ss_t_quote:
@@ -1137,8 +1137,8 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
 #undef ss_eval_tail
   _return:
   if ( ss_eval_verbose ) {
-    fprintf(*ss_stderr, "  ;; exec %3d result expr: ", (int) ss_env->depth); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
-    fprintf(*ss_stderr, "  ;; exec %3d result  val: ", (int) ss_env->depth);
+    fprintf(*ss_stderr, "  ;; eval %3d result expr: ", (int) ss_env->depth); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
+    fprintf(*ss_stderr, "  ;; eval %3d result  val: ", (int) ss_env->depth);
     ss_write(rtn, ss_stderr);
     fprintf(*ss_stderr, " (%s) ", ss_constantExprQ ? "const" : "non-const");
     fprintf(*ss_stderr, "\n");
