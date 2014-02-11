@@ -195,9 +195,9 @@ ss ss_write_3(ss v, ss port, ss mode)
     break;
   case ss_t_char:
     if ( mode == ss_sym(display) ) {
-      fprintf(out, "%c",  ss_unbox(char, v));
+      fprintf(out, "%c",  ss_C(v));
     } else {
-      fprintf(out, "#\\%c",  ss_unbox(char, v));
+      fprintf(out, "#\\%c",  ss_C(v));
     }
     break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
@@ -353,11 +353,11 @@ ss ss_set(ss o, ss i, ss v)
   return ((ss*) o)[ss_I(i)] = v;
 }
 
-ss ss_box_char(int _v)
+ss ss_c(int _v)
 {
   return ss_BOX_char(_v);
 }
-int ss_unbox_char(ss v)
+int ss_C(ss v)
 {
   ss_typecheck(ss_t_char, v);
   return ((int) ss_UNBOX_char(v)) & 0xff;
@@ -1354,7 +1354,7 @@ int main(int argc, char **argv)
 
 ss ss_call_macro_char(ss_s_env *ss_env, int c, ss port)
 {
-  ss expr = ss_cons(ss_sym(ss_call_macro_char), ss_cons(ss_box_char(c), ss_cons(port, ss_nil)));
+  ss expr = ss_cons(ss_sym(ss_call_macro_char), ss_cons(ss_c(c), ss_cons(port, ss_nil)));
   return ss_eval(expr);
 }
 
@@ -1373,7 +1373,7 @@ ss ss_call_macro_char(ss_s_env *ss_env, int c, ss port)
 #define E ss_eos
 #define BRACKET_LISTS 1
 #define SET_CDR(C,R) (ss_CDR(C) = (R))
-#define MAKE_CHAR(I) ss_box(char, (I))
+#define MAKE_CHAR(I) ss_c((I))
 #define LIST_2_VECTOR(X) ss_list_to_vector(X)
 #define STRING(S,L) ss_strnv((L), (S))
 #define SYMBOL_DOT ss_sym(DOT)
