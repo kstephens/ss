@@ -28,12 +28,13 @@ void* ss_malloc(size_t s)
 
 ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 
-ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr);
+ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv);
 #define ss_expr (*_ss_expr)
-#define ss_eval(X) _ss_eval(ss_env, &(X))
+#define ss_eval(X) _ss_eval(ss_env, &(X), 0)
+#define ss_callv(P,ARGS) _ss_eval(ss_env, &(P), ARGS)
 #if 1
-int ss_rewrite_verbose;
-int ss_eval_verbose;
+int ss_rewrite_verbose = 0;
+int ss_eval_verbose = 0;
 ss ss_set_eval_verbose(ss x)
 {
   ss_eval_verbose = ss_unbox(fixnum, x); return x;
@@ -632,12 +633,12 @@ ss ss_m_global(ss sym, ss ref)
 ss ss_define(ss_s_env *env, ss sym, ss val)
 {
   int i;
-  for ( i = 0; i < env->argc; ++ i )
+  for ( i = 0; i < env->argc; ++ i ) {
     if ( sym == env->symv[i] ) {
       env->argv[i] = val;
       return sym;
     }
-
+  }
   env->symv = memcpy(ss_malloc(sizeof(env->symv) * (env->argc + 1)), env->symv, sizeof(env->symv[0]) * env->argc);
   env->symv[env->argc] = sym;
   env->argv = memcpy(ss_malloc(sizeof(env->argv) * (env->argc + 1)), env->argv, sizeof(env->argv[0]) * env->argc);
@@ -764,6 +765,20 @@ ss_syntax(setE,2,2,0,"set! name value") {
   self->expr = ss_argv[1];
   ss_return(self);
 } ss_end
+
+ss_prim(ss_getc,1,1,0,"port")
+{
+  int c = getc(FP(ss_argv[0]));
+  ss_return(ss_i(c));
+}
+ss_end
+
+ss_prim(ss_ungetc,2,2,0,"port c")
+{
+  int c = ss_I(ss_argv[1]);
+  ungetc(c, FP(ss_argv[0]));
+}
+ss_end
 
 ss ss_read(ss_s_env *ss_env, ss port);
 ss_prim(read,0,1,0,"_read port")
@@ -993,11 +1008,9 @@ ss_end
 
 ss ss_apply(ss_s_env *ss_env, ss func, ss args)
 {
-  args = ss_cons(func, args);
-  args = ss_set_type(ss_t_app, ss_list_to_vector(args));
-  for ( size_t i = 0; i < ss_vector_L(args); ++ i )
-    ss_vector_V(args)[i] = ss_box_quote(ss_vector_V(args)[i]);
-  return(ss_eval(args));
+  if ( ss_type(args) != ss_t_vector ) 
+    args = ss_list_to_vector(args);
+  return _ss_eval(ss_env, &func, args);
 }
 
 ss_prim(apply,2,2,0,"apply func args") {
@@ -1005,16 +1018,28 @@ ss_prim(apply,2,2,0,"apply func args") {
 } ss_end
 
 ss_prim(eval,1,2,0,"eval expr env?") {
-  ss expr = ss_argv[0];
-  ss_return(_ss_eval(ss_argc > 1 ? ss_argv[1] : ss_top_level_env, &expr));
+  ss_return(_ss_eval(ss_argc > 1 ? ss_argv[1] : ss_top_level_env, &ss_argv[0], 0));
 } ss_end
 
-ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
+ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
 {
   ss rtn, expr;
+  int const_argsQ;
+  size_t ss_argc;
 #define return(X) do { rtn = (X); goto _return; } while(0)
   expr = ss_expr;
   ++ ss_env->depth;
+  if ( ss_argv ) {
+    if ( ss_eval_verbose ) {
+      fprintf(*ss_stderr, "  ;; eval %3d E#@%p #@%p (", (int) ss_env->depth, ss_env, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, " . "); ss_write(ss_argv, ss_stderr); fprintf(*ss_stderr, ") (apply)\n");
+    }
+    rtn = expr;
+    ss_argc = ss_vector_L(ss_argv);
+    ss_argv = ss_vector_V(ss_argv);
+    const_argsQ = 0;
+    ss_current_env = ss_env;
+    goto call;
+  }
   again:
   ss_current_env = ss_env;
 #define ss_eval_tail(X) do {     \
@@ -1084,11 +1109,8 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
     ss_rewrite_expr(expr, "application vector");
     /* FALL THROUGH */
   case ss_t_app: {
-    size_t ss_argc = ss_vector_L(expr) - 1;
-    ss    *ss_argv;
-    int const_argsQ;
-
     if ( ss_vector_L(expr) < 1 ) return(ss_error(ss_env, "apply empty-vector", expr));
+    ss_argc = ss_vector_L(expr) - 1;
 
     rtn = ss_eval(ss_vector_V(expr)[0]);
 
@@ -1098,18 +1120,20 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
       ss_argv[i] = ss_eval(ss_vector_V(expr)[i + 1]);
       const_argsQ &= ss_constantExprQ;
     }
+
+    call:
     ss_constantExprQ = 0;
 
     switch ( ss_type(rtn) ) {
     case ss_t_prim:
       {
-        ss result = (ss_UNBOX(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
+        expr = (ss_UNBOX(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
         if ( ss_eval_verbose ) {
           if ( const_argsQ ) fprintf(*ss_stderr, "    ;; const_argsQ %s\n", ss_UNBOX(prim, rtn)->no_side_effect ? "no-side-effect" : "");
         }
         if ( (ss_constantExprQ = const_argsQ && ss_UNBOX(prim, rtn)->no_side_effect) )
-          ss_rewrite_expr(ss_box_quote(result), "constant folding");
-        return(result);
+          ss_rewrite_expr(ss_box_quote(expr), "constant folding");
+        return(expr);
       }
 
     case ss_t_closure:
@@ -1345,18 +1369,18 @@ int main(int argc, char **argv)
   ss_init_cfunc(ss_env);
   if ( 1 ) {
     FILE *fp = fopen("lib/boot.scm", "r");
-    ss_repl(ss_env, &fp, ss_f, ss_f, ss_f);
+    ss out = ss_f; // ss_stderr;
+    ss_repl(ss_env, &fp, out, out, ss_f);
     fclose(fp);
   }
   ss_repl(ss_env, ss_stdin, ss_stdout, ss_stderr, ss_t);
   return 0;
 }
 
-ss ss_call_macro_char(ss_s_env *ss_env, int c, ss port)
-{
-  ss expr = ss_cons(ss_sym(ss_call_macro_char), ss_cons(ss_c(c), ss_cons(port, ss_nil)));
-  return ss_eval(expr);
-}
+#define ss_apply_sym(SYM, NARGS, ARGS, ...)                     \
+  ({ ss __sym = ss_sym(SYM);                                    \
+    ss_apply(ss_env, ss_eval(__sym), ss_vec(NARGS, ARGS));      \
+  })
 
 #define VALUE ss
 #define READ_DECL ss ss_read(ss_s_env *ss_env, ss stream)
@@ -1385,7 +1409,7 @@ ss ss_call_macro_char(ss_s_env *ss_env, int c, ss port)
 #define MALLOC(S) GC_malloc_atomic(S)
 #define REALLOC(P,S) GC_realloc(P,S)
 #define FREE(P) GC_free(P)
-#define CALL_MACRO_CHAR(c) ss_call_macro_char(ss_env, c, stream)
+#define CALL_MACRO_CHAR(c) ss_apply_sym(ss_call_macro_char, 2, c, stream)
 #include "lispread/lispread.c"
 
 ss ss_cfunc_sym(const char *name)

@@ -44,6 +44,7 @@ typedef enum ss_e_type {
   ss_t_closure,
   ss_t_quote,
   ss_t_eos,
+  ss_t_type,
   ss_t_LITERAL_MAX = ss_t_eos,
 
   ss_t_pair,
@@ -112,8 +113,12 @@ typedef struct ss_s_flonum {
 ss ss_box_flonum(ss_flonum_t _v);
 ss_flonum_t ss_unbox_flonum(ss v);
 
-#define ss_box_boolean(X) ((X) ? ss_t : ss_f)
-#define ss_unbox_boolean(X) ((X) != ss_f)
+static inline
+ss ss_b(int x) { return x ? ss_t : ss_f; }
+static inline
+int ss_B(ss x) { return x != ss_f; }
+#define ss_box_boolean(X) ss_b((int) (X)) 
+#define ss_unbox_boolean(X) ss_B(X)
 
 typedef struct ss_s_quote {
   ss value;
