@@ -192,7 +192,7 @@ typedef struct ss_s_env {
   ss *argv;
   struct ss_s_env *parent, *top_level;
   ss_fixnum_t constantExprQ, constantExprQAll;
-  ss_fixnum_t depth;
+  ss_fixnum_t level, depth;
   ss expr;
   jmp_buf *error_jmp;
   ss error_val;
