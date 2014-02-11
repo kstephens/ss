@@ -478,6 +478,19 @@ ss ss_cdr(ss a)
   return ss_CDR(a);
 }
 
+ss ss_listn(int n, ...)
+{
+  va_list vap;
+  va_start(vap, n);
+  ss l = ss_nil, *lp = &l;
+  while ( n -- ) {
+    *lp = ss_cons(va_arg(vap, ss), ss_nil);
+    lp = &ss_CDR(*lp);
+  }
+  va_end(vap);
+  return l;
+}
+
 ss ss_listnv(size_t n, const ss *v)
 {
   ss l = ss_nil, *lp = &l;
