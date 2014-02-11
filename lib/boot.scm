@@ -53,6 +53,9 @@
 (C:ss_make_constant '<pair>)
 (define (pair? x) (eq? (%type x) <pair>))
 (C:ss_make_constant 'pair?)
+(define cons C:ss_cons)
+(define car C:ss_car)
+(define cdr C:ss_cdr)
 
 (define <string> (%type "string"))
 (C:ss_make_constant '<string>)
@@ -141,6 +144,13 @@
 
 (define (%write-port port str)
   (C:fwrite (C:ss_string_V str) (C:ss_string_L str) (C:ss_unbox_integer 1) (C:ss_car port)))
+
+(define (read . port)
+  (C:ss_read &env (if (null? port) ss_stdout (car port))))
+(define (write obj . port)
+  (C:ss_write_3 obj (if (null? port) ss_stdout (car port)) 'write))
+(define (display obj . port)
+  (C:ss_write_3 obj (if (null? port) ss_stdout (car port)) 'display))
 
 (define *load-verbose* #f)
 (define (load-file file)
