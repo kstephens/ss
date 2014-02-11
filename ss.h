@@ -55,6 +55,7 @@ typedef enum ss_e_type {
   ss_t_global,
   ss_t_if,
   ss_t_begin,
+  ss_t_app,
 
   ss_t_port,
   

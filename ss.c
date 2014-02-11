@@ -258,6 +258,9 @@ ss ss_write_3(ss v, ss port, ss mode)
   case ss_t_begin:
     fprintf(out, "(begin ");
     goto vector_body;
+  case ss_t_app:
+    fprintf(out, "(");
+    goto vector_body;
   case ss_t_vector:
     fprintf(out, "#(");
   vector_body:
@@ -951,7 +954,7 @@ ss_end
 ss ss_apply(ss_s_env *ss_env, ss func, ss args)
 {
   args = ss_cons(func, args);
-  args = ss_list_to_vector(args);
+  args = ss_set_type(ss_t_app, ss_list_to_vector(args));
   for ( size_t i = 0; i < ss_vector_l(args); ++ i )
     ss_vector_v(args)[i] = ss_box_quote(ss_vector_v(args)[i]);
   return(ss_exec(args));
@@ -1029,9 +1032,10 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
       goto again;
     }
     expr = ss_list_to_vector(expr);
+    ss_set_type(ss_t_app, expr);
     ss_rewrite_expr(expr, "application vector");
     /* FALL THROUGH */
-  case ss_t_vector: {
+  case ss_t_app: {
     size_t ss_argc = ss_vector_l(expr) - 1;
     ss    *ss_argv;
     int const_argsQ;
