@@ -170,9 +170,9 @@ ss ss_write_3(ss v, ss port, ss mode)
   case ss_t_flonum:  ss_write_flonum(v, port); break;
   case ss_t_string:
     if ( mode == ss_sym(display) ) {
-      fwrite(ss_string_v(v), ss_string_l(v), 1, out);
+      fwrite(ss_string_V(v), ss_string_L(v), 1, out);
     } else {
-      fprintf(out, "\"%s\"", ss_string_v(v));
+      fprintf(out, "\"%s\"", ss_string_V(v));
     }
     break;
   case ss_t_char:
@@ -188,7 +188,7 @@ ss ss_write_3(ss v, ss port, ss mode)
     if ( ss_UNBOX(symbol, v).name == ss_f ) {
       fprintf(out, "#<symbol #@%p>", v);
     } else {
-      fprintf(out, "%s",   ss_string_v(ss_UNBOX(symbol, v).name));
+      fprintf(out, "%s",   ss_string_V(ss_UNBOX(symbol, v).name));
     }
     break;
   case ss_t_if:
@@ -274,7 +274,7 @@ ss ss_write_3(ss v, ss port, ss mode)
   case ss_t_vector:
     fprintf(out, "#(");
   vector_body:
-    ss_write_vec(ss_vector_l(v), ss_vector_v(v), port);
+    ss_write_vec(ss_vector_L(v), ss_vector_V(v), port);
     fprintf(out, ")");
     break;
   }
@@ -350,8 +350,8 @@ ss ss_strn(size_t l)
 ss ss_strnv(size_t l, const char *v)
 {
   ss self = ss_strn(l);
-  memcpy(ss_string_v(self), v, sizeof(ss_string_v(self)[0]) * l);
-  ss_string_v(self)[l] = 0;
+  memcpy(ss_string_V(self), v, sizeof(ss_string_V(self)[0]) * l);
+  ss_string_V(self)[l] = 0;
   return self;
 }
 
@@ -363,7 +363,7 @@ ss ss_s(const char *p)
 ss ss_S(ss p)
 {
   if ( p == ss_f || p == ss_nil ) return 0;
-  return ss_string_v(p);
+  return ss_string_V(p);
 }
 
 ss ss_string_TO_number(ss s, int radix)
@@ -372,10 +372,10 @@ ss ss_string_TO_number(ss s, int radix)
   double d;
   long long ll;
 
-  ll = strtoll(ss_string_v(s), &endp, radix);
+  ll = strtoll(ss_string_V(s), &endp, radix);
   if ( ! *endp )
     return ss_box(fixnum, ll);
-  d = strtod(ss_string_v(s), &endp);
+  d = strtod(ss_string_V(s), &endp);
   if ( ! *endp )
     return ss_box(flonum, d);
   return ss_f;
@@ -404,7 +404,7 @@ ss ss_box_symbol(const char *name)
   if ( name ) {
     for ( ss l = symbols; l != ss_nil; l = ss_cdr(l) ) {
       sym = (ss_s_symbol*) ss_car(l);
-      if ( strcmp(name, ss_string_v(sym->name)) == 0 )
+      if ( strcmp(name, ss_string_V(sym->name)) == 0 )
         goto rtn;
     }
   }
@@ -497,7 +497,7 @@ size_t ss_list_length(ss x)
     l ++;
     goto again;
   case ss_t_null:    return l;
-  case ss_t_vector:  return l + ss_vector_l(x);
+  case ss_t_vector:  return l + ss_vector_L(x);
   default:           return l + 1;
   }
 }
@@ -509,16 +509,16 @@ ss ss_list_to_vector(ss x)
   again:
   switch ( ss_type(x) ) {
   case ss_t_pair:
-    ss_vector_v(v)[l ++] = ss_CAR(x);
+    ss_vector_V(v)[l ++] = ss_CAR(x);
     x = ss_CDR(x);
     goto again;
   case ss_t_null:
     break;
   case ss_t_vector:
-    memcpy(ss_vector_v(v) + l, ss_vector_v(x), sizeof(ss_vector_v(v)[0]) * ss_vector_l(x));
+    memcpy(ss_vector_V(v) + l, ss_vector_V(x), sizeof(ss_vector_V(v)[0]) * ss_vector_L(x));
     break;
   default:
-    ss_vector_v(v)[l] = ss_cons(ss_sym(_rest), x);
+    ss_vector_V(v)[l] = ss_cons(ss_sym(_rest), x);
     break;
   }
   return v;
@@ -546,7 +546,7 @@ ss ss_vec(int n, ...)
   va_list vap;
   va_start(vap,n);
   while ( i < n )
-    ss_vector_v(x)[i ++] = va_arg(vap, ss);
+    ss_vector_V(x)[i ++] = va_arg(vap, ss);
   va_end(vap);
   return x;
 }
@@ -772,12 +772,12 @@ ss_syntax(lambda,1,-1,0,"lambda formals body...") {
   self->params = ss_list_to_vector(ss_argv[0]);
   self->rest = ss_f;
   self->rest_i = -1;
-  if ( ss_vector_l(self->params) > 0 ) {
-    rest_i = ss_vector_l(self->params) - 1;
-    rest = ss_vector_v(self->params)[rest_i];
+  if ( ss_vector_L(self->params) > 0 ) {
+    rest_i = ss_vector_L(self->params) - 1;
+    rest = ss_vector_V(self->params)[rest_i];
     if ( ss_type(rest) == ss_t_pair && ss_CAR(rest) == ss_sym(_rest) ) {
       self->rest_i = rest_i;
-      ss_vector_v(self->params)[rest_i] = self->rest = ss_CDR(rest);
+      ss_vector_V(self->params)[rest_i] = self->rest = ss_CDR(rest);
     }
   }
   self->body = ss_cons(ss_sym(begin), ss_listnv(ss_argc - 1, ss_argv + 1));
@@ -963,8 +963,8 @@ ss ss_apply(ss_s_env *ss_env, ss func, ss args)
 {
   args = ss_cons(func, args);
   args = ss_set_type(ss_t_app, ss_list_to_vector(args));
-  for ( size_t i = 0; i < ss_vector_l(args); ++ i )
-    ss_vector_v(args)[i] = ss_box_quote(ss_vector_v(args)[i]);
+  for ( size_t i = 0; i < ss_vector_L(args); ++ i )
+    ss_vector_V(args)[i] = ss_box_quote(ss_vector_V(args)[i]);
   return(ss_eval(args));
 }
 
@@ -1025,9 +1025,9 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
   case ss_t_begin:
     {
       size_t i;
-      for ( i = 0; i < ss_vector_l(expr) - 1; ++ i )
-        ss_eval(ss_vector_v(expr)[i]);
-      ss_eval_tail(ss_vector_v(expr)[i]);
+      for ( i = 0; i < ss_vector_L(expr) - 1; ++ i )
+        ss_eval(ss_vector_V(expr)[i]);
+      ss_eval_tail(ss_vector_V(expr)[i]);
     }
   case ss_t_lambda:
     {
@@ -1049,18 +1049,18 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
     ss_rewrite_expr(expr, "application vector");
     /* FALL THROUGH */
   case ss_t_app: {
-    size_t ss_argc = ss_vector_l(expr) - 1;
+    size_t ss_argc = ss_vector_L(expr) - 1;
     ss    *ss_argv;
     int const_argsQ;
 
-    if ( ss_vector_l(expr) < 1 ) return(ss_error(ss_env, "apply empty-vector", expr));
+    if ( ss_vector_L(expr) < 1 ) return(ss_error(ss_env, "apply empty-vector", expr));
 
-    rtn = ss_eval(ss_vector_v(expr)[0]);
+    rtn = ss_eval(ss_vector_V(expr)[0]);
 
     const_argsQ = 1;
     ss_argv = ss_malloc(sizeof(ss_argv[0]) * (ss_argc + 1)); // +1 restarg.
     for ( size_t i = 0; i < ss_argc; i ++ ) {
-      ss_argv[i] = ss_eval(ss_vector_v(expr)[i + 1]);
+      ss_argv[i] = ss_eval(ss_vector_V(expr)[i + 1]);
       const_argsQ &= ss_constantExprQ;
     }
     ss_constantExprQ = 0;
@@ -1086,14 +1086,14 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
           if ( ss_argc < self->rest_i )
             return(ss_error(ss_env, "apply wrong-number-of-arguments given %lu, expected at least %lu", self, (unsigned long) ss_argc, (unsigned long) self->rest_i));
         } else {
-          if ( ss_argc != ss_vector_l(self->params) )
-            return(ss_error(ss_env, "apply wrong-number-of-arguments given %lu, expected %lu", self, (unsigned long) ss_argc, (unsigned long) ss_vector_l(self->params)));
+          if ( ss_argc != ss_vector_L(self->params) )
+            return(ss_error(ss_env, "apply wrong-number-of-arguments given %lu, expected %lu", self, (unsigned long) ss_argc, (unsigned long) ss_vector_L(self->params)));
         }
 
         env = ss_m_env(((ss_s_closure*) rtn)->env);
         env->expr = ss_expr;
         env->argc = ss_argc;
-        env->symv = ss_vector_v(self->params);
+        env->symv = ss_vector_V(self->params);
         env->argv = ss_argv;
         if ( self->rest_i >= 0 ) {
           env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
@@ -1264,7 +1264,7 @@ void ss_s_port_finalize(void *port, void *arg)
 {
   ss_s_port *self = (ss_s_port*) port;
   if ( self->fp ) {
-    fprintf(stderr, "  ;; finalizing #@%p %s\n", self, ss_string_v(self->name));
+    fprintf(stderr, "  ;; finalizing #@%p %s\n", self, ss_string_V(self->name));
   }
   ss_port_close(port);
 }
@@ -1344,7 +1344,7 @@ ss ss_call_macro_char(ss_s_env *ss_env, int c, ss port)
 #define SYMBOL_DOT ss_sym(DOT)
 #define SYMBOL(N) ss_sym(N)
 #define STRING_2_NUMBER(s, radix) ss_string_TO_number(s, radix)
-#define STRING_2_SYMBOL(s) ss_box(symbol, ss_string_v(s))
+#define STRING_2_SYMBOL(s) ss_box(symbol, ss_string_V(s))
 #define ERROR(msg,args...) ss_error(ss_env, "read: " msg, stream, ##args)
 #define RETURN(X) return X
 #define MALLOC(S) GC_malloc_atomic(S)
