@@ -70,15 +70,15 @@
 (C_ss_make_constant 'vector?)
 
 (define (string-length a)
-  (C_ss_i (C_ss_string_l a)))
+  (C_ss_i (C_ss_string_L a)))
 (C_ss_make_constant 'string-length)
-(define string-ref C_ss_string_ref)
+(define string-ref C_ss_string_R)
 (C_ss_make_constant 'string-ref)
 
 (define (vector-length a)
-  (C_ss_i (C_ss_vector_l a)))
+  (C_ss_i (C_ss_vector_L a)))
 (C_ss_make_constant 'vector-length)
-(define vector-ref C_ss_vector_ref)
+(define vector-ref C_ss_vector_R)
 (C_ss_make_constant 'vector-ref)
 
 (define (%string-equal? a b)
@@ -124,8 +124,8 @@
 
 (define (%open-file func file mode)
   (let ((port (C_ss_m_port
-                (C_fopen (C_ss_string_v file) (C_ss_string_v mode))
-                (C_ss_string_v file) (C_ss_string_v mode))))
+                (C_fopen (C_ss_string_V file) (C_ss_string_V mode))
+                (C_ss_string_V file) (C_ss_string_V mode))))
     (if port port
       (error func "cannot open" file (C_ss_errstr #f)))))
 
@@ -135,7 +135,7 @@
   (C_ss_port_close port))
 
 (define (%write-port port str)
-  (C_fwrite (C_ss_string_v str) (C_ss_string_l str) (C_ss_unbox_integer 1) (C_ss_car port)))
+  (C_fwrite (C_ss_string_V str) (C_ss_string_L str) (C_ss_unbox_integer 1) (C_ss_car port)))
 
 (define *load-verbose* #f)
 (define (load file)
