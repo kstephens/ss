@@ -243,9 +243,11 @@ ss ss_write_3(ss v, ss port, ss mode)
     fprintf(out, ">");
     break;
   case ss_t_env:
-    fprintf(out, "#<env #@%p E#@%p %ld>", v, ((ss_s_env*) v)->parent, (long) ((ss_s_env*) v)->depth);
+    fprintf(out, "#<env #@%p %ld >", v, (long) ((ss_s_env*) v)->level);
     break;
-  default:           fprintf(out, "#<??? %d #@%p>", ss_type(v), (void*) v); break;
+  default:
+    fprintf(out, "#<??? %d #@%p >", ss_type(v), (void*) v);
+    break;
   case ss_t_pair:
     fprintf(out, "(");
     while ( v != ss_nil ) {
@@ -559,6 +561,7 @@ ss ss_m_env(ss_s_env *parent)
   env->parent = parent;
   env->top_level = parent ? parent->top_level : env;
   env->depth     = parent ? parent->depth     : 0;
+  env->level     = parent ? parent->level + 1 : 0;
   env->constantExprQ = env->constantExprQAll = 0;
   env->expr      = ss_undef;
   env->error_jmp = 0; env->error_val = ss_undef;
