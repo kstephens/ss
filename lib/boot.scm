@@ -24,6 +24,11 @@
 (define (null? x) (eq? x '()))
 (C:ss_make_constant 'null?)
 
+(define <boolean> (%type #t))
+(C:ss_make_constant '<boolean>)
+(define (boolean? x) (eq? (%type x) <boolean>))
+(C:ss_make_constant 'boolean?)
+
 (define <fixnum> (%type 1))
 (C:ss_make_constant '<fixnum>)
 (define (fixnum? x) (eq? (%type x) <fixnum>))
