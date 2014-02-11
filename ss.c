@@ -1389,11 +1389,18 @@ ss ss_call_macro_char(ss_s_env *ss_env, int c, ss port)
 #define CALL_MACRO_CHAR(c) ss_call_macro_char(ss_env, c, stream)
 #include "lispread/lispread.c"
 
+ss ss_cfunc_sym(const char *name)
+{
+  char buf[128];
+  snprintf(buf, sizeof(buf) - 1, "C:%s", name);
+  return ss_box_symbol(buf);
+}
+
 void ss_init_cfunc(ss_s_env *ss_env)
 {
   ss sym;
 #define ss_cfunc_def(TYPE,NAME,ARGS)                                    \
-  sym = ss_sym(C_##NAME);                                               \
+  sym = ss_cfunc_sym(#NAME);                                            \
   ss_define(ss_env, sym, ss_m_cfunc(NAME, #NAME, TYPE " " #NAME ARGS)); \
   ss_UNBOX(symbol, sym).is_const = 1;
 #include "cfunc.def"
