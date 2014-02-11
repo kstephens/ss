@@ -22,15 +22,15 @@ void* ss_malloc(size_t s)
 
 ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 
-ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr);
+ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr);
 #define ss_expr (*_ss_expr)
-#define ss_exec(X) _ss_exec(ss_env, &(X))
+#define ss_eval(X) _ss_eval(ss_env, &(X))
 #if 1
 int ss_rewrite_verbose;
-int ss_exec_verbose;
+int ss_eval_verbose;
 ss ss_set_exec_verbose(ss x)
 {
-  ss_exec_verbose = ss_unbox(fixnum, x); return x;
+  ss_eval_verbose = ss_unbox(fixnum, x); return x;
 }
 ss ss_set_rewrite_verbose(ss x)
 {
@@ -39,7 +39,7 @@ ss ss_set_rewrite_verbose(ss x)
 static inline
 void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, int line)
 {
-  if ( ss_rewrite_verbose || ss_exec_verbose ) {
+  if ( ss_rewrite_verbose || ss_eval_verbose ) {
     fprintf(*ss_stderr, ";; rewrite: ");
     ss_write(ss_expr, ss_stderr);
     fprintf(*ss_stderr, "\n;;      at: #@%p", _ss_expr);
@@ -47,7 +47,7 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
     fprintf(*ss_stderr, "\n;;  reason: %s\n", (REASON));
   }
   ss_expr = X;
-  if ( ss_rewrite_verbose || ss_exec_verbose ) {
+  if ( ss_rewrite_verbose || ss_eval_verbose ) {
     fprintf(*ss_stderr, ";;      as: ");
     ss_write(ss_expr, ss_stderr);
     fprintf(*ss_stderr, "\n\n");
@@ -56,7 +56,7 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
 #define ss_rewrite_expr(X,REASON) _ss_rewrite_expr(&ss_expr, (X), REASON, __FUNCTION__, __LINE__)
 #else
 #define ss_rewrite_verbose 0
-#define ss_exec_verbose    0
+#define ss_eval_verbose    0
 #define ss_rewrite_expr(X,REASON) (ss_expr = (X))
 #endif
 
@@ -957,26 +957,26 @@ ss ss_apply(ss_s_env *ss_env, ss func, ss args)
   args = ss_set_type(ss_t_app, ss_list_to_vector(args));
   for ( size_t i = 0; i < ss_vector_l(args); ++ i )
     ss_vector_v(args)[i] = ss_box_quote(ss_vector_v(args)[i]);
-  return(ss_exec(args));
+  return(ss_eval(args));
 }
 
 ss_prim(apply,2,2,0,"apply func args") {
   ss_return(ss_apply(ss_env, ss_argv[0], ss_argv[1]));
 } ss_end
 
-ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
+ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
 {
   ss rtn, expr;
 #define return(X) do { rtn = (X); goto _return; } while(0)
   expr = ss_expr;
   ++ ss_env->depth;
   again:
-#define ss_exec_tail(X) do {     \
+#define ss_eval_tail(X) do {     \
     expr = *(_ss_expr = &(X));   \
     goto again;                  \
   } while(0)
   ss_constantExprQ = 0;
-  if ( ss_exec_verbose ) {
+  if ( ss_eval_verbose ) {
     fprintf(*ss_stderr, "  ;; exec %3d E#@%p #@%p ", (int) ss_env->depth, ss_env, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
   switch ( ss_type(expr) ) {
@@ -990,7 +990,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
   case ss_t_var_set:
     {
       ss_s_var_set *self = expr;
-      rtn = ss_exec(self->expr);
+      rtn = ss_eval(self->expr);
       ss_var_set(ss_env, &self->var, self->var, rtn);
       return(ss_undef);
     }
@@ -1000,7 +1000,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
     {
       ss_s_if *self = ss_expr;
       ss *subexpr;
-      rtn = ss_exec(self->t);
+      rtn = ss_eval(self->t);
       subexpr = rtn != ss_f ? &self->a : &self->b;
       if ( 0 && ss_constantExprQ )
         ss_rewrite_expr(*subexpr, rtn != ss_f ? "constant test is true" : "constant test is false");
@@ -1013,8 +1013,8 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
     {
       size_t i;
       for ( i = 0; i < ss_vector_l(expr) - 1; ++ i )
-        ss_exec(ss_vector_v(expr)[i]);
-      ss_exec_tail(ss_vector_v(expr)[i]);
+        ss_eval(ss_vector_v(expr)[i]);
+      ss_eval_tail(ss_vector_v(expr)[i]);
     }
   case ss_t_lambda:
     {
@@ -1042,12 +1042,12 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
 
     if ( ss_vector_l(expr) < 1 ) return(ss_error(ss_env, "apply empty-vector", expr));
 
-    rtn = ss_exec(ss_vector_v(expr)[0]);
+    rtn = ss_eval(ss_vector_v(expr)[0]);
 
     const_argsQ = 1;
     ss_argv = ss_malloc(sizeof(ss_argv[0]) * (ss_argc + 1)); // +1 restarg.
     for ( size_t i = 0; i < ss_argc; i ++ ) {
-      ss_argv[i] = ss_exec(ss_vector_v(expr)[i + 1]);
+      ss_argv[i] = ss_eval(ss_vector_v(expr)[i + 1]);
       const_argsQ &= ss_constantExprQ;
     }
     ss_constantExprQ = 0;
@@ -1056,7 +1056,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
     case ss_t_prim:
       {
         ss result = (ss_UNBOX(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
-        if ( ss_exec_verbose ) {
+        if ( ss_eval_verbose ) {
           if ( const_argsQ ) fprintf(*ss_stderr, "    ;; const_argsQ %s\n", ss_UNBOX(prim, rtn)->no_side_effect ? "no-side-effect" : "");
         }
         if ( (ss_constantExprQ = const_argsQ && ss_UNBOX(prim, rtn)->no_side_effect) )
@@ -1086,7 +1086,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
           env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
           env->argc ++;
         }
-        if ( ss_exec_verbose ) {
+        if ( ss_eval_verbose ) {
           fprintf(*ss_stderr, "    ;; apply closure:\n");
           fprintf(*ss_stderr, "    ;;   args: (");
           ss_write_vec(env->argc, env->argv, ss_stderr);
@@ -1094,7 +1094,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
           ss_write(self, ss_stderr);
           fprintf(*ss_stderr, "\n");
         }
-        if ( ss_exec_verbose ) {
+        if ( ss_eval_verbose ) {
           size_t i;
           fprintf(*ss_stderr, "    ;; binding:\n");
           for ( i = 0; i < env->argc; ++ i ) {
@@ -1107,7 +1107,7 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
         }
 
         ss_env = env;
-        ss_exec_tail(self->body);
+        ss_eval_tail(self->body);
       }
       break;
     default:
@@ -1119,9 +1119,9 @@ ss _ss_exec(ss_s_env *ss_env, ss *_ss_expr)
     ss_constantExprQ = ss_literalQ(expr);
   }
 #undef return
-#undef ss_exec_tail
+#undef ss_eval_tail
   _return:
-  if ( ss_exec_verbose ) {
+  if ( ss_eval_verbose ) {
     fprintf(*ss_stderr, "  ;; exec %3d result expr: ", (int) ss_env->depth); ss_write(ss_expr, ss_stderr); fprintf(*ss_stderr, "\n");
     fprintf(*ss_stderr, "  ;; exec %3d result  val: ", (int) ss_env->depth);
     ss_write(rtn, ss_stderr);
@@ -1216,7 +1216,7 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
     }
 
     value = ss_undef;
-    value = ss_exec(expr);
+    value = ss_eval(expr);
 
     if ( prompt != ss_f ) {
       fprintf(*ss_stderr, ";; rewrite => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
@@ -1307,7 +1307,7 @@ int main(int argc, char **argv)
 ss ss_call_macro_char(ss_s_env *ss_env, int c, ss port)
 {
   ss expr = ss_cons(ss_sym(ss_call_macro_char), ss_cons(ss_box_char(c), ss_cons(port, ss_nil)));
-  return ss_exec(expr);
+  return ss_eval(expr);
 }
 
 #define VALUE ss
