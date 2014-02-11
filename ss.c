@@ -1045,6 +1045,8 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
       goto again;
     }
     expr = ss_list_to_vector(expr);
+    /* FALL THROUGH */
+  case ss_t_vector: /* FIXME: Some syntaxes expand into vectors. */
     ss_set_type(ss_t_app, expr);
     ss_rewrite_expr(expr, "application vector");
     /* FALL THROUGH */
