@@ -3,6 +3,11 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h> /* memcpy(), strerror() */
+#if 1 /* DARWIN */
+#define _DONT_USE_CTYPE_INLINE_ 1
+#define _ANSI_SOURCE 1
+#endif
+#include <ctype.h>
 #include <assert.h>
 
 ss_s_env *ss_top_level_env, *ss_current_env;
