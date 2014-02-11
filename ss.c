@@ -5,6 +5,7 @@
 #include <string.h> /* memcpy() */
 #include <assert.h>
 
+ss_s_env *ss_top_level_env, *ss_current_env;
 FILE **ss_stdin = &stdin, **ss_stdout = &stdout, **ss_stderr = &stderr;
 ss ss_write(ss obj, ss port);
 ss ss_write_3(ss v, ss port, ss mode);
@@ -92,6 +93,7 @@ void ss_error_init(ss_s_env *ss_env, jmp_buf *jb)
 ss ss_error_raise(ss_s_env *ss_env, ss val)
 {
   ss_s_env *e = ss_env;
+  if ( ! e ) e = ss_current_env;
   while ( e && ! e->error_jmp ) e = e->parent;
   if ( ! e ) {
     fprintf(*ss_stderr, "ss: no error catch: aborting\n");
@@ -971,6 +973,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
   expr = ss_expr;
   ++ ss_env->depth;
   again:
+  ss_current_env = ss_env;
 #define ss_eval_tail(X) do {     \
     expr = *(_ss_expr = &(X));   \
     goto again;                  \
@@ -1288,7 +1291,7 @@ int main(int argc, char **argv)
   ss_s_env *ss_env;
   GC_INIT();
   // GC_register_displacement(sizeof(ss) * 2);
-  ss_env = ss_m_env(0);
+  ss_top_level_env = ss_current_env = ss_env = ss_m_env(0);
   ss_init_const(ss_env);
   ss_init_symbol(ss_env);
   ss_init_port(ss_env);
