@@ -781,19 +781,6 @@ ss_prim(ss_ungetc,2,2,0,"port c")
 ss_end
 
 ss ss_read(ss_s_env *ss_env, ss port);
-ss_prim(read,0,1,0,"_read port")
-{
-  ss_return(ss_read(ss_env, ss_argc > 0 ? ss_argv[0] : ss_stdin));
-}
-ss_end
-
-ss_prim(write,1,2,0,"write object")
-  ss_write_3(ss_argv[0], ss_argc > 1 ? ss_argv[1] : ss_stdout, ss_sym(write));
-ss_end
-
-ss_prim(display,1,2,0,"display object")
-  ss_write_3(ss_argv[0], ss_argc > 1 ? ss_argv[1] : ss_stdout, ss_sym(display));
-ss_end
 
 ss_prim(newline,0,1,0,"newline")
   FILE **out = ss_argc > 0 ? ss_argv[0] : ss_stdout;
@@ -857,20 +844,6 @@ ss_syntax(begin,0,-1,0,"begin body...") {
     ss_return(ss_set_type(ss_t_begin, ss_vecnv(ss_argc, ss_argv)));
   }
 } ss_end
-
-ss_prim(cons,2,2,0,"cons car cdr")
-  ss_return(ss_cons(ss_argv[0], ss_argv[1]));
-ss_end
-
-ss_prim(car,1,1,1,"car pair")
-  ss_typecheck(ss_t_pair,ss_argv[0]);
-  ss_return(ss_CAR(ss_argv[0]));
-ss_end
-
-ss_prim(cdr,1,1,1,"cdr pair")
-  ss_typecheck(ss_t_pair,ss_argv[0]);
-  ss_return(ss_CDR(ss_argv[0]));
-ss_end
 
 static
 ss ss_to_flonum(ss x)
