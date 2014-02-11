@@ -973,7 +973,8 @@ ss_prim(apply,2,2,0,"apply func args") {
 } ss_end
 
 ss_prim(eval,1,2,0,"eval expr env?") {
-  ss_return(_ss_eval(ss_argc > 1 ? ss_argv[1] : ss_top_level_env, &ss_argv[0]));
+  ss expr = ss_argv[0];
+  ss_return(_ss_eval(ss_argc > 1 ? ss_argv[1] : ss_top_level_env, &expr));
 } ss_end
 
 ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
