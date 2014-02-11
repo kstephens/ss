@@ -6,37 +6,37 @@ Implements lazy, threaded expression rewriting with constant-folding.
 
 ## Syntax
 
-   (define VAR VALUE)
-   (set! VAR VALUE)
-   (lambda FORMALS . BODY)
-   (let BINDINGS . BODY)
-   (quote DATA)
+    (define VAR VALUE)
+    (set! VAR VALUE)
+    (lambda FORMALS . BODY)
+    (let BINDINGS . BODY)
+    (quote DATA)
 
 ## Primitives
 
-   (cons A B)
-   (car P)
-   (cdr P)
-   (+ x...)
-   (- x)
-   (- x y...)
-   (* x...)
-   (/ x)
-   (/ x...)
-   (write OBJ . PORT)
-   (display OBJ . PORT)
-   (newline . PORT)
-   (read . PORT)
+    (cons A B)
+    (car P)
+    (cdr P)
+    (+ x...)
+    (- x)
+    (- x y...)
+    (* x...)
+    (/ x)
+    (/ x...)
+    (write OBJ . PORT)
+    (display OBJ . PORT)
+    (newline . PORT)
+    (read . PORT)
 
 ## Values
 
-   integers (immediate fixnum)
-   reals (boxed flonum)
-   strings
-   characters (immediate)
-   vectors
-   pairs
-   booleans
+* Integer (immediate fixnum)
+* Real (boxed flonum)
+* String
+* Character (immediate)
+* Vector
+* Pair
+* Booleans
 
 ## Features
 
