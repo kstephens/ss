@@ -138,11 +138,12 @@
   (C_fwrite (C_ss_string_V str) (C_ss_string_L str) (C_ss_unbox_integer 1) (C_ss_car port)))
 
 (define *load-verbose* #f)
-(define (load file)
+(define (load-file file)
   (let ((port (open-read-file file)))
     (let ((result (C_ss_repl &env port (if *load-verbose* ss_stderr #f) #f #f)))
       (close-port port)
       result)))
+(define load load-file)
 
 (define (%define-macro name . form)
   (if (pair? name)
