@@ -23,27 +23,48 @@ Implements lazy, threaded expression rewriting with constant-folding.
    (* x...)
    (/ x)
    (/ x...)
-   (write OBJ)
-   (newline)
-   (read)
+   (write OBJ . PORT)
+   (display OBJ . PORT)
+   (newline . PORT)
+   (read . PORT)
 
 ## Values
 
-   integers
-   reals
+   integers (immediate fixnum)
+   reals (boxed flonum)
    strings
-   characters
+   characters (immediate)
    vectors
    pairs
    booleans
 
+## Features
+
+* Eval-by-reference: rewrites s-expressions during evaluation.
+* Automatically generates C function callables from CPP output of ss.c.
+* Simple macros.
+
 ## Build
 
-   make
+    $ make
+     
+## Test
 
-Requires perl and BDWGC installed.
+    $ ./sssh
+     ss> (load "t/test.scm")
+
+## Portability
+
+* 64-bit Linux
+* 64-bit OS X
+
+## Dependencies
+
+* perl
+* rlwrap
+* BDW GC
 
 ## Run
 
-   ./ss
+    $ ./sssh
 
