@@ -62,7 +62,7 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
 
 ss ss_set_type(ss_e_type type, ss obj)
 {
-  ((ss_fixnum_t *) obj)[-1] = type;
+  ((ss*) obj)[-1] = (ss) type;
   return obj;
 }
 
