@@ -1397,10 +1397,17 @@ ss ss_cfunc_sym(const char *name)
 
 void ss_init_cfunc(ss_s_env *ss_env)
 {
-  ss sym;
-#define ss_cfunc_def(TYPE,NAME,ARGS)                                    \
-  sym = ss_cfunc_sym(#NAME);                                            \
-  ss_define(ss_env, sym, ss_m_cfunc(NAME, #NAME, TYPE " " #NAME ARGS)); \
-  ss_UNBOX(symbol, sym).is_const = 1;
+  static struct {
+    const char *rtn, *name, *args, *desc;
+    void *ptr;
+  } inits[] = {
+#define ss_cfunc_def(TYPE,NAME,ARGS) { TYPE, #NAME, ARGS, TYPE " " #NAME ARGS, &NAME },
 #include "cfunc.def"
+    { 0 }
+  };
+  for ( int i = 0; inits[i].rtn; ++ i ) {
+    ss sym = ss_cfunc_sym(inits[i].name);
+    ss_define(ss_env, sym, ss_m_cfunc(inits[i].ptr, inits[i].name, inits[i].desc));
+    ss_UNBOX(symbol, sym).is_const = 1;
+  }
 }
