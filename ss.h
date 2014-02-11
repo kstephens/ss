@@ -79,8 +79,8 @@ ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 
 #define ss_UNBOX_char(X)        (((ss_fixnum_t) (X)) >> 1)
 #define ss_BOX_char(X)   ((ss) ((((ss_fixnum_t) (X)) & 0xff) << 1))
-ss  ss_box_char(int _v);
-int ss_unbox_char(ss v);
+ss  ss_c(int _v);
+int ss_C(ss v);
 
 static inline
 ss_e_type ss_type(ss x)
@@ -174,7 +174,7 @@ char  *ss_string_V(ss x) { return ((ss_s_string*)(x))->v; }
 static inline
 size_t ss_string_L(ss x) { return ((ss_s_string*)(x))->l; }
 static inline
-ss     ss_string_R(ss x, ss i) { return ss_box_char(((ss_s_string*)(x))->v[ss_I(i)]); }
+ss     ss_string_R(ss x, ss i) { return ss_c(((ss_s_string*)(x))->v[ss_I(i)]); }
 
 ss ss_strn(size_t l);
 
