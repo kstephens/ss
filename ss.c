@@ -1099,7 +1099,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr)
         env->argv = ss_argv;
         if ( self->rest_i >= 0 ) {
           env->argv[self->rest_i] = ss_listnv(ss_argc - self->rest_i, env->argv + self->rest_i);
-          env->argc ++;
+          env->argc = self->rest_i + 1;
         }
         if ( ss_eval_verbose ) {
           fprintf(*ss_stderr, "    ;; apply closure:\n");
