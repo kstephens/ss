@@ -305,21 +305,25 @@ ss ss_box_flonum(ss_flonum_t v)
   self->value = v;
   return self;
 }
-ss ss_r(ss v)
-{
-  return ss_box_flonum(*(double*) &v);
-}
 
 ss_flonum_t ss_unbox_flonum(ss v)
 {
   ss_typecheck(ss_t_flonum, v);
   return ss_UNBOX_flonum(v);
 }
+
+ss ss_r(ss v)
+{
+  ss x[2] = { 0, 0 };
+  x[0] = v;
+  return ss_box_flonum(*(ss_flonum_t*) &x);
+}
+
 ss ss_R(ss v)
 {
-  ss rtn;
+  ss rtn[2] = { 0, 0 };
   *((ss_flonum_t*) &rtn) = ss_unbox_flonum(v);
-  return rtn;
+  return rtn[0];
 }
 
 ss ss_get(ss o, ss i)
