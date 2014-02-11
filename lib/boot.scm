@@ -8,78 +8,78 @@
 (define != _NE)
 (define = _EQ)
 
-(define eq? C_ss_eqQ)
-(C_ss_make_constant 'eq?)
+(define eq? C:ss_eqQ)
+(C:ss_make_constant 'eq?)
 
 (define %unspec (if #f #t))
-(C_ss_make_constant '%unspec)
+(C:ss_make_constant '%unspec)
 
 (define (not x) (if x #f #t))
 
-(define (%type x) (C_ss_i (C_ss_type x)))
-(C_ss_make_constant '%type)
+(define (%type x) (C:ss_i (C:ss_type x)))
+(C:ss_make_constant '%type)
 
 (define <null> (%type '()))
-(C_ss_make_constant '<null>)
+(C:ss_make_constant '<null>)
 (define (null? x) (eq? x '()))
-(C_ss_make_constant 'null?)
+(C:ss_make_constant 'null?)
 
 (define <fixnum> (%type 1))
-(C_ss_make_constant '<fixnum>)
+(C:ss_make_constant '<fixnum>)
 (define (fixnum? x) (eq? (%type x) <fixnum>))
-(C_ss_make_constant 'fixnum?)
+(C:ss_make_constant 'fixnum?)
 
 (define <flonum> (%type 1.23))
-(C_ss_make_constant '<flonum>)
+(C:ss_make_constant '<flonum>)
 (define (flonum? x) (eq? (%type x) <flonum>))
-(C_ss_make_constant 'flonum?)
+(C:ss_make_constant 'flonum?)
 
 (define integer? fixnum?)
-(C_ss_make_constant 'integer?)
+(C:ss_make_constant 'integer?)
 
 (define (real? x)
   (if (fixnum? x) #t (flonum? x)))
-(C_ss_make_constant 'number?)
+(C:ss_make_constant 'number?)
 
 (define number? real?)
-(C_ss_make_constant 'real?)
+(C:ss_make_constant 'real?)
 
 (define <pair> (%type '(a cons)))
-(C_ss_make_constant '<pair>)
+(C:ss_make_constant '<pair>)
 (define (pair? x) (eq? (%type x) <pair>))
-(C_ss_make_constant 'pair?)
+(C:ss_make_constant 'pair?)
 
 (define <string> (%type "string"))
-(C_ss_make_constant '<string>)
+(C:ss_make_constant '<string>)
 (define (string? x) (eq? (%type x) <string>))
-(C_ss_make_constant 'string?)
+(C:ss_make_constant 'string?)
 
 (define <symbol> (%type 'symbol))
-(C_ss_make_constant '<symbol>)
+(C:ss_make_constant '<symbol>)
 (define (symbol? x) (eq? (%type x) <symbol>))
-(C_ss_make_constant 'symbol?)
+(C:ss_make_constant 'symbol?)
 
 (define <char> (%type #\a))
-(C_ss_make_constant '<char>)
+(C:ss_make_constant '<char>)
 (define (char? x) (eq? (%type x) <char>))
-(C_ss_make_constant 'char?)
+(C:ss_make_constant 'char?)
 
 (define <vector> (%type '#(1 2)))
-(C_ss_make_constant '<vector>)
+(C:ss_make_constant '<vector>)
 (define (vector? x) (eq? (%type x) <vector>))
-(C_ss_make_constant 'vector?)
+(C:ss_make_constant 'vector?)
 
 (define (string-length a)
-  (C_ss_i (C_ss_string_L a)))
-(C_ss_make_constant 'string-length)
-(define string-ref C_ss_string_R)
-(C_ss_make_constant 'string-ref)
+  (C:ss_i (C:ss_string_L a)))
+(C:ss_make_constant 'string-length)
+(define string-ref C:ss_string_R)
+(C:ss_make_constant 'string-ref)
 
 (define (vector-length a)
-  (C_ss_i (C_ss_vector_L a)))
-(C_ss_make_constant 'vector-length)
-(define vector-ref C_ss_vector_R)
-(C_ss_make_constant 'vector-ref)
+  (C:ss_i (C:ss_vector_L a)))
+(C:ss_make_constant 'vector-length)
+(define vector-ref C:ss_vector_R)
+(C:ss_make_constant 'vector-ref)
 
 (define (%string-equal? a b)
   (let ((i (- (string-length a) 1)) (e? #f))
@@ -104,7 +104,7 @@
     (if (>= i 0) (e? i) #t)))
 
 (define (list . l) l)
-(C_ss_make_constant 'list)
+(C:ss_make_constant 'list)
 (define (%append-2 a b)
   (if (null? a) b
     (cons (car a) (%append-2 (cdr a) b))))
@@ -120,36 +120,36 @@
        (map proc (cdr args)))))
 
 (define (error code . other)
-  (C_ss_error &env "" (cons code other)))
+  (C:ss_error &env "" (cons code other)))
 
 (define (%open-file func file mode)
-  (let ((port (C_ss_m_port
-                (C_fopen (C_ss_string_V file) (C_ss_string_V mode))
-                (C_ss_string_V file) (C_ss_string_V mode))))
+  (let ((port (C:ss_m_port
+                (C:fopen (C:ss_string_V file) (C:ss_string_V mode))
+                (C:ss_string_V file) (C:ss_string_V mode))))
     (if port port
-      (error func "cannot open" file (C_ss_errstr #f)))))
+      (error func "cannot open" file (C:ss_errstr #f)))))
 
 (define (open-read-file file)
   (%open-file 'open-read-file file "r"))
 (define (close-port port)
-  (C_ss_port_close port))
+  (C:ss_port_close port))
 
 (define (%write-port port str)
-  (C_fwrite (C_ss_string_V str) (C_ss_string_L str) (C_ss_unbox_integer 1) (C_ss_car port)))
+  (C:fwrite (C:ss_string_V str) (C:ss_string_L str) (C:ss_unbox_integer 1) (C:ss_car port)))
 
 (define *load-verbose* #f)
 (define (load-file file)
   (let ((port (open-read-file file)))
-    (let ((result (C_ss_repl &env port (if *load-verbose* ss_stderr #f) #f #f)))
+    (let ((result (C:ss_repl &env port (if *load-verbose* ss_stderr #f) #f #f)))
       (close-port port)
       result)))
 (define load load-file)
 
 (define (%define-macro name . form)
   (if (pair? name)
-    (list 'C_ss_make_syntax (list 'quote (car name)) (list 'lambda (cdr name) (cons 'begin form)))
-    (list 'C_ss_make_syntax (list 'quote name) (car form))))
-(C_ss_make_syntax 'define-macro %define-macro)
+    (list 'C:ss_make_syntax (list 'quote (car name)) (list 'lambda (cdr name) (cons 'begin form)))
+    (list 'C:ss_make_syntax (list 'quote name) (car form))))
+(C:ss_make_syntax 'define-macro %define-macro)
 
 (load "lib/cxr.scm")
 (load "lib/quasiquote.scm")
@@ -160,7 +160,7 @@
     `(define-constant ,(car name) (lambda ,(cdr name) ,@body))
     `(begin
       (define ,name ,@body)
-      (C_ss_make_constant ',name))))
+      (C:ss_make_constant ',name))))
 
 (define-constant _DIV2 _DIV)
 (define-constant (_DIV x y)
@@ -168,7 +168,7 @@
     (if (fixnum? y)
       (if (_EQ (_MOD x y) 0)
         (_DIV2 x y)
-        (_DIV2 (C_ss_to_flonum x) y))
+        (_DIV2 (C:ss_to_flonum x) y))
       (_DIV2 x y))
     (_DIV2 x y)))
 
@@ -176,7 +176,7 @@
   (error 'read "invalid read macro char" c))
 
 (define (%gensym x)
-  (C_ss_box_symbol (C_ss_I 0)))
+  (C:ss_box_symbol (C:ss_I 0)))
 
 (define (%or tmp terms)
   (if (null? terms) #f
