@@ -19,7 +19,8 @@
       (if (number? o)    o
         (if (string? o)  o
           (if (char? o)  o
-            (list 'quote o)))))))
+            (if (boolean? o) o
+              (list 'quote o))))))))
 (define (%quasiquote expr)
   (if *quasiquote-debug*
     (begin (display "  (quasiquote ")(write expr)(display ")")(newline)))
