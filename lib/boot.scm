@@ -126,6 +126,18 @@
 
 (define (list->vector l)
   (C:ss_list_to_vector l))
+(define (vector->list v)
+  (let ( (v->l! #f)
+         (l (list #f)))
+    (set! v->l!
+      (lambda (l i)
+        (if (< i (vector-length v))
+          (begin
+            (set-cdr! l (cons (vector-ref v i) '()))
+            (v->l! (cdr l) (+ i 1))))))
+    (v->l! l 0)
+    (cdr l)))
+
 (define (vector->list! v l)
   (let ((v->l! #f))
     (set! v->l!
