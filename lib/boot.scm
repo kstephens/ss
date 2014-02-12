@@ -252,6 +252,8 @@
       (C:ss_make_constant ',name))))
 
 (define-constant _DIV2 _DIV)
+(define-constant %fixnum-div _DIV2)
+(define-constant %fixnum-mod _MOD)
 (define-constant (_DIV x y)
   (if (fixnum? x)
     (if (fixnum? y)
