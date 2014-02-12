@@ -2,23 +2,48 @@
 (define (truncate-remainder n1 n2) (%fixnum-mod n1 n2))
 (define (abs x) (if (< x 0) (- x) x))
 
-(define %+ +)
-(define (+ . vals)
+(define-constant %+ +)
+(define-constant (+ . vals)
   (%reduce %+ 0 vals))
 
-(define %- -)
-(define (- x . vals)
+(define-constant %- -)
+(define-constant (- x . vals)
   (if (null? vals)
-    (_NEG x)
+    (%neg x)
     (%- x (%reduce %+ 0 vals))))
 
-(define %* *)
-(define (* . vals)
+(define-constant %* *)
+(define-constant (* . vals)
   (%reduce %* 1 vals))
 
-(define %/ /)
-(define (/ x . vals)
+(define-constant %/ /)
+(define-constant (/ x . vals)
   (if (null? vals)
-    (_DIV 1.0 x)
+    (%/ 1.0 x) ;; rational
     (%/ x (%reduce %* 1 vals))))
 
+(define-constant (%all-pairs? f x l)
+  (if (null? l) #t
+    (if (f x (car l))
+      (%all-pairs? f (car l) (cdr l))
+      #f)))
+
+(define %= =)
+(define-constant (= x . vals)
+  (%all-pairs? %= x vals))
+
+(define %< <)
+(define-constant (< x . vals)
+  (%all-pairs? %< x vals))
+
+(define %> >)
+(define-constant (> x . vals)
+  (%all-pairs? %> x vals))
+
+(define %<= <=)
+(define-constant (<= x . vals)
+  (%all-pairs? %<= x vals))
+
+(define %>= >=)
+(define-constant (>= x . vals)
+  (%all-pairs? %>= x vals))
