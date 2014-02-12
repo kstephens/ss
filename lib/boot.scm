@@ -8,6 +8,7 @@
 (define - _SUB)
 (define * _MUL)
 (define (/ a b) (_DIV a b))
+(define %neg _NEG)
 (define < _LT)
 (define > _GT)
 (define <= _LE)
