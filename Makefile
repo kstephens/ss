@@ -32,27 +32,23 @@ boot/cfunc.def
 
 all : ss
 
-boot/sym.def    : gen/sym.def.pl
+boot/sym.def    : gen/sym.def.gen
 	perl $< /dev/null >$@
-boot/prim.def   : gen/prim.def.pl
+boot/prim.def   : gen/prim.def.gen
 	perl $< /dev/null >$@
-boot/syntax.def : gen/syntax.def.pl
+boot/syntax.def : gen/syntax.def.gen
 	perl $< /dev/null >$@
-boot/cfunc.def  : gen/cfunc.def.pl
+boot/cfunc.def  : gen/cfunc.def.gen
 	perl $< /dev/null >$@
 
-gen/sym.def : Makefile gen/sym.def.pl $(CFILES) gen/prim.def gen/syntax.def gen/cfunc.def
-	$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | perl $@.pl > $@
-#	open $@
-
-gen/prim.def : Makefile gen/prim.def.pl $(CFILES)
-	$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) | perl $@.pl > $@
-
-gen/syntax.def : Makefile gen/syntax.def.pl $(CFILES)
-	$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) | perl $@.pl > $@
-
-gen/cfunc.def : Makefile gen/cfunc.def.pl $(CFILES)
-	$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | perl $@.pl > $@
+gen/sym.def : Makefile gen/sym.def.gen $(CFILES) gen/prim.def gen/syntax.def gen/cfunc.def
+	$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | perl $@.gen > $@
+gen/prim.def : Makefile gen/prim.def.gen $(CFILES)
+	$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) | perl $@.gen > $@
+gen/syntax.def : Makefile gen/syntax.def.gen $(CFILES)
+	$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) | perl $@.gen > $@
+gen/cfunc.def : Makefile gen/cfunc.def.gen $(CFILES)
+	$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | perl $@.gen > $@
 
 lispread/lispread.c:
 	git submodule init
