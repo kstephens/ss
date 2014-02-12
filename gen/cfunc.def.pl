@@ -12,7 +12,7 @@ while ( <> ) {
     $func = $2;
     $args = $3;
     next if ( $type =~ /^(typedef|__inline|inline)$/ );
-    next if ( $func =~ /^(__typeof__|alloca|GC_win32_free_heap|zopen)$/ );
+    next if ( $func =~ /^(__typeof__|alloca|GC_win32_free_heap|zopen|add_profil|profil|unwhiteout)$/ );
     next if ( /^(ss_prim|ss_syntax|ss_end)/ );
     if ( 0 ) {
       print STDERR "  line = ", $_, "\n";
