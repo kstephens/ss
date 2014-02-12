@@ -1,10 +1,14 @@
 #!/usr/bin/env perl
 %syms = ();
 while ( <> ) {
-  while ( $_ =~ s/,\s$/, / ) {
+  while ( $_ =~ s/,\s*$/,/ ) {
     chomp;
     $_ .= <>;
   }
+  # while ( $_ =~ s/\)\s*;\s*$/\);\n/ ) {
+  #   chomp;
+  #   $_ .= <>;
+  # }
   chomp;
   s/^extern\s+//;
   s/^(inline|__inline)\s+//;
