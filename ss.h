@@ -152,9 +152,6 @@ typedef struct ss_s_cons {
 } ss_s_cons;
 #define ss_CAR(X) (((ss_s_cons*) (X))->a)
 #define ss_CDR(X) (((ss_s_cons*) (X))->d)
-ss ss_cons(ss _car, ss _cdr);
-ss ss_car(ss c);
-ss ss_cdr(ss c);
 
 typedef struct ss_s_vector {
   ss *v;
