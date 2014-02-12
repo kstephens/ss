@@ -69,7 +69,19 @@ typedef void *ss;
 typedef size_t  ss_word_t;
 typedef ssize_t ss_fixnum_t;
 
-extern ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
+#define ss_BOX_fixnum(X)   ((ss) ((((ss_fixnum_t)(X)) << 1) | 1))
+#define ss_UNBOX_fixnum(X)        (((ss_fixnum_t)(X)) >> 1)
+
+#define ss_BOX_char(X)   ((ss) (((((ss_fixnum_t) (X)) & 0xff) + 16) << 1))
+#define ss_UNBOX_char(X)        ((((ss_fixnum_t) (X)) >> 1) - 16)
+
+#define ss_nil    ((ss)0)
+#define ss_undef  ((ss)2)
+#define ss_unspec ((ss)4)
+#define ss_t      ((ss)6)
+#define ss_f      ((ss)8)
+#define ss_eos    ((ss)10)
+extern ss_e_type ss_immediate_types[];
 
 static inline
 ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
@@ -79,26 +91,26 @@ ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 #define ss_unbox(T,X)ss_PASTE2(ss_unbox_,T)(X)
 #define ss_UNBOX(T,X)ss_PASTE2(ss_UNBOX_,T)(X)
 
-#define ss_UNBOX_char(X)        (((ss_fixnum_t) (X)) >> 1)
-#define ss_BOX_char(X)   ((ss) ((((ss_fixnum_t) (X)) & 0xff) << 1))
-ss  ss_c(int _v);
-int ss_C(ss v);
+static inline
+ss  ss_c(int c) { return ss_BOX_char(c); }
+int ss_C(ss v)  { return ss_UNBOX_char(v); }
 
 static inline
 ss_e_type ss_type(ss x)
 {
-  return ((ss_fixnum_t) x) & 1 ? ss_t_fixnum : 
+  return                 x == 0 ? ss_t_null :
+          ((ss_word_t) x) & 1   ? ss_t_fixnum :
+          ((ss_word_t) x) <= 16 ? ss_immediate_types[(ss_word_t) x] :
           x <= ss_BOX_char(255) ? ss_t_char :
-                                  (ss_fixnum_t) (((ss*) x)[-1]);
+                                 (ss_fixnum_t) (((ss*) x)[-1]);
 }
+
 static inline
 int ss_literalQ(ss X)
 {
   return ss_t_LITERAL_MIN <= ss_type(X) && ss_type(X) <= ss_t_LITERAL_MAX;
 }
 
-#define ss_UNBOX_fixnum(X)        (((ss_fixnum_t)(X)) >> 1)
-#define ss_BOX_fixnum(X)   ((ss) ((((ss_fixnum_t)(X)) << 1) | 1))
 ss ss_box_fixnum(ss_fixnum_t _v);
 ss_fixnum_t ss_unbox_fixnum(ss v);
 static inline
@@ -279,8 +291,6 @@ typedef struct ss_s_port {
   ss mode;
 } ss_s_port;
 #define ss_UNBOX_port(X) (*(ss_s_port*)(X))
-
-extern ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f;
 
 #ifndef ss_sym
 #define ss_sym(X)ss_PASTE2(_ss_sym_,X)
