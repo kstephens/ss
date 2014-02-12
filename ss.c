@@ -165,10 +165,16 @@ ss ss_error(ss_s_env *ss_env, const char *format, ss obj, ...)
 }
 
 static inline
+ss ss_typecheck_error(ss v)
+{
+  return ss_error(ss_current_env, "typecheck", v);
+}
+
+static inline
 ss ss_typecheck(ss_e_type t, ss v)
 {
   if ( ss_type(v) != t )
-    return ss_error(ss_current_env, "typecheck", v);
+    return ss_typecheck_error(v);
   return v;
 }
 
@@ -890,7 +896,7 @@ ss ss_to_flonum(ss x)
   switch ( ss_type(x)) {
   case ss_t_flonum:  return x;
   case ss_t_fixnum:  return ss_box(flonum, ss_I(x));
-  default:           abort();
+  default:           return ss_typecheck_error(x);
   }
 }
 
@@ -905,7 +911,7 @@ void ss_number_coerce_2(ss *argv)
       break;
     case ss_t_fixnum:
       break;
-    default: abort();
+    default: ss_typecheck_error(argv[1]);
     }
     break;
   case ss_t_flonum:
@@ -914,10 +920,10 @@ void ss_number_coerce_2(ss *argv)
       argv[1] = ss_box(flonum, ss_UNBOX(fixnum, argv[1]));
       break;
     case ss_t_flonum: break;
-    default: abort();
+    default: ss_typecheck_error(argv[1]);
     }
     break;
-  default: abort();
+  default: ss_typecheck_error(argv[1]);
   }
 }
 
@@ -967,7 +973,7 @@ ss_end
       ss_return(ss_box(fixnum, ss_UNBOX(fixnum,ss_argv[0]) OP ss_UNBOX(fixnum,ss_argv[1]))); \
     case ss_t_flonum:                                                   \
       ss_return(ss_box(flonum, ss_UNBOX(flonum,ss_argv[0]) OP ss_UNBOX(flonum,ss_argv[1]))); \
-    default: abort();                                                   \
+    default: ss_typecheck_error(ss_argv[0]);                            \
     }                                                                   \
   }                                                                     \
   ss_end
@@ -980,7 +986,7 @@ ss_end
       ss_return(ss_box(fixnum, OP ss_UNBOX(fixnum,ss_argv[0])));        \
     case ss_t_flonum:                                                   \
       ss_return(ss_box(flonum, OP ss_UNBOX(flonum,ss_argv[0])));        \
-    default: abort();                                                   \
+    default: ss_typecheck_error(ss_argv[0]);                            \
     }                                                                   \
   }                                                                     \
   ss_end
@@ -994,7 +1000,7 @@ ss_end
       ss_return(ss_box(boolean, ss_UNBOX(fixnum,ss_argv[0]) OP ss_UNBOX(fixnum,ss_argv[1]))); \
     case ss_t_flonum:                                                   \
       ss_return(ss_box(boolean, ss_UNBOX(flonum,ss_argv[0]) OP ss_UNBOX(flonum,ss_argv[1]))); \
-    default: abort();                                                   \
+    default: ss_typecheck_error(ss_argv[0]);                            \
     }                                                                   \
   }                                                                     \
   ss_end
