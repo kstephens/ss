@@ -435,7 +435,8 @@ ss ss_strn(size_t l)
 ss ss_strnv(size_t l, const char *v)
 {
   ss self = ss_strn(l);
-  memcpy(ss_string_V(self), v, sizeof(ss_string_V(self)[0]) * l);
+  if ( v )
+    memcpy(ss_string_V(self), v, sizeof(ss_string_V(self)[0]) * l);
   ss_string_V(self)[l] = 0;
   return self;
 }

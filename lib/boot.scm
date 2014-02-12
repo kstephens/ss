@@ -116,6 +116,8 @@
             (e? (- i 1))
             #f))))
     (if (>= i 0) (e? i) #t)))
+(define (vector-copy v)
+  (C:ss_vecnv (C:ss_vector_L v) (C:ss_vector_V v)))
 
 (define (list . l) l)
 (C:ss_make_constant 'list)
