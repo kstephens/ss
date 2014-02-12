@@ -194,6 +194,8 @@
 (load "lib/cxr.scm")
 (load "lib/quasiquote.scm")
 (define-macro quasiquote %quasiquote)
+(load "lib/string.scm")
+(load "lib/sort.scm")
 
 (define-macro (define-constant name . body)
   (if (pair? name)

@@ -1024,6 +1024,20 @@ ss ss_apply(ss_s_env *ss_env, ss func, ss args)
   return _ss_eval(ss_env, &func, args);
 }
 
+int ss_sort_cmp(void *thunk, const void *a, const void *b)
+{
+  ss ss_env = ((ss*)thunk)[0];
+  ss func   = ((ss*)thunk)[1];
+  return ss_apply(ss_env, func, ss_vec(2, *(ss*)a, *(ss*)b)) == ss_f ? 1 : -1;
+}
+
+ss ss_sort(ss_s_env *ss_env, ss v, ss cmp)
+{
+  ss thunk[] = { ss_env, cmp };
+  qsort_r(ss_vector_V(v), ss_vector_L(v), sizeof(ss), thunk, ss_sort_cmp);
+  return v;
+}
+
 ss_prim(apply,2,2,0,"apply func args") {
   ss_return(ss_apply(ss_env, ss_argv[0], ss_argv[1]));
 } ss_end
