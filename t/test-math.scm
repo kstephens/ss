@@ -23,4 +23,15 @@
 (test eq? (>= 2 2) #t)
 (test eq? (>= 2 2.0) #t)
 
+(test eq? (= 2 2 2) #t)
+(test eq? (= 2 2.0 2) #t)
+(test eq? (< 2 3 4) #t)
+(test eq? (< 2 3.0 4) #t)
+(test eq? (> 2 1 0) #t)
+(test eq? (> 2 2 2) #f)
+(test eq? (<= 2 2) #t)
+(test eq? (<= 2 2.0) #t)
+(test eq? (>= 2 2) #t)
+(test eq? (>= 2 2.0) #t)
+
 'ok
