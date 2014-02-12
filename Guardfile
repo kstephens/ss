@@ -1,43 +1,53 @@
 guard :shell do
+  watch %r{\.(def\.pl)*$} do | m |
+    $gq.go "make clean"
+    $qq.go "make test"
+  end
   watch %r{\.(c|h|def)*$} do | m |
     $gq.go "make test"
   end
-  watch 'boot.scm' do | m |
+  watch 'lib/boot.scm' do | m |
     $gq.go "make test"
   end
   watch %r{^t/test.*\.scm$} do | m |
-    $gq.go "make test TEST_FILE=#{m[0]}"
+    $gq.go "make test"
   end
   watch 'Makefile' do | m |
     $gq.go "make clean"
-    $gq.go "make test"
+    $qq.go "make test"
   end
 end
 
 require 'thread'
+require 'term/ansicolor'
 
 class GuardQueue
+  C = Term::ANSIColor
   def initialize
     @stage = [ ]
     @queue = Queue.new
   end
 
-  def msg msg
-    $stderr.puts "  GQ #{$$} #{Thread.current.object_id} #{msg}"
+  def msg str
+    $stderr.puts "\n  GQ #{$$} #{str}"
   end
+
+  def notice str; msg C.yellow(str); end
+  def error  str; msg C.red(str); end
+  def ok     str; msg C.green(str); end
 
   def go cmd
     if @stage.include? cmd
-      msg "ALREADY  #{cmd.inspect}"
+      # msg "ALREADY  #{cmd.inspect}"
     else
       @stage.unshift cmd
-      msg "STAGE    #{@stage.inspect}"
+      notice "STAGE   #{@stage.inspect}"
     end
     if @working
-      msg "WORKING  #{@working.inspect}" unless @working == cmd
+      notice "WORKING #{@working.inspect}" unless @working == cmd
     else
       while cmd = @stage.pop
-        msg "QUEUEING #{cmd.inspect}"
+        notice "QUEUEING #{cmd.inspect}"
         @queue.enq cmd
       end
     end
@@ -45,23 +55,33 @@ class GuardQueue
 
   def start!
     at_exit do
+      @stopping = true
       go :stop
+      sleep 0.5
+      @thread.kill rescue nil
+      @thread.join
     end
 
-    Thread.new do
-      msg "WAITING"
+    @thread = Thread.new do
+      notice "WAITING"
       while true
+        break if @stopping
         case cmd = @queue.deq
         when :stop
           break
         else
+          break if @stopping
           begin
             @working = cmd
-            msg "RUNNING #{cmd.inspect}"
-            `#{cmd}`
+            notice "RUNNING #{cmd.inspect}"
+            if system(cmd)
+              ok "  OK #{cmd.inspect}"
+            else
+              error "  FAILED #{cmd.inspect}"
+            end
           ensure
-            sleep 2
-            msg "   DONE #{cmd.inspect}"
+            sleep 0.5
+            # notice "   DONE #{cmd.inspect}"
             @working = nil
           end
         end

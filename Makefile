@@ -69,8 +69,12 @@ ss.s : $(EARLY_FILES) $(CFILES) $(HFILES)
 ss.i : $(EARLY_FILES) $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -E -o $@ $(CFILES) $(LIBS)
 
-TEST_FILE = t/test*.scm
+
 test : all
+	echo '(load "t/test.scm")' | ./ss
+
+TEST_FILE = t/test*.scm
+test-file : all
 	errors=0; for f in $(TEST_FILE) ;\
 	do \
           cmd="./ss < $$f" ;\
