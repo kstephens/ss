@@ -1,5 +1,13 @@
-(define + _ADD) ;; FIXME
-(define * _MUL) ;; FIXME
+(define (error code . other)
+  (C:ss_error &env "" (cons code other)))
+
+(define (apply func args)
+  (C:ss_apply &env func args))
+
+(define + _ADD)
+(define - _SUB)
+(define * _MUL)
+(define (/ a b) (_DIV a b))
 (define < _LT)
 (define > _GT)
 (define <= _LE)
@@ -252,6 +260,7 @@
         (_DIV2 (C:ss_to_flonum x) y))
       (_DIV2 x y))
     (_DIV2 x y)))
+(load "lib/math.scm")
 
 (define (ss_call_macro_char c port)
   (error 'read "invalid read macro char" c))
