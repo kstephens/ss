@@ -12,6 +12,7 @@ CFLAGS += -DNO_GC=$(NO_GC)
 else
 LIBS += -lgc
 endif
+LIBS += -lm
 
 CFILES = \
   ss.c
