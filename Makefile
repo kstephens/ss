@@ -5,8 +5,10 @@ CFLAGS += -I.
 CFLAGS += -Igen
 CFLAGS += -Iboot
 CFLAGS += -I/opt/local/include
+CFLAGS += -Wall
 CFLAGS += -Wno-deprecated-declarations
 CFLAGS += -Wno-int-to-void-pointer-cast
+CFLAGS += -Wno-unused-label
 
 LIBS += -L/opt/local/lib
 ifneq "$(NO_GC)" ""
