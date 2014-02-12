@@ -14,7 +14,7 @@ guard :shell do
   end
   watch 'Makefile' do | m |
     $gq.go "make clean"
-    $qq.go "make test"
+    $gq.go "make test"
   end
 end
 
