@@ -1,6 +1,7 @@
 #include "ss.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <math.h>
 #include <errno.h>
 #include <string.h> /* memcpy(), strerror() */
