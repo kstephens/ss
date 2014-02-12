@@ -11,6 +11,23 @@
 #include <unistd.h>
 #include <assert.h>
 
+static inline
+ss ss_get(ss o, ss i)
+{
+  return ((ss*) o)[ss_I(i)];
+}
+static inline
+ss ss_set(ss o, ss i, ss v)
+{
+  return ((ss*) o)[ss_I(i)] = v;
+}
+static inline
+ss ss_get_0(ss x) { return ((ss*)x)[0]; }
+static inline
+ss ss_get_1(ss x) { return ((ss*)x)[1]; }
+static inline
+ss ss_get_2(ss x) { return ((ss*)x)[2]; }
+
 ss_s_env *ss_top_level_env, *ss_current_env;
 FILE **ss_stdin = &stdin, **ss_stdout = &stdout, **ss_stderr = &stderr;
 ss ss_write(ss obj, ss port);
@@ -26,6 +43,18 @@ void* ss_malloc(size_t s)
   return GC_malloc(s);
 }
 #endif
+
+ss ss_memmove(ss dst, ss src, ss size)
+{
+  memmove(dst, src, ss_I(size));
+  return dst;
+}
+
+ss ss_memcmp(ss a, ss b, ss as, ss bs)
+{
+  int cmp = memcmp(a, b, ss_I(as) < ss_I(bs) ? ss_I(as) : ss_I(bs));
+  return ss_i(cmp ? (cmp < 0 ? -1 : 1) : (ss_I(as) == ss_I(bs) ? 0 : (ss_I(as) < ss_I(bs) ? -1 : 1)));
+}
 
 ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
 
@@ -383,15 +412,6 @@ ss ss_R(ss v)
   ss rtn[2] = { 0, 0 };
   *((ss_flonum_t*) &rtn) = ss_unbox_flonum(v);
   return rtn[0];
-}
-
-ss ss_get(ss o, ss i)
-{
-  return ((ss*) o)[ss_I(i)];
-}
-ss ss_set(ss o, ss i, ss v)
-{
-  return ((ss*) o)[ss_I(i)] = v;
 }
 
 ss ss_c(int _v)
