@@ -985,24 +985,38 @@ ss_syntax(DIV,1,-1,1,"/ z...")
 ss_end
 
 #define PRIM_BOP(NAME,OP)                                               \
-  ss ss_##NAME##w(ss a0, ss a1)                                         \
+  ss ss_##NAME##W(ss a0, ss a1)                                         \
   {                                                                     \
     return (ss) ( ((ss_word_t) a0) OP ((ss_word_t) a1) );               \
+  }                                                                     \
+  ss ss_##NAME##I(ss a0, ss a1)                                         \
+  {                                                                     \
+    return (ss) ( ((ss_fixnum_t) a0) OP ((ss_fixnum_t) a1) );           \
   }                                                                     \
   ss_prim(ss_##NAME,2,2,1,#OP " z...")                                  \
   ss_return(ss_##NAME(ss_argv[0], ss_argv[1]));                         \
   ss_end                                                                \
-  ss_prim(ss_##NAME##w,2,2,1,#OP " word1 word2")                        \
-    ss_return(ss_##NAME##w(ss_argv[0], ss_argv[1]));                    \
+  ss_prim(ss_##NAME##I,2,2,1,#OP " int1 int2")                        \
+    ss_return(ss_##NAME##I(ss_argv[0], ss_argv[1]));                    \
+  ss_end                                                                \
+  ss_prim(ss_##NAME##W,2,2,1,#OP " word1 word2")                        \
+    ss_return(ss_##NAME##W(ss_argv[0], ss_argv[1]));                    \
   ss_end
 
 #define PRIM_UOP(NAME,OP)                                               \
-  ss ss_##NAME##w(ss a0)                                                \
+  ss ss_##NAME##W(ss a0)                                                \
   {                                                                     \
     return (ss) (OP (ss_word_t) a0);                                    \
   }                                                                     \
-  ss_prim(ss_##NAME##w,1,1,1,#OP " word")                               \
-  ss_return(ss_##NAME##w(ss_argv[0]));                                  \
+  ss ss_##NAME##I(ss a0)                                                \
+  {                                                                     \
+    return (ss) (OP (ss_fixnum_t) a0);                                  \
+  }                                                                     \
+  ss_prim(ss_##NAME##W,1,1,1,#OP " word")                               \
+  ss_return(ss_##NAME##W(ss_argv[0]));                                  \
+  ss_end                                                                \
+  ss_prim(ss_##NAME##I,1,1,1,#OP " int")                                \
+  ss_return(ss_##NAME##I(ss_argv[0]));                                  \
   ss_end                                                                \
   ss_prim(ss_##NAME,1,1,1,#OP " z")                                     \
     ss_return(ss_##NAME(ss_argv[0]));                                   \
