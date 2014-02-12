@@ -407,6 +407,15 @@ ss_flonum_t ss_unbox_flonum(ss v)
   return ss_UNBOX_flonum(v);
 }
 
+ss_flonum_t ss_flonum_(ss v)
+{
+  switch ( ss_type(v) ) {
+  case ss_t_flonum:  return ss_UNBOX_flonum(v);
+  case ss_t_fixnum:  return ss_I(v);
+  default:           ss_typecheck_error(v); return 1.0 / 0.0;
+  }
+}
+
 ss ss_r(ss v)
 {
   ss x[2] = { 0, 0 };
@@ -1251,7 +1260,7 @@ ss_end
 ss_prim(ss_call_cfunc_double,0,5,1,"call cfunc double")
 {
 #define T double
-#define A(X) ss_unbox_flonum(X)
+#define A(X) ss_flonum_(X)
 #define R(X) ss_return(ss_box_flonum(X))
 #include "cfunc_call.h"
 #undef T
