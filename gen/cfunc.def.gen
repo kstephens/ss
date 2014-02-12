@@ -19,6 +19,11 @@ while ( <> ) {
     $args =~ s/\s*\(\s*/\(/g;
     $args =~ s/\s*\)\s*/\)/g;
     $args =~ s/\s*,\s*/,/g;
+    $args =~ s/( |\*)[a-z0-9_]+,/\1,/ig;
+    $args =~ s/( |\*)[a-z0-9_]+\)/\1\)/ig;
+    $args =~ s/ \*/\*/ig;
+    $args =~ s/\s*\)\s*/\)/g;
+    $args = '()' if ( $args eq '(void)' );
     next if ( $type =~ /^(typedef|__inline|inline)$/ );
     next if ( $func =~ /^(__typeof__|alloca|GC_win32_free_heap|zopen|add_profil|profil|unwhiteout)$/ );
     next if ( /^(ss_prim|ss_syntax|ss_end)/ );
