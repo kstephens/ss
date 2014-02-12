@@ -1,6 +1,10 @@
 #!/usr/bin/env perl
 %syms = ();
 while ( <> ) {
+  while ( $_ =~ s/,\s$/, / ) {
+    chomp;
+    $_ .= <>;
+  }
   chomp;
   s/^extern\s+//;
   s/^(inline|__inline)\s+//;
@@ -11,6 +15,10 @@ while ( <> ) {
     $type = $1;
     $func = $2;
     $args = $3;
+    $args =~ s/\b(__restrict|restrict)\b//g;
+    $args =~ s/\s*\(\s*/\(/g;
+    $args =~ s/\s*\)\s*/\)/g;
+    $args =~ s/\s*,\s*/,/g;
     next if ( $type =~ /^(typedef|__inline|inline)$/ );
     next if ( $func =~ /^(__typeof__|alloca|GC_win32_free_heap|zopen|add_profil|profil|unwhiteout)$/ );
     next if ( /^(ss_prim|ss_syntax|ss_end)/ );
