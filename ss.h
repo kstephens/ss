@@ -178,11 +178,17 @@ typedef struct ss_s_string {
   size_t l;
 } ss_s_string;
 static inline
-char  *ss_string_V(ss x) { return ((ss_s_string*)(x))->v; }
+char  *ss_string_V(ss x)
+{ return ((ss_s_string*)(x))->v; }
 static inline
-size_t ss_string_L(ss x) { return ((ss_s_string*)(x))->l; }
+size_t ss_string_L(ss x)
+{ return ((ss_s_string*)(x))->l; }
 static inline
-ss     ss_string_R(ss x, ss i) { return ss_c(((ss_s_string*)(x))->v[ss_I(i)]); }
+ss     ss_string_R(ss x, ss i)
+{ return ss_c(((ss_s_string*)(x))->v[ss_I(i)]); }
+static inline
+ss     ss_string_S(ss x, ss i, ss v)
+{ ((ss_s_string*)(x))->v[ss_I(i)] = ss_C(v); return x; }
 
 ss ss_strn(size_t l);
 

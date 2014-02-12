@@ -88,6 +88,8 @@
 (C:ss_make_constant 'string-length)
 (define string-ref C:ss_string_R)
 (C:ss_make_constant 'string-ref)
+(define string-set! C:ss_string_S)
+(C:ss_make_constant 'string-set!)
 
 (define (vector-length a)
   (C:ss_i (C:ss_vector_L a)))
