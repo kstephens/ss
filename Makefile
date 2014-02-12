@@ -81,6 +81,12 @@ ss.s : $(EARLY_FILES) $(CFILES) $(HFILES)
 ss.i : $(EARLY_FILES) $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -E -o $@ $(CFILES) $(LIBS)
 
+system-defines :
+	$(CC) $(CFLAGS) -E -dM - < /dev/null | sort
+
+prog-defines :
+	$(CC) $(CFLAGS) -E -dM $(CFILES) | sort
+
 test : all
 	echo '(load "t/test.scm")' | ./ss
 
