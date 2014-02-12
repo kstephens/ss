@@ -56,6 +56,8 @@
 (define cons C:ss_cons)
 (define car C:ss_car)
 (define cdr C:ss_cdr)
+(define set-car! C:ss_set_carE)
+(define set-cdr! C:ss_set_cdrE)
 
 (define <string> (%type "string"))
 (C:ss_make_constant '<string>)
