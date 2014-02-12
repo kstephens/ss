@@ -38,6 +38,7 @@ ss ss_write_3(ss v, ss port, ss mode);
 size_t ss_malloc_bytes, ss_malloc_objects;
 #if 0
 #undef ss_malloc
+static inline
 void* ss_malloc(size_t s)
 {
   ss_malloc_bytes += s;
@@ -909,7 +910,7 @@ ss_syntax(begin,0,-1,0,"begin body...") {
   }
 } ss_end
 
-static
+static inline
 ss ss_to_flonum(ss x)
 {
   switch ( ss_type(x)) {
