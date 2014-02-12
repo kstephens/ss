@@ -6,7 +6,7 @@ guard :shell do
   watch %r{\.(c|h|def)*$} do | m |
     $gq.go "make test"
   end
-  watch 'lib/boot.scm' do | m |
+  watch %r{^lib/.*\.scm$} do | m |
     $gq.go "make test"
   end
   watch %r{^t/test.*\.scm$} do | m |
@@ -41,7 +41,7 @@ class GuardQueue
       # msg "ALREADY  #{cmd.inspect}"
     else
       @stage.unshift cmd
-      notice "STAGE   #{@stage.inspect}"
+      # notice "STAGE   #{@stage.inspect}"
     end
     if @working
       notice "WORKING #{@working.inspect}" unless @working == cmd
@@ -86,7 +86,7 @@ class GuardQueue
           end
         end
       end
-      msg "STOPPING"
+      notice "STOPPING"
     end
     self
   end
