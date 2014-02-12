@@ -71,6 +71,10 @@
 (C:ss_make_constant '<char>)
 (define (char? x) (eq? (%type x) <char>))
 (C:ss_make_constant 'char?)
+(define (char->integer c)
+  (C:ss_i (C:ss_C c)))
+(define (integer->char i)
+  (C:ss_c (C:ss_I i)))
 
 (define <vector> (%type '#(1 2)))
 (C:ss_make_constant '<vector>)
