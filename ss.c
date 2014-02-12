@@ -919,30 +919,30 @@ ss ss_to_flonum(ss x)
   }
 }
 
-static
-void ss_number_coerce_2(ss *argv)
+static inline
+void ss_number_coerce_2(ss *a0, ss *a1)
 {
-  switch ( ss_type(argv[0]) ) {
+  switch ( ss_type(*a0) ) {
   case ss_t_fixnum:
-    switch ( ss_type(argv[1]) ) {
+    switch ( ss_type(*a1) ) {
     case ss_t_flonum:
-      argv[0] = ss_box(flonum, ss_UNBOX(fixnum, argv[0]));
+      *a0 = ss_box(flonum, ss_UNBOX(fixnum, *a0));
       break;
     case ss_t_fixnum:
       break;
-    default: ss_typecheck_error(argv[1]);
+    default: ss_typecheck_error(*a1);
     }
     break;
   case ss_t_flonum:
-    switch ( ss_type(argv[1]) ) {
+    switch ( ss_type(*a1) ) {
     case ss_t_fixnum:
-      argv[1] = ss_box(flonum, ss_UNBOX(fixnum, argv[1]));
+      *a1 = ss_box(flonum, ss_UNBOX(fixnum, *a1));
       break;
     case ss_t_flonum: break;
-    default: ss_typecheck_error(argv[1]);
+    default: ss_typecheck_error(*a1);
     }
     break;
-  default: ss_typecheck_error(argv[1]);
+  default: ss_typecheck_error(*a1);
   }
 }
 
@@ -950,17 +950,17 @@ ss_syntax(ADD,0,-1,1,"+ z...")
   switch ( ss_argc ) {
   case 0:  ss_return(ss_box(fixnum,0));
   case 1:  ss_return(ss_argv[0]);
-  case 2:  ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0], ss_argv[1]));
-  default: ss_return(ss_vec(3, ss_sym(_ADD), ss_argv[0],
+  case 2:  ss_return(ss_vec(3, ss_sym(ss_ADD), ss_argv[0], ss_argv[1]));
+  default: ss_return(ss_vec(3, ss_sym(ss_ADD), ss_argv[0],
                             ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
 ss_syntax(SUB,1,-1,1,"- z...")
   switch ( ss_argc ) {
-  case 1:  ss_return(ss_vec(2, ss_sym(_NEG), ss_argv[0]));
-  case 2:  ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[0], ss_argv[1]));
-  default: ss_return(ss_vec(3, ss_sym(_SUB), ss_argv[0],
+  case 1:  ss_return(ss_vec(2, ss_sym(ss_NEG), ss_argv[0]));
+  case 2:  ss_return(ss_vec(3, ss_sym(ss_SUB), ss_argv[0], ss_argv[1]));
+  default: ss_return(ss_vec(3, ss_sym(ss_SUB), ss_argv[0],
                             ss_cons(ss_sym(ADD), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
@@ -969,77 +969,101 @@ ss_syntax(MUL,0,-1,1,"* z...")
   switch ( ss_argc ) {
   case 0:  ss_return(ss_box(fixnum,1));
   case 1:  ss_return(ss_argv[0]);
-  case 2:  ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0], ss_argv[1]));
-  default: ss_return(ss_vec(3, ss_sym(_MUL), ss_argv[0],
+  case 2:  ss_return(ss_vec(3, ss_sym(ss_MUL), ss_argv[0], ss_argv[1]));
+  default: ss_return(ss_vec(3, ss_sym(ss_MUL), ss_argv[0],
                             ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
 ss_syntax(DIV,1,-1,1,"/ z...")
   switch ( ss_argc ) {
-  case 1:  ss_return(ss_vec(3, ss_sym(_DIV), ss_box(flonum, 1.0), ss_argv[0]));
-  case 2:  ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_argv[1]));
-  default: ss_return(ss_vec(3, ss_sym(_DIV), ss_argv[0], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
+  case 1:  ss_return(ss_vec(3, ss_sym(ss_DIV), ss_box(flonum, 1.0), ss_argv[0]));
+  case 2:  ss_return(ss_vec(3, ss_sym(ss_DIV), ss_argv[0], ss_argv[1]));
+  default: ss_return(ss_vec(3, ss_sym(ss_DIV), ss_argv[0], ss_cons(ss_sym(MUL), ss_vecnv(ss_argc - 1, ss_argv + 1))));
   }
 ss_end
 
-#define BOP(NAME,OP)                                                    \
-  ss_prim(_##NAME,2,2,1,#OP " z...")                                    \
+#define PRIM_BOP(NAME,OP)                                               \
+  ss ss_##NAME##w(ss a0, ss a1)                                         \
   {                                                                     \
-    ss_number_coerce_2(ss_argv);                                        \
-    switch ( ss_type(ss_argv[0]) ) {                                    \
-    case ss_t_fixnum:                                                   \
-      ss_return(ss_box(fixnum, ss_UNBOX(fixnum,ss_argv[0]) OP ss_UNBOX(fixnum,ss_argv[1]))); \
-    case ss_t_flonum:                                                   \
-      ss_return(ss_box(flonum, ss_UNBOX(flonum,ss_argv[0]) OP ss_UNBOX(flonum,ss_argv[1]))); \
-    default: ss_typecheck_error(ss_argv[0]);                            \
-    }                                                                   \
+    return (ss) ( ((ss_word_t) a0) OP ((ss_word_t) a1) );               \
   }                                                                     \
+  ss_prim(ss_##NAME,2,2,1,#OP " z...")                                  \
+  ss_return(ss_##NAME(ss_argv[0], ss_argv[1]));                         \
+  ss_end                                                                \
+  ss_prim(ss_##NAME##w,2,2,1,#OP " word1 word2")                        \
+    ss_return(ss_##NAME##w(ss_argv[0], ss_argv[1]));                    \
   ss_end
 
-#define UOP(NAME,OP)                                                    \
-  ss_prim(_##NAME,1,1,1,#OP " z")                                       \
+#define PRIM_UOP(NAME,OP)                                               \
+  ss ss_##NAME##w(ss a0)                                                \
   {                                                                     \
-    switch ( ss_type(ss_argv[0]) ) {                                    \
+    return (ss) (OP (ss_word_t) a0);                                    \
+  }                                                                     \
+  ss_prim(ss_##NAME##w,1,1,1,#OP " word")                               \
+  ss_return(ss_##NAME##w(ss_argv[0]));                                  \
+  ss_end                                                                \
+  ss_prim(ss_##NAME,1,1,1,#OP " z")                                     \
+    ss_return(ss_##NAME(ss_argv[0]));                                   \
+  ss_end
+
+#define BOP(NAME,OP)                                                    \
+  ss ss_##NAME(ss a0, ss a1)                                            \
+  {                                                                     \
+    ss_number_coerce_2(&a0, &a1);                                       \
+    switch ( ss_type(a0) ) {                                            \
     case ss_t_fixnum:                                                   \
-      ss_return(ss_box(fixnum, OP ss_UNBOX(fixnum,ss_argv[0])));        \
+      return ss_box(fixnum, ss_UNBOX(fixnum,a0) OP ss_UNBOX(fixnum,a1)); \
     case ss_t_flonum:                                                   \
-      ss_return(ss_box(flonum, OP ss_UNBOX(flonum,ss_argv[0])));        \
-    default: ss_typecheck_error(ss_argv[0]);                            \
+      return ss_box(flonum, ss_UNBOX(flonum,a0) OP ss_UNBOX(flonum,a1)); \
+    default: return ss_typecheck_error(a0);                             \
     }                                                                   \
   }                                                                     \
-  ss_end
+  PRIM_BOP(NAME,OP)
+  
+#define UOP(NAME,OP)                                                    \
+  ss ss_##NAME(ss a0)                                                   \
+  {                                                                     \
+    switch ( ss_type(a0) ) {                                            \
+    case ss_t_fixnum:                                                   \
+      return ss_box(fixnum, OP ss_UNBOX(fixnum,a0));                    \
+    case ss_t_flonum:                                                   \
+      return ss_box(flonum, OP ss_UNBOX(flonum,a0));                    \
+    default: return ss_typecheck_error(a0);                             \
+    }                                                                   \
+  }                                                                     \
+  PRIM_UOP(NAME,OP)
 
 #define ROP(NAME,OP)                                                    \
-  ss_prim(_##NAME,2,2,1,#OP " x y")                                     \
+  ss ss_##NAME(ss a0, ss a1)                                            \
   {                                                                     \
-    ss_number_coerce_2(ss_argv);                                        \
-    switch ( ss_type(ss_argv[0]) ) {                                    \
+    ss_number_coerce_2(&a0, &a1);                                       \
+    switch ( ss_type(a0) ) {                                            \
     case ss_t_fixnum:                                                   \
-      ss_return(ss_box(boolean, ss_UNBOX(fixnum,ss_argv[0]) OP ss_UNBOX(fixnum,ss_argv[1]))); \
+      return ss_box(boolean, ss_UNBOX(fixnum,a0) OP ss_UNBOX(fixnum,a1)); \
     case ss_t_flonum:                                                   \
-      ss_return(ss_box(boolean, ss_UNBOX(flonum,ss_argv[0]) OP ss_UNBOX(flonum,ss_argv[1]))); \
-    default: ss_typecheck_error(ss_argv[0]);                            \
+      return ss_box(boolean, ss_UNBOX(flonum,a0) OP ss_UNBOX(flonum,a1)); \
+    default: return ss_typecheck_error(a0);                             \
     }                                                                   \
   }                                                                     \
-  ss_end
+  PRIM_BOP(NAME,OP)
 
 #define IBOP(NAME,OP)                                                   \
-  ss_prim(_##NAME,2,2,1,#OP " i j")                                     \
+  ss ss_##NAME(ss a0, ss a1)                                            \
   {                                                                     \
-    ss_typecheck(ss_t_fixnum, ss_argv[0]);                              \
-    ss_typecheck(ss_t_fixnum, ss_argv[1]);                              \
-    ss_return(ss_box(fixnum, ss_UNBOX(fixnum,ss_argv[0]) OP ss_UNBOX(fixnum,ss_argv[1]))); \
+    ss_typecheck(ss_t_fixnum, a0);                                      \
+    ss_typecheck(ss_t_fixnum, a1);                                      \
+    return ss_box(fixnum, ss_UNBOX(fixnum,a0) OP ss_UNBOX(fixnum,a1));  \
   }                                                                     \
-  ss_end
+  PRIM_BOP(NAME,OP)
 
 #define IUOP(NAME,OP)                                                   \
-  ss_prim(_##NAME,1,1,1,#OP " i")                                       \
+  ss ss_##NAME(ss a0)                                                   \
   {                                                                     \
-    ss_typecheck(ss_t_fixnum, ss_argv[0]);                              \
-    ss_return(ss_box(fixnum, OP ss_UNBOX(fixnum,ss_argv[1])));          \
+    ss_typecheck(ss_t_fixnum, a0);                                      \
+    return ss_box(fixnum, OP ss_UNBOX(fixnum,a0));                      \
   }                                                                     \
-  ss_end
+  PRIM_UOP(NAME,OP)
 
 #include "cops.def"
 

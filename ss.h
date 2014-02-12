@@ -66,6 +66,7 @@ typedef enum ss_e_type {
 } ss_e_type;
 
 typedef void *ss;
+typedef size_t  ss_word_t;
 typedef ssize_t ss_fixnum_t;
 
 extern ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
