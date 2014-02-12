@@ -186,7 +186,7 @@ ss ss_typecheck_error(ss v)
 static inline
 ss ss_typecheck(ss_e_type t, ss v)
 {
-  if ( ss_type(v) != t )
+  if ( ss_type_e(v) != t )
     return ss_typecheck_error(v);
   return v;
 }
@@ -272,7 +272,7 @@ ss ss_write_3(ss v, ss port, ss mode)
 {
 #define ss_write(v,p) ss_write_3(v, p, mode)
   FILE *out = FP(port);
-  switch ( ss_type(v) ) {
+  switch ( ss_type_e(v) ) {
   case ss_t_undef:   fprintf(out, "#<undef>"); break;
   case ss_t_fixnum:  fprintf(out, "%lld", (long long) ss_UNBOX(fixnum, v)); break;
   case ss_t_flonum:  ss_write_flonum(v, port); break;
@@ -355,12 +355,12 @@ ss ss_write_3(ss v, ss port, ss mode)
     fprintf(out, "#<env #@%p %ld >", v, (long) ((ss_s_env*) v)->level);
     break;
   default:
-    fprintf(out, "#<??? %d #@%p >", ss_type(v), (void*) v);
+    fprintf(out, "#<??? %d #@%p >", ss_type_e(v), (void*) v);
     break;
   case ss_t_pair:
     fprintf(out, "(");
     while ( v != ss_nil ) {
-      switch ( ss_type(v) ) {
+      switch ( ss_type_e(v) ) {
       case ss_t_pair:
         ss_write(ss_CAR(v), port);
         v = ss_CDR(v);
@@ -410,7 +410,7 @@ ss_fixnum_t ss_unbox_fixnum(ss v)
 
 ss_fixnum_t ss_fixnum_(ss v)
 {
-  switch ( ss_type(v) ) {
+  switch ( ss_type_e(v) ) {
   case ss_t_flonum:  return ss_UNBOX_flonum(v);
   case ss_t_fixnum:  return ss_I(v);
   default:           ss_typecheck_error(v); return 0;
@@ -432,7 +432,7 @@ ss_flonum_t ss_unbox_flonum(ss v)
 
 ss_flonum_t ss_flonum_(ss v)
 {
-  switch ( ss_type(v) ) {
+  switch ( ss_type_e(v) ) {
   case ss_t_flonum:  return ss_UNBOX_flonum(v);
   case ss_t_fixnum:  return ss_I(v);
   default:           ss_typecheck_error(v); return 1.0 / 0.0;
@@ -553,7 +553,7 @@ void ss_init_symbol(ss_s_env *ss_env)
 
 ss ss_box_quote(ss v)
 {
-  if ( ss_literalQ(v) && ss_type(v) != ss_t_quote ) {
+  if ( ss_literalQ(v) && ss_type_e(v) != ss_t_quote ) {
     return(v);
   } else {
     ss_s_quote *self = ss_alloc(ss_t_quote, sizeof(*self));
@@ -590,7 +590,7 @@ size_t ss_list_length(ss x)
   size_t l = 0;
   
   again:
-  switch ( ss_type(x) ) {
+  switch ( ss_type_e(x) ) {
   case ss_t_pair:
     x = ss_CDR(x);
     l ++;
@@ -606,7 +606,7 @@ ss ss_list_to_vector(ss x)
   size_t l = 0;
   ss v = ss_vecn(ss_list_length(x));
   again:
-  switch ( ss_type(x) ) {
+  switch ( ss_type_e(x) ) {
   case ss_t_pair:
     ss_vector_V(v)[l ++] = ss_CAR(x);
     x = ss_CDR(x);
@@ -723,7 +723,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
   int up, over;
   ss sym, *ref;
   ss_constantExprQ = 0;
-  switch ( ss_type(var) ) {
+  switch ( ss_type_e(var) ) {
   case ss_t_symbol:
     sym = var;
     up = 0;
@@ -760,7 +760,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
  rtn:
   ref = &env->argv[over];
  ref:
-  if ( ss_type(*ref) == ss_t_global ) {
+  if ( ss_type_e(*ref) == ss_t_global ) {
     sym = ((ss_s_global*) *ref)->name;
     ss_rewrite_expr(*ref, "global binding is known");
     ref = &ss_UNBOX(global, *ref);
@@ -815,7 +815,7 @@ ss ss_make_syntax(ss sym, ss proc)
 
 ss_syntax(define,1,-1,0,"define name value") {
   ss name = ss_argv[0];
-  if ( ss_type(name) == ss_t_pair ) {
+  if ( ss_type_e(name) == ss_t_pair ) {
     ss_return(ss_cons(ss_sym(define), ss_cons(ss_car(name), ss_cons(ss_cons(ss_sym(lambda), ss_cons(ss_cdr(name), ss_listnv(ss_argc - 1, ss_argv + 1))), ss_nil))));
   } else {
     ss_return(ss_cons(ss_sym(_define), ss_cons(ss_box_quote(name), ss_cons(ss_argv[1], ss_nil))));
@@ -876,7 +876,7 @@ ss_syntax(lambda,1,-1,0,"lambda formals body...") {
   if ( ss_vector_L(self->params) > 0 ) {
     rest_i = ss_vector_L(self->params) - 1;
     rest = ss_vector_V(self->params)[rest_i];
-    if ( ss_type(rest) == ss_t_pair && ss_CAR(rest) == ss_sym(_rest) ) {
+    if ( ss_type_e(rest) == ss_t_pair && ss_CAR(rest) == ss_sym(_rest) ) {
       self->rest_i = rest_i;
       ss_vector_V(self->params)[rest_i] = self->rest = ss_CDR(rest);
     }
@@ -915,7 +915,7 @@ ss_syntax(begin,0,-1,0,"begin body...") {
 static inline
 ss ss_to_flonum(ss x)
 {
-  switch ( ss_type(x)) {
+  switch ( ss_type_e(x)) {
   case ss_t_flonum:  return x;
   case ss_t_fixnum:  return ss_box(flonum, ss_I(x));
   default:           return ss_typecheck_error(x);
@@ -925,9 +925,9 @@ ss ss_to_flonum(ss x)
 static inline
 void ss_number_coerce_2(ss *a0, ss *a1)
 {
-  switch ( ss_type(*a0) ) {
+  switch ( ss_type_e(*a0) ) {
   case ss_t_fixnum:
-    switch ( ss_type(*a1) ) {
+    switch ( ss_type_e(*a1) ) {
     case ss_t_flonum:
       *a0 = ss_box(flonum, ss_UNBOX(fixnum, *a0));
       break;
@@ -937,7 +937,7 @@ void ss_number_coerce_2(ss *a0, ss *a1)
     }
     break;
   case ss_t_flonum:
-    switch ( ss_type(*a1) ) {
+    switch ( ss_type_e(*a1) ) {
     case ss_t_fixnum:
       *a1 = ss_box(flonum, ss_UNBOX(fixnum, *a1));
       break;
@@ -1028,7 +1028,7 @@ ss_end
   ss ss_##NAME(ss a0, ss a1)                                            \
   {                                                                     \
     ss_number_coerce_2(&a0, &a1);                                       \
-    switch ( ss_type(a0) ) {                                            \
+    switch ( ss_type_e(a0) ) {                                          \
     case ss_t_fixnum:                                                   \
       return ss_box(fixnum, ss_UNBOX(fixnum,a0) OP ss_UNBOX(fixnum,a1)); \
     case ss_t_flonum:                                                   \
@@ -1041,7 +1041,7 @@ ss_end
 #define UOP(NAME,OP)                                                    \
   ss ss_##NAME(ss a0)                                                   \
   {                                                                     \
-    switch ( ss_type(a0) ) {                                            \
+    switch ( ss_type_e(a0) ) {                                          \
     case ss_t_fixnum:                                                   \
       return ss_box(fixnum, OP ss_UNBOX(fixnum,a0));                    \
     case ss_t_flonum:                                                   \
@@ -1055,7 +1055,7 @@ ss_end
   ss ss_##NAME(ss a0, ss a1)                                            \
   {                                                                     \
     ss_number_coerce_2(&a0, &a1);                                       \
-    switch ( ss_type(a0) ) {                                            \
+    switch ( ss_type_e(a0) ) {                                          \
     case ss_t_fixnum:                                                   \
       return ss_box(boolean, ss_UNBOX(fixnum,a0) OP ss_UNBOX(fixnum,a1)); \
     case ss_t_flonum:                                                   \
@@ -1086,7 +1086,7 @@ ss_end
 
 ss ss_apply(ss_s_env *ss_env, ss func, ss args)
 {
-  if ( ss_type(args) != ss_t_vector ) 
+  if ( ss_type_e(args) != ss_t_vector )
     args = ss_list_to_vector(args);
   return _ss_eval(ss_env, &func, args);
 }
@@ -1152,7 +1152,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
   if ( ss_eval_verbose ) {
     fprintf(*ss_stderr, "  ;; eval %3d E#@%p #@%p ", (int) ss_env->depth, ss_env, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
-  switch ( ss_type(expr) ) {
+  switch ( ss_type_e(expr) ) {
   case ss_t_quote:
     ss_constantExprQ = 1;
     return(ss_UNBOX(quote, expr));
@@ -1199,7 +1199,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     }
   case ss_t_pair:
     rtn = ss_car(expr);
-    if ( ss_type(rtn) == ss_t_symbol && (rtn = ss_UNBOX(symbol, rtn).syntax) != ss_f ) {
+    if ( ss_type_e(rtn) == ss_t_symbol && (rtn = ss_UNBOX(symbol, rtn).syntax) != ss_f ) {
       expr = ss_apply(ss_env, rtn, ss_cdr(expr));
       ss_rewrite_expr(expr, "syntax rewrite");
       goto again;
@@ -1226,7 +1226,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     call:
     ss_constantExprQ = 0;
 
-    switch ( ss_type(rtn) ) {
+    switch ( ss_type_e(rtn) ) {
     case ss_t_prim:
       {
         expr = (ss_UNBOX(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
@@ -1285,7 +1285,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
       }
       break;
     default:
-      return(ss_error(ss_env, "apply cannot apply type=%d", rtn, (int) ss_type(rtn)));
+      return(ss_error(ss_env, "apply cannot apply type=%d", rtn, (int) ss_type_e(rtn)));
     }
   }
   default:

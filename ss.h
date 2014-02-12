@@ -82,7 +82,12 @@ typedef ssize_t ss_fixnum_t;
 #define ss_t      ((ss)6)
 #define ss_f      ((ss)8)
 #define ss_eos    ((ss)10)
-extern ss_e_type ss_immediate_types[];
+#define _ss_type ss_e_type
+extern _ss_type ss_immediate_types[];
+
+typedef struct ss_s_type {
+  ss_word_t e;
+} ss_s_type;
 
 static inline
 ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
@@ -97,7 +102,7 @@ ss  ss_c(int c) { return ss_BOX_char(c); }
 int ss_C(ss v)  { return ss_UNBOX_char(v); }
 
 static inline
-ss_e_type ss_type(ss x)
+ss_e_type ss_type_e(ss x)
 {
   return                 x == 0 ? ss_t_null :
           ((ss_word_t) x) & 1   ? ss_t_fixnum :
@@ -105,11 +110,14 @@ ss_e_type ss_type(ss x)
           x <= ss_BOX_char(255) ? ss_t_char :
                                  (ss_fixnum_t) (((ss*) x)[-1]);
 }
+static inline
+ss ss_type(ss x)
+{ return (ss) ss_type_e(x); }
 
 static inline
 int ss_literalQ(ss X)
 {
-  return ss_t_LITERAL_MIN <= ss_type(X) && ss_type(X) <= ss_t_LITERAL_MAX;
+  return ss_t_LITERAL_MIN <= ss_type_e(X) && ss_type_e(X) <= ss_t_LITERAL_MAX;
 }
 
 ss ss_box_fixnum(ss_fixnum_t _v);
