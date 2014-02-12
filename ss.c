@@ -8,6 +8,7 @@
 #define _ANSI_SOURCE 1
 #endif
 #include <ctype.h>
+#include <unistd.h>
 #include <assert.h>
 
 ss_s_env *ss_top_level_env, *ss_current_env;
@@ -1346,7 +1347,16 @@ int main(int argc, char **argv)
     ss_repl(ss_env, &fp, out, out, ss_f);
     fclose(fp);
   }
-  ss_repl(ss_env, ss_stdin, ss_stdout, ss_stderr, ss_t);
+  {
+    ss prompt = ss_stderr;
+    ss input  = ss_stdin;
+    ss output = ss_stdout;
+    ss trap_errors = ss_t;
+    if ( ! isatty(0) ) {
+      prompt = trap_errors = ss_f;
+    }
+    ss_repl(ss_env, input, output, prompt, trap_errors);
+  }
   return 0;
 }
 
