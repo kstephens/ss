@@ -47,3 +47,17 @@
 (define %>= >=)
 (define-constant (>= x . vals)
   (%all-pairs? %>= x vals))
+
+(define (trunc x)
+  (if (integer? x)
+    x
+    (C:ss_i (C:ss_fixnum_ x))))
+
+(define (floor x)
+  (if (integer? x)
+    x
+    (C:ss_i (C:ss_fixnum_ (C:floor x)))))
+
+(define (expr x y)
+  ;; if y is a non-negative integer result is integer.
+  (C:pow x y))
