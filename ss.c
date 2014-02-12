@@ -293,6 +293,7 @@ ss ss_write_3(ss v, ss port, ss mode)
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
   case ss_t_prim:    fprintf(out, "#<p %s>", ss_UNBOX(prim, v)->name); break;
   case ss_t_symbol:
+  case ss_t_keyword:
     if ( ss_UNBOX(symbol, v).name == ss_f ) {
       fprintf(out, "#<symbol #@%p>", v);
     } else {
@@ -517,7 +518,7 @@ ss ss_box_symbol(const char *name)
     }
   }
 
-  sym = ss_alloc(ss_t_symbol, sizeof(*sym));
+  sym = ss_alloc(name && name[0] == ':' ? ss_t_keyword : ss_t_symbol, sizeof(*sym));
   sym->name = name ? ss_strnv(strlen(name), name) : ss_f;
   sym->docstring = ss_f;
   sym->syntax = ss_f;
