@@ -45,7 +45,8 @@ typedef enum ss_e_type {
   ss_t_quote,
   ss_t_eos,
   ss_t_type,
-  ss_t_LITERAL_MAX = ss_t_eos,
+  ss_t_keyword,
+  ss_t_LITERAL_MAX = ss_t_keyword,
 
   ss_t_pair,
   ss_t_null,
