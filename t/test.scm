@@ -2,7 +2,7 @@
   (display "test-error: ")
   (write args)
   (newline)
-  (C_abort))
+  (error 'test-error "FAILED" args))
 
 (define *test-verbose* #f)
 (define (%test cmp a b expr)
@@ -16,8 +16,8 @@
 
 (define (epsilon? e)
   (lambda (a b)
-    (if (_LT (- b e) a)
-      (_LT a (+ b e))
+    (if (< (- b e) a)
+      (< a (+ b e))
       #f)))
 
 (define (test-file name)
