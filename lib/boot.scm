@@ -123,6 +123,21 @@
 
 (define (list . l) l)
 (C:ss_make_constant 'list)
+
+(define (list->vector l)
+  (C:ss_list_to_vector l))
+(define (vector->list! v l)
+  (let ((v->l! #f))
+    (set! v->l!
+      (lambda (l i)
+        (if (pair? l)
+          (begin
+            (set-car! l (vector-ref v i))
+            (v->l! (cdr l) (+ i 1))))))
+    (v->l! l 0))
+  l)
+
+
 (define (%append-2 a b)
   (if (null? a) b
     (cons (car a) (%append-2 (cdr a) b))))
