@@ -4,6 +4,7 @@
 (define (apply func args)
   (C:ss_apply &env func args))
 
+;; ss_ADD has arity checks, while C:ss_ADD does not.
 (define + ss_ADD)
 (define - ss_SUB)
 (define * ss_MUL)
