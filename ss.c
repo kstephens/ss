@@ -1238,21 +1238,25 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
 
 ss_prim(ss_call_cfunc,0,5,1,"call cfunc")
 {
-  switch ( ss_argc ) {
-  case 0:
-    ss_return(((ss(*)()) ss_prim->c_func)());
-  case 1:
-    ss_return(((ss(*)(ss)) ss_prim->c_func)(ss_argv[0]));
-  case 2:
-    ss_return(((ss(*)(ss,ss)) ss_prim->c_func)(ss_argv[0], ss_argv[1]));
-  case 3:
-    ss_return(((ss(*)(ss,ss,ss)) ss_prim->c_func)(ss_argv[0], ss_argv[1], ss_argv[2]));
-  case 4:
-    ss_return(((ss(*)(ss,ss,ss,ss)) ss_prim->c_func)(ss_argv[0], ss_argv[1], ss_argv[2], ss_argv[3]));
-  case 5:
-    ss_return(((ss(*)(ss,ss,ss,ss,ss)) ss_prim->c_func)(ss_argv[0], ss_argv[1], ss_argv[2], ss_argv[3], ss_argv[4]));
-  default: abort();
-  }
+#define T ss
+#define A(X) X
+#define R(X) ss_return(X)
+#include "cfunc_call.h"
+#undef T
+#undef A
+#undef R
+}
+ss_end
+
+ss_prim(ss_call_cfunc_double,0,5,1,"call cfunc double")
+{
+#define T double
+#define A(X) ss_unbox_flonum(X)
+#define R(X) ss_return(ss_box_flonum(X))
+#include "cfunc_call.h"
+#undef T
+#undef A
+#undef R
 }
 ss_end
 
@@ -1472,7 +1476,15 @@ void ss_init_cfunc(ss_s_env *ss_env)
   };
   for ( int i = 0; inits[i].rtn; ++ i ) {
     ss sym = ss_cfunc_sym(inits[i].name);
-    ss_define(ss_env, sym, ss_m_cfunc(inits[i].ptr, inits[i].name, inits[i].desc));
+    ss_s_prim *func = ss_m_cfunc(inits[i].ptr, inits[i].name, inits[i].desc);
+    if ( strcmp(inits[i].rtn, "double") == 0 &&
+         (
+          strcmp(inits[i].args, "(double)") == 0 ||
+          strcmp(inits[i].args, "(double,double)") == 0
+          ) ) {
+      func->func = _ss_pf_ss_call_cfunc_double;
+    }
+    ss_define(ss_env, sym, func);
     ss_UNBOX(symbol, sym).is_const = 1;
   }
 }
