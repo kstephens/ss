@@ -158,11 +158,17 @@ typedef struct ss_s_vector {
   size_t l;
 } ss_s_vector;
 static inline
-ss    *ss_vector_V(ss x) { return ((ss_s_vector*)(x))->v; }
+ss    *ss_vector_V(ss x)
+{ return ((ss_s_vector*)(x))->v; }
 static inline
-size_t ss_vector_L(ss x) { return ((ss_s_vector*)(x))->l; }
+size_t ss_vector_L(ss x)
+{ return ((ss_s_vector*)(x))->l; }
 static inline
-ss     ss_vector_R(ss x, ss i) { return ((ss_s_vector*)(x))->v[ss_I(i)]; }
+ss     ss_vector_R(ss x, ss i)
+{ return ((ss_s_vector*)(x))->v[ss_I(i)]; }
+static inline
+ss     ss_vector_S(ss x, ss i, ss v)
+{ ((ss_s_vector*)(x))->v[ss_I(i)] = v; return x; }
 ss ss_vecn(size_t l);
 ss ss_vec(int n, ...);
 
