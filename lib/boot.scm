@@ -123,7 +123,8 @@
 
 (define (list . l) l)
 (C:ss_make_constant 'list)
-
+(define (list-length l)
+  (C:ss_i (C:ss_list_length l)))
 (define (list->vector l)
   (C:ss_list_to_vector l))
 (define (vector->list v)
@@ -149,6 +150,25 @@
     (v->l! l 0))
   l)
 
+(define (%map-1 f l)
+  (if (null? l) l
+    (cons (f (car l)) (%map-1 f (cdr l)))))
+(define (%map f lists)
+  (if (null? (car lists)) '()
+    (cons
+      (apply f (%map-1 car lists))
+      (%map f (%map-1 cdr lists)))))
+(define (map f . lists) (%map f lists))
+(define (%for-each f lists)
+  (if (null? (car lists)) tl_v
+    (begin
+      (apply f (%map-1 car lists))
+      (%for-each f (%map-1 cdr lists)))))
+(define (for-each f . lists) (%for-each f lists))
+
+(define (%reduce f a l)
+  (if (null? l) a
+    (f (car l) (%reduce f a (cdr l)))))
 
 (define (%append-2 a b)
   (if (null? a) b
@@ -158,14 +178,21 @@
     (%append-3 (%append-2 l (car lists)) (cdr lists))))
 (define (append l . lists) (%append-3 l lists))
 
-(define (map proc args)
-  (if (null? args)
-    '()
-    (cons (proc (car args))
-       (map proc (cdr args)))))
-
-(define (error code . other)
-  (C:ss_error &env "" (cons code other)))
+(define (assp f l)
+  (if (null? l) #f
+    (if (f (car (car l)))
+      (car l)
+      (assp f (cdr l)))))
+(define (assq x l)  (assp (lambda (y) (eq? x y))    l))
+(define (assv x l)  (assp (lambda (y) (eqv? x y))   l))
+(define (assoc x l) (assp (lambda (y) (equal? x y)) l))
+(define (memp f l)
+  (if (null? l) #f
+    (if (f (car l)) #t
+      (memp f (cdr l)))))
+(define (memq x l)   (memp (lambda (y) (eq? x y))    l))
+(define (memv x l)   (memp (lambda (y) (eqv? x y))   l))
+(define (member x l) (memp (lambda (y) (equal? x y)) l))
 
 (define (%open-file func file mode)
   (let ((port (C:ss_m_port
