@@ -65,6 +65,7 @@
   (test eq? ensure #t)
   (test eq? result 'rescue))
 
+(test-name "nested catch, no throw")
 (let ( (body1 #f) (rescue1 #f) (ensure1 #f) (result1 #f)
        (body2 #f) (rescue2 #f) (ensure2 #f) (result2 #f)
        )
@@ -89,7 +90,7 @@
   (test eq? ensure2 #t)
   (test eq? result2 'body2))
 
-;; inner throw/rescue does not affect outer catch.
+(test-name "inner throw/rescue does not affect outer catch.")
 (let ( (body1 #f) (rescue1 #f) (ensure1 #f) (result1 #f)
        (body2 #f) (rescue2 #f) (ensure2 #f) (result2 #f)
        )
@@ -106,16 +107,16 @@
       (value (set! rescue1 value) 'rescue1)
       (begin (set! ensure1 #t) 'ensure1)))
   (test eq? body1 #t)
-  (test eq? rescue1 #f)
-  (test eq? ensure1 #t)
-  (test eq? result1 'rescue2)
   (test eq? body2 #t)
   (test eq? rescue2 #t)
   (test eq? ensure2 #t)
   (test eq? result2 'rescue2)
+  (test eq? rescue1 #f)
+  (test eq? ensure1 #t)
+  (test eq? result1 'rescue2)
   )
 
-;; outer throw/rescue does not affect outer catch.
+(test-name "outer throw/rescue does not affect outer catch.")
 (let ( (body1 #f) (rescue1 #f) (ensure1 #f) (result1 #f)
        (body2 #f) (rescue2 #f) (ensure2 #f) (result2 #f)
        )
@@ -145,13 +146,79 @@
         ;; (display "c1 ensure")(newline)
         (set! ensure1 #t) 'ensure1)))
   (test eq? body1 #t)
-  (test eq? rescue1 'body2)
-  (test eq? ensure1 #t)
-  (test eq? result1 'rescue1)
   (test eq? body2 #t)
   (test eq? rescue2 #f)
   (test eq? ensure2 #t)
   (test eq? result2 #f)
+  (test eq? rescue1 'body2)
+  (test eq? ensure1 #t)
+  (test eq? result1 'rescue1)
+  )
+
+(test-name "inner rethrow/rescue does not affect outer catch.")
+(let ( (body1 #f) (rescue1 #f) (ensure1 #f) (result1 #f)
+       (body2 #f) (rescue2 #f) (ensure2 #f) (result2 #f)
+       )
+  (set! result1
+    (catch c1
+      (begin (set! body1 #t) 
+        (set! result2
+          (catch c2
+            (begin (set! body2 #t) (throw c1 'body2) 'body2)
+            (value (set! rescue2 #t) (rethrow) 'rescue2)
+            (begin (set! ensure2 #t) 'ensure2)
+            ))
+        result2)
+      (value (set! rescue1 value) 'rescue1)
+      (begin (set! ensure1 #t) 'ensure1)))
+  (test eq? body1 #t)
+  (test eq? body2 #t)
+  (test eq? rescue2 #t)
+  (test eq? ensure2 #t)
+  (test eq? result2 #f)
+  (test eq? rescue1 'body2)
+  (test eq? ensure1 #t)
+  (test eq? result1 'rescue1)
+  )
+
+(test-name "deep rethrow/rescue.")
+(let ( (body1 #f) (rescue1 #f) (ensure1 #f) (result1 #f)
+       (body2 #f) (rescue2 #f) (ensure2 #f) (result2 #f)
+       (body3 #f) (rescue3 #f) (ensure3 #f) (result3 #f)
+       )
+  (catch c1
+    (begin
+      (set! body1 #t) 
+      (catch c2
+        (begin
+          (set! body2 #t)
+          (catch c3
+            (begin
+              (set! body3 #t) 
+              (throw c1 'body3)
+              'body3)
+            #f
+            (begin (set! ensure3 #t) 'ensure3))
+          'body2)
+        (value (set! rescue2 value) (rethrow) 'rescue2)
+        (begin (set! ensure2 #t) 'ensure2)
+        )
+      'body1)
+    (value
+      (set! rescue1 value)
+      'rescue1)
+    (begin
+      (set! ensure1 #t)
+      'ensure1))
+  (test eq? body1 #t)
+  (test eq? body2 #t)
+  (test eq? body3 #t)
+  (test eq? rescue3 #f)
+  (test eq? ensure3 #t)
+  (test eq? rescue2 'body3)
+  (test eq? ensure2 #t)
+  (test eq? rescue1 'body3)
+  (test eq? ensure1 #t)
   )
 
 'ok

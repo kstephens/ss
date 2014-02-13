@@ -342,12 +342,15 @@
   (C:ss_catch &env body rescue ensure))
 (define-constant (%throw catch value)
   (C:ss_throw &env catch value))
+(define-constant (%rethrow)
+  (C:ss_rethrow &env))
 (define-macro (catch name body rescue . ensure)
   `(%catch
      (lambda (,name) ,body)
      ,(if (not rescue)   #f `(lambda (,name ,(car rescue)) ,@(cdr rescue)))
      ,(if (null? ensure) #f `(lambda (,name) ,(car ensure)))))
 (define-constant throw %throw)
+(define-constant rethrow %rethrow)
 
 (display ";; ss - boot.scm loaded.")(newline)
 

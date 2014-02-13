@@ -20,13 +20,20 @@
       (< a (+ b e))
       #f)))
 
+(define (test-name name)
+  (if *test-verbose*
+    (begin
+      (display "  ;; test: ")(display name)(display " ...")(newline))))
+
 (define (test-file name)
-  (display ";; testing ")(display name)(display " ...")(newline)
+  (display ";; test ")(display name)(display " ...")(newline)
   (test eq? (load name) 'ok)
-  (display ";; testing ")(display name)(display "  OK")(newline)
+  (display ";; test ")(display name)(display "  OK")(newline)
   )
 
+;;(set! *test-verbose* #t)
 (test-file "t/test-catch.scm")
+;;(set! *test-verbose* #f)
 (test-file "t/test-equal.scm")
 (test-file "t/test-char.scm")
 (test-file "t/test-string.scm")
