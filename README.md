@@ -43,6 +43,7 @@ Implements lazy, threaded expression rewriting with constant-folding.
 * Eval-by-reference: rewrites s-expressions during evaluation.
 * Automatically generates C function callables from CPP output of ss.c.
 * Simple macros.
+* catch, throw, rescue, ensure.
 
 ## Build
 
