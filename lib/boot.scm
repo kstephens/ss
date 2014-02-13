@@ -1,7 +1,7 @@
 (define (error code . other)
   (C:ss_error &env "" (cons code other)))
 
-(define (apply func args)
+(define (apply func args) ;; FIXME
   (C:ss_apply &env func args))
 
 ;; ss_ADD has arity checks, while C:ss_ADD does not.
@@ -29,39 +29,42 @@
 (define (%type x) (C:ss_i (C:ss_type x)))
 (C:ss_make_constant '%type)
 
-(define <null> (%type '()))
-(C:ss_make_constant '<null>)
+(define %<null> (%type '()))
+(C:ss_make_constant '%<null>)
 (define (null? x) (eq? x '()))
 (C:ss_make_constant 'null?)
 
-(define <boolean> (%type #t))
-(C:ss_make_constant '<boolean>)
-(define (boolean? x) (eq? (%type x) <boolean>))
+(define %<boolean> (%type #t))
+(C:ss_make_constant '%<boolean>)
+(define (boolean? x) (eq? (%type x) %<boolean>))
 (C:ss_make_constant 'boolean?)
 
-(define <fixnum> (%type 1))
-(C:ss_make_constant '<fixnum>)
-(define (fixnum? x) (eq? (%type x) <fixnum>))
+(define %<fixnum> (%type 1))
+(C:ss_make_constant '%<fixnum>)
+(define (fixnum? x) (eq? (%type x) %<fixnum>))
 (C:ss_make_constant 'fixnum?)
 
-(define <flonum> (%type 1.23))
-(C:ss_make_constant '<flonum>)
-(define (flonum? x) (eq? (%type x) <flonum>))
+(define %<flonum> (%type 1.23))
+(C:ss_make_constant '%<flonum>)
+(define (flonum? x) (eq? (%type x) %<flonum>))
 (C:ss_make_constant 'flonum?)
 
 (define integer? fixnum?)
 (C:ss_make_constant 'integer?)
 
+(define rational? integer?)
+(C:ss_make_constant 'rational?)
+
 (define (real? x)
   (if (fixnum? x) #t (flonum? x)))
-(C:ss_make_constant 'number?)
-
-(define number? real?)
 (C:ss_make_constant 'real?)
 
-(define <pair> (%type '(a cons)))
-(C:ss_make_constant '<pair>)
-(define (pair? x) (eq? (%type x) <pair>))
+(define number? real?)
+(C:ss_make_constant 'number?)
+
+(define %<pair> (%type '(a cons)))
+(C:ss_make_constant '%<pair>)
+(define (pair? x) (eq? (%type x) %<pair>))
 (C:ss_make_constant 'pair?)
 (define cons C:ss_cons)
 (define car C:ss_car)
@@ -69,28 +72,28 @@
 (define set-car! C:ss_set_carE)
 (define set-cdr! C:ss_set_cdrE)
 
-(define <string> (%type "string"))
-(C:ss_make_constant '<string>)
-(define (string? x) (eq? (%type x) <string>))
+(define %<string> (%type "string"))
+(C:ss_make_constant '%<string>)
+(define (string? x) (eq? (%type x) %<string>))
 (C:ss_make_constant 'string?)
 
-(define <symbol> (%type 'symbol))
-(C:ss_make_constant '<symbol>)
-(define (symbol? x) (eq? (%type x) <symbol>))
+(define %<symbol> (%type 'symbol))
+(C:ss_make_constant '%<symbol>)
+(define (symbol? x) (eq? (%type x) %<symbol>))
 (C:ss_make_constant 'symbol?)
 
-(define <char> (%type #\a))
-(C:ss_make_constant '<char>)
-(define (char? x) (eq? (%type x) <char>))
+(define %<char> (%type #\a))
+(C:ss_make_constant '%<char>)
+(define (char? x) (eq? (%type x) %<char>))
 (C:ss_make_constant 'char?)
 (define (char->integer c)
   (C:ss_i (C:ss_C c)))
 (define (integer->char i)
   (C:ss_c (C:ss_I i)))
 
-(define <vector> (%type '#(1 2)))
-(C:ss_make_constant '<vector>)
-(define (vector? x) (eq? (%type x) <vector>))
+(define %<vector> (%type '#(1 2)))
+(C:ss_make_constant '%<vector>)
+(define (vector? x) (eq? (%type x) %<vector>))
 (C:ss_make_constant 'vector?)
 
 (define (string-length a)
