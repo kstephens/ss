@@ -213,6 +213,7 @@ ss     ss_string_S(ss x, ss i, ss v)
 { ((ss_s_string*)(x))->v[ss_I(i)] = ss_C(v); return x; }
 
 ss ss_strn(size_t l);
+ss ss_s(const char *p);
 
 typedef struct ss_s_symbol {
   ss name;
@@ -221,6 +222,7 @@ typedef struct ss_s_symbol {
   ss_fixnum_t is_const;
 } ss_s_symbol;
 #define ss_UNBOX_symbol(X) (*((ss_s_symbol*)(X)))
+ss ss_box_symbol(const char *name);
 
 typedef struct ss_s_port {
   FILE *fp;
@@ -243,6 +245,9 @@ typedef struct ss_s_env {
 
 #define ss_constantExprQ    ss_env->constantExprQ
 #define ss_constantExprQAll ss_env->constantExprQAll
+
+ss ss_error_raise(ss_s_env *ss_env, ss val);
+ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...);
 
 #include "ss/catch.h"
 

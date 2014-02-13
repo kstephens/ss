@@ -1,5 +1,5 @@
 (define (error code . other)
-  (C:ss_error &env "" (cons code other)))
+  (C:ss_error &env (cons code other) 0))
 
 (define (apply func args) ;; FIXME
   (C:ss_apply &env func args))
