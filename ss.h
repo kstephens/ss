@@ -152,33 +152,6 @@ int ss_B(ss x) { return x != ss_f; }
 #define ss_box_boolean(X) ss_b((int) (X)) 
 #define ss_unbox_boolean(X) ss_B(X)
 
-typedef struct ss_s_quote {
-  ss value;
-} ss_s_quote;
-#define ss_UNBOX_quote(X) ((ss_s_quote*)(X))->value
-
-typedef struct ss_s_var {
-  ss name;
-  ss_fixnum_t up, over;
-} ss_s_var;
-#define ss_UNBOX_var(X) (*(ss_s_var*)(X))
-
-typedef struct ss_s_var_set {
-  ss var;
-  ss expr;
-} ss_s_var_set;
-#define ss_UNBOX_var_set(X) (*(ss_s_var_set*)(X))
-
-typedef struct ss_s_global {
-  ss *ref;
-  ss name;
-} ss_s_global;
-#define ss_UNBOX_global(X) (*((ss_s_global*)(X))->ref)
-
-typedef struct ss_s_if {
-  ss t, a, b;
-} ss_s_if;
-
 typedef struct ss_s_cons {
   ss a, d;
 } ss_s_cons;
@@ -231,6 +204,13 @@ typedef struct ss_s_symbol {
   ss_fixnum_t is_const;
 } ss_s_symbol;
 #define ss_UNBOX_symbol(X) (*((ss_s_symbol*)(X)))
+
+typedef struct ss_s_port {
+  FILE *fp;
+  ss name;
+  ss mode;
+} ss_s_port;
+#define ss_UNBOX_port(X) (*(ss_s_port*)(X))
 
 typedef struct ss_s_env {
   ss_fixnum_t argc;
@@ -305,12 +285,32 @@ typedef struct ss_s_closure {
 } ss_s_closure;
 #define ss_UNBOX_closure(X) (*(ss_s_closure*)(X))
 
-typedef struct ss_s_port {
-  FILE *fp;
+typedef struct ss_s_quote {
+  ss value;
+} ss_s_quote;
+#define ss_UNBOX_quote(X) ((ss_s_quote*)(X))->value
+
+typedef struct ss_s_var {
   ss name;
-  ss mode;
-} ss_s_port;
-#define ss_UNBOX_port(X) (*(ss_s_port*)(X))
+  ss_fixnum_t up, over;
+} ss_s_var;
+#define ss_UNBOX_var(X) (*(ss_s_var*)(X))
+
+typedef struct ss_s_var_set {
+  ss var;
+  ss expr;
+} ss_s_var_set;
+#define ss_UNBOX_var_set(X) (*(ss_s_var_set*)(X))
+
+typedef struct ss_s_global {
+  ss *ref;
+  ss name;
+} ss_s_global;
+#define ss_UNBOX_global(X) (*((ss_s_global*)(X))->ref)
+
+typedef struct ss_s_if {
+  ss t, a, b;
+} ss_s_if;
 
 #ifndef ss_sym
 #define ss_sym(X)ss_PASTE2(_ss_sym_,X)
