@@ -71,7 +71,7 @@ void _ss_catch_in_body(ss_CATCH_PARAMS)
   ss_env->catch = catch;
   catch->dst = catch->src = 0;
   if ( ss_CATCH_DEBUG ) 
-    fprintf(stderr, "    %3d BODY    %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
+    fprintf(stderr, "    %3d BODY    %p prev %p env %p env->catch %p\n", (int) catch->level, catch, catch->prev, ss_env, ss_env->catch);
 }
 
 #define ss_CATCH_RESCUE                                                 \
@@ -81,7 +81,7 @@ void _ss_catch_in_rescue(ss_CATCH_PARAMS)
 {
   catch->in_rescue = 1;
   if ( ss_CATCH_DEBUG ) 
-    fprintf(stderr, "    %3d RESCUE  %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
+    fprintf(stderr, "    %3d RESCUE  %p prev %p env %p env->catch %p\n", (int) catch->level, catch, catch->prev, ss_env, ss_env->catch);
 }
 
 #define ss_CATCH_ENSURE                                 \
@@ -91,7 +91,7 @@ void _ss_catch_in_ensure(ss_CATCH_PARAMS)
 {
   catch->in_ensure = 1;
   if ( ss_CATCH_DEBUG ) 
-    fprintf(stderr, "    %3d ENSURE  %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
+    fprintf(stderr, "    %3d ENSURE  %p prev %p env %p env->catch %p\n", (int) catch->level, catch, catch->prev, ss_env, ss_env->catch);
 }
 
 #define ss_CATCH_END                                             \
@@ -115,7 +115,7 @@ int _ss_catch_in_end(ss_CATCH_PARAMS)
   if ( catch->dst && catch->dst != ss_env->catch ) {
     ss_s_catch *dst = catch->prev;
     if ( ss_CATCH_DEBUG )
-      fprintf(stderr, "    %3d RETHROW %p prev %p dst %p env %p env->catch %p\n", catch->level, catch, catch->prev, dst, ss_env, ss_env->catch);
+      fprintf(stderr, "    %3d RETHROW %p prev %p dst %p env %p env->catch %p\n", (int) catch->level, catch, catch->prev, dst, ss_env, ss_env->catch);
     if ( ! dst ) {
       ss_error(ss_env, "no-catch", catch, 0);
       return 0;
@@ -144,7 +144,7 @@ ss __ss_throw(ss_s_env *ss_env, ss_s_catch *catch, ss value)
   assert(ss_env->catch);
 
   if ( ss_CATCH_DEBUG ) 
-    fprintf(stderr, "   %3d THROW   %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
+    fprintf(stderr, "   %3d THROW   %p prev %p env %p env->catch %p\n", (int) catch->level, catch, catch->prev, ss_env, ss_env->catch);
 
   //   If THROW within current ENSURE,
   //     Jump to parent RESCUE or ENSURE.
@@ -194,7 +194,7 @@ ss ss_rethrow(ss_s_env *ss_env)
   assert(catch->dst);
   dst = catch->dst;
   if ( ss_CATCH_DEBUG )
-    fprintf(stderr, "    %3d RETHROW %p prev %p dst %p env %p env->catch %p\n", catch->level, catch, catch->prev, dst, ss_env, ss_env->catch);
+    fprintf(stderr, "    %3d RETHROW %p prev %p dst %p env %p env->catch %p\n", (int) catch->level, catch, catch->prev, dst, ss_env, ss_env->catch);
   __ss_throw(ss_env, dst, dst->value);
   return 0;
 }
