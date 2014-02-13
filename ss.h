@@ -177,7 +177,22 @@ ss     ss_vector_S(ss x, ss i, ss v)
 ss ss_vecn(size_t l);
 ss ss_vecnv(size_t l, const ss *v);
 ss ss_vec(int n, ...);
-ss ss_vec1(ss a1);
+static inline
+ss ss_vec1(ss a0)
+{
+  ss_s_vector *self = ss_vecn(1);
+  self->v[0] = a0;
+  return self;
+}
+
+static inline
+ss ss_vec2(ss a0, ss a1)
+{
+  ss_s_vector *self = ss_vecn(2);
+  self->v[0] = a0;
+  self->v[1] = a1;
+  return self;
+}
 
 typedef char ss_string_t;
 typedef struct ss_s_string {

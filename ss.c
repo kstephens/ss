@@ -143,17 +143,17 @@ ss ss_catch(ss_s_env *ss_env, ss body, ss rescue, ss ensure)
 {
   ss_s_catch *c = ss_m_catch();
   ss rtn = ss_undef;
+  c->body = body;
+  c->rescue = rescue;
+  c->ensure = ensure;
   ss_CATCH(c) {
-    c->body = body;
-    c->rescue = rescue;
-    c->ensure = ensure;
     rtn = ss_apply(ss_env, c->body, ss_vec1(c));
   }
   ss_CATCH_RESCUE {
-    rtn = ss_apply(ss_env, c->rescue, ss_vec1(c));
+    rtn = ss_apply(ss_env, c->rescue, ss_vec2(c, c->value));
   }
   ss_CATCH_ENSURE {
-    ss_apply(ss_env, c->rescue, ss_vec1(c));
+    ss_apply(ss_env, c->ensure, ss_vec1(c));
   }
   ss_CATCH_END;
   return rtn;
@@ -649,13 +649,6 @@ ss ss_vecnv(size_t l, const ss *v)
 {
   ss_s_vector *self = ss_vecn(l);
   memcpy(self->v, v, sizeof(self->v[0]) * l);
-  return self;
-}
-
-ss ss_vec1(ss a1)
-{
-  ss_s_vector *self = ss_vecn(1);
-  self->v[0] = a1;
   return self;
 }
 
