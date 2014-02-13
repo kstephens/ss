@@ -29,7 +29,8 @@ HFILES = \
   gen/cfunc.def \
   gen/syntax.def \
   lispread/lispread.c \
-  include/ss/*.h
+  include/ss/*.h \
+  src/*.c
 
 EARLY_FILES = \
 boot/sym.def    \
