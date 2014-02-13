@@ -150,10 +150,12 @@ ss ss_catch(ss_s_env *ss_env, ss body, ss rescue, ss ensure)
     rtn = ss_apply(ss_env, c->body, ss_vec1(c));
   }
   ss_CATCH_RESCUE {
-    rtn = ss_apply(ss_env, c->rescue, ss_vec2(c, c->value));
+    if ( c->rescue != ss_f )
+      rtn = ss_apply(ss_env, c->rescue, ss_vec2(c->src, c->src->value));
   }
   ss_CATCH_ENSURE {
-    ss_apply(ss_env, c->ensure, ss_vec1(c));
+    if ( c->ensure != ss_f )
+      ss_apply(ss_env, c->ensure, ss_vec1(c));
   }
   ss_CATCH_END;
   return rtn;
@@ -675,7 +677,7 @@ ss ss_m_env(ss_s_env *parent)
   env->level     = parent ? parent->level + 1 : 0;
   env->constantExprQ = env->constantExprQAll = 0;
   env->expr      = ss_undef;
-  env->catch     = parent ? parent->catch : 0;
+  env->catch       = parent ? parent->catch       : 0;
   env->error_catch = parent ? parent->error_catch : 0;
   return env;
 }
@@ -1266,6 +1268,8 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
         }
 
         env = ss_m_env(((ss_s_closure*) rtn)->env);
+        env->catch = ss_env->catch;
+        env->error_catch = ss_env->error_catch;
         env->expr = ss_expr;
         env->argc = ss_argc;
         env->symv = ss_vector_V(self->params);
@@ -1402,7 +1406,7 @@ ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
 ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
 {
   ss expr, value = ss_undef;
-  ss catch = ss_m_catch();
+  ss_s_catch *catch = ss_m_catch();
   while ( 1 ) {
     ss_CATCH(catch) {
       if ( trap_error != ss_f ) ss_env->error_catch = catch;
@@ -1431,7 +1435,9 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
       }
     }
     ss_CATCH_RESCUE {
-      fprintf(*ss_stderr, "  ;; ss: recovered from error\n");
+      fprintf(*ss_stderr, "  ;; ss: recovered from error: ");
+      ss_write(catch->value, ss_stderr);
+      fprintf(*ss_stderr, "\n");
     }
     ss_CATCH_ENSURE {
       // fprintf(*ss_stderr, "  ;; ss: ensure\n");
