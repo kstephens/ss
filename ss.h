@@ -46,7 +46,8 @@ typedef enum ss_e_type {
   ss_t_eos,
   ss_t_type,
   ss_t_keyword,
-  ss_t_LITERAL_MAX = ss_t_keyword,
+  ss_t_catch,
+  ss_t_LITERAL_MAX = ss_t_catch,
 
   ss_t_pair,
   ss_t_null,
@@ -212,6 +213,37 @@ typedef struct ss_s_port {
 } ss_s_port;
 #define ss_UNBOX_port(X) (*(ss_s_port*)(X))
 
+typedef struct ss_s_catch {
+  jmp_buf *jmp;
+  ss val;
+  struct ss_s_catch *prev;
+  ss body, rescue, ensure;
+} ss_s_catch;
+#define ss_CATCH(C)                                   \
+  do {                                                \
+  jmp_buf _catch_jb;                                  \
+  ss_s_catch *_catch = (C);                           \
+  switch ( setjmp(_catch_jb) ) {                      \
+  default: abort();                                     \
+  case 0:                                              \
+    _catch->jmp = &_catch_jb;                            \
+    _catch->prev = ss_env->catch;                        \
+    ss_env->catch = _catch;                              \
+    {
+
+#define ss_CATCH_RESCUE                                 \
+    } break;                                            \
+  case 1: ss_env->catch = _catch->prev; {
+#define ss_CATCH_ENSURE                                 \
+    } break; \
+  case 2:  ss_env->catch = _catch->prev; {
+#define ss_CATCH_END                            \
+    } break;                                      \
+  } \
+_catch_end:                                \
+  ss_env->catch = _catch->prev;               \
+} while(0)
+
 typedef struct ss_s_env {
   ss_fixnum_t argc;
   ss *symv;
@@ -220,8 +252,7 @@ typedef struct ss_s_env {
   ss_fixnum_t constantExprQ, constantExprQAll;
   ss_fixnum_t level, depth;
   ss expr;
-  jmp_buf *error_jmp;
-  ss error_val;
+  ss_s_catch *catch, *error_catch;
 } ss_s_env;
 
 #define ss_constantExprQ    ss_env->constantExprQ
