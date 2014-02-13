@@ -1581,6 +1581,8 @@ ss ss_cfunc_sym(const char *name)
 static inline
 ss ss_throw (ss_s_env *ss_env, ss_s_catch *catch, ss value)
 {
+  assert(catch);
+  catch->expr = ss_env->expr;
   return __ss_throw(ss_env, catch, value);
 }
 

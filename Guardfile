@@ -57,7 +57,6 @@ class GuardQueue
     at_exit do
       @stopping = true
       go :stop
-      sleep 0.5
       @thread.kill rescue nil
       @thread.join
     end

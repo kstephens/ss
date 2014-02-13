@@ -10,11 +10,12 @@ typedef struct ss_s_catch {
   jmp_buf *jmp;
   ss value;
   struct ss_s_catch *prev, *dst, *src;
-  unsigned jmp_to : 2, in_begin : 1, in_body : 1, in_rescue : 1, in_ensure : 1, in_end : 1;
-  int level;
   ss body, rescue, ensure;
   struct ss_s_env *env;
-  const char *file, *funcname; int line;
+  const char *file, *funcname;
+  ss_fixnum_t line, level;
+  ss expr;
+  unsigned jmp_to : 2, in_begin : 1, in_body : 1, in_rescue : 1, in_ensure : 1, in_end : 1;
 #define ss_CATCH_PARAMS ss_s_env *ss_env, ss_s_catch *catch, const char *file, int line, const char *funcname
 #define ss_CATCH_ARGS ss_env, _catch, __FILE__, __LINE__, __FUNCTION__
 #define ss_CATCH_SET_INFO() catch->file = file; catch->line = line; catch->funcname = funcname
