@@ -351,4 +351,4 @@
 
 (display ";; ss - boot.scm loaded.")(newline)
 
-(load "t/test.scm")
+;; (load "t/test.scm")

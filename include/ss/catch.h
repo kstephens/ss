@@ -5,7 +5,7 @@
 #include <assert.h>
 
 typedef struct ss_s_catch {
-  jmp_buf *jmp; int sig;
+  jmp_buf *jmp;
   ss value;
   struct ss_s_catch *prev, *dst, *src;
   unsigned jmp_to : 2, in_begin : 1, in_body : 1, in_rescue : 1, in_ensure : 1, in_end : 1;
