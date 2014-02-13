@@ -9,6 +9,7 @@ typedef struct ss_s_catch {
   ss value;
   struct ss_s_catch *prev, *dst, *src;
   unsigned jmp_to : 2, in_begin : 1, in_body : 1, in_rescue : 1, in_ensure : 1, in_end : 1;
+  int level;
   ss body, rescue, ensure;
   struct ss_s_env *env;
   const char *file, *func; int line;
@@ -20,9 +21,6 @@ typedef struct ss_s_catch {
 #ifndef ss_CATCH_DEBUG
 #define ss_CATCH_DEBUG 0
 #endif
-#define ss_CATCH_DEBUG_(X) ({ \
-      if ( ss_CATCH_DEBUG ) fprintf(stderr, "  %s:%d %s : catch %p prev %p dst %p env %p env->catch %p\n", __FILE__, __LINE__, #X, catch, catch->prev, catch->dst, ss_env, ss_env->catch); \
-  X; })
 
 static inline
 void _ss_longjmp(ss_s_env *ss_env, ss_s_catch *catch, ss_s_catch *dst, int sig)
@@ -32,7 +30,7 @@ void _ss_longjmp(ss_s_env *ss_env, ss_s_catch *catch, ss_s_catch *dst, int sig)
     fprintf(stderr, " longjmp(%d) %p prev %p dst %p env %p env->catch %p\n", sig, catch, catch->prev, dst, ss_env, ss_env->catch);
   assert(dst->jmp);
   jmp = dst->jmp;
-  dst->jmp = 0;
+  // dst->jmp = 0; // disable for ss_rethrow.
   ss_env->catch = dst;
   longjmp(*jmp, sig);
 }
@@ -44,6 +42,7 @@ void _ss_catch_in_begin(ss_CATCH_PARAMS)
   catch->in_begin = 1;
   catch->env = ss_env;
   catch->prev = ss_env->catch;
+  catch->level = catch->prev ? catch->prev->level + 1 : 0;
   catch->jmp_to = 0;
   catch->jmp = 0;
   catch->in_body = catch->in_rescue = catch->in_ensure = catch->in_end = 0;
@@ -66,7 +65,7 @@ void _ss_catch_in_body(ss_CATCH_PARAMS)
   ss_env->catch = catch;
   catch->dst = catch->src = 0;
   if ( ss_CATCH_DEBUG ) 
-    fprintf(stderr, "    BODY    %p prev %p env %p env->catch %p\n", catch, catch->prev, ss_env, ss_env->catch);
+    fprintf(stderr, "    %3d BODY    %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
 }
 
 #if 0
@@ -84,7 +83,7 @@ void _ss_catch_in_rescue(ss_CATCH_PARAMS)
   catch->in_rescue = 1;
   assert(ss_env->catch == catch);
   if ( ss_CATCH_DEBUG ) 
-    fprintf(stderr, "    RESCUE  %p prev %p env %p env->catch %p\n", catch, catch->prev, ss_env, ss_env->catch);
+    fprintf(stderr, "    %3d RESCUE  %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
 }
 
 #define ss_CATCH_ENSURE                                 \
@@ -96,7 +95,7 @@ void _ss_catch_in_ensure(ss_CATCH_PARAMS)
   catch->in_ensure = 1;
   assert(ss_env->catch == catch);
   if ( ss_CATCH_DEBUG ) 
-    fprintf(stderr, "    ENSURE  %p prev %p env %p env->catch %p\n", catch, catch->prev, ss_env, ss_env->catch);
+    fprintf(stderr, "    %3d ENSURE  %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
 }
 
 #define ss_CATCH_END                                             \
@@ -121,7 +120,7 @@ int _ss_catch_in_end(ss_CATCH_PARAMS)
   if ( catch->dst && catch->dst != ss_env->catch ) {
     ss_s_catch *dst = catch->prev;
     if ( ss_CATCH_DEBUG )
-      fprintf(stderr, "    RETHROW %p prev %p dst %p env %p env->catch %p\n", catch, catch->prev, dst, ss_env, ss_env->catch);
+      fprintf(stderr, "    %3d RETHROW %p prev %p dst %p env %p env->catch %p\n", catch->level, catch, catch->prev, dst, ss_env, ss_env->catch);
     dst->dst = catch->dst;
     dst->src = catch->src;
     _ss_longjmp(ss_env, catch, dst, 1);
@@ -141,7 +140,7 @@ ss ss_throw(ss_s_env *ss_env, ss_s_catch *catch, ss value)
   catch->value = value;
 
   if ( ss_CATCH_DEBUG ) 
-    fprintf(stderr, "    THROW   %p prev %p env %p env->catch %p\n", catch, catch->prev, ss_env, ss_env->catch);
+    fprintf(stderr, "   %3d THROW   %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
 
   //   If THROW within current ENSURE,
   //     Jump to parent RESCUE or ENSURE.
@@ -167,5 +166,18 @@ ss ss_throw(ss_s_env *ss_env, ss_s_catch *catch, ss value)
   return 0;
 }
 
+static inline
+ss ss_rethrow(ss_s_env *ss_env)
+{
+  ss_s_catch *catch, *dst;
+  assert(ss_env->catch);
+  catch = ss_env->catch;
+  assert(catch->dst);
+  dst = catch->dst;
+  if ( ss_CATCH_DEBUG )
+    fprintf(stderr, "    %3d RETHROW %p prev %p dst %p env %p env->catch %p\n", catch->level, catch, catch->prev, dst, ss_env, ss_env->catch);
+  ss_throw(ss_env, dst, dst->value);
+  return 0;
+}
 
 #endif
