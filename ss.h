@@ -85,8 +85,18 @@ typedef ssize_t ss_fixnum_t;
 #define _ss_type ss_e_type
 extern _ss_type ss_immediate_types[];
 
+struct ss_s_env;
+struct ss_s_prim;
+
+#define ss_PROC_DECL(X) \
+  ss X (struct ss_s_env *ss_env, ss *_ss_expr, struct ss_s_prim *ss_prim, unsigned int ss_argc, ss *ss_argv)
+
 typedef struct ss_s_type {
+  ss_PROC_DECL((*func));
   ss_word_t e;
+  size_t instance_size;
+  ss supers;
+  ss methods;
 } ss_s_type;
 
 static inline
@@ -237,7 +247,6 @@ typedef struct ss_s_env {
 #define ss_constantExprQ    ss_env->constantExprQ
 #define ss_constantExprQAll ss_env->constantExprQAll
 
-#define ss_PROC_DECL(X) ss X (ss_s_env *ss_env, ss *_ss_expr, struct ss_s_prim *ss_prim, unsigned int ss_argc, ss *ss_argv)
 typedef struct ss_s_prim {
   ss_PROC_DECL((*func));
   const char *name;
