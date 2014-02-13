@@ -70,7 +70,6 @@ void _ss_longjump(ss_s_env *ss_env, ss_s_catch *catch, ss_s_catch *dst)
 static inline
 ss ss_throw(ss_s_env *ss_env, ss_s_catch *catch, ss value)
 {
-  ss_s_catch *dst;
   assert(catch);
   assert(ss_env->catch);
   catch->value = value;
@@ -80,8 +79,11 @@ ss ss_throw(ss_s_env *ss_env, ss_s_catch *catch, ss value)
   return 0;
 }
 
+#if 0
 #define ss_CATCH_RESTORE_ENV() ss_env = _catch->env; _catch->env = 0;
+#else
 #define ss_CATCH_RESTORE_ENV()
+#endif
 
 #define ss_CATCH_RESCUE                                                 \
   break; case 1: ss_CATCH_RESTORE_ENV(); _ss_catch_in_rescue(ss_CATCH_ARGS);
