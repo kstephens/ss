@@ -68,10 +68,6 @@ ss ss_memcmp(ss a, ss b, ss as, ss bs)
   return ss_i(cmp ? (cmp < 0 ? -1 : 1) : (ss_I(as) == ss_I(bs) ? 0 : (ss_I(as) < ss_I(bs) ? -1 : 1)));
 }
 
-#ifndef ss_nil
-ss ss_undef, ss_unspec, ss_nil, ss_t, ss_f, ss_eos;
-#endif
-
 ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv);
 #define ss_expr (*_ss_expr)
 #define ss_eval(X) _ss_eval(ss_env, &(X), 0)
@@ -1344,15 +1340,6 @@ ss ss_m_cfunc(void *ptr, const char *name, const char *docstr)
 
 void ss_init_const(ss_s_env *ss_env)
 {
-#ifndef ss_undef
-  ss_undef  = ss_alloc(ss_t_undef, 0);
-  ss_unspec = ss_alloc(ss_t_unspec, 0);
-  ss_nil    = ss_alloc(ss_t_null, 0);
-  ss_t      = ss_alloc(ss_t_boolean, 0);
-  ss_f      = ss_alloc(ss_t_boolean, 0);
-  ss_eos    = ss_alloc(ss_t_eos, 0);
-#endif
-
   symbols = ss_nil;
 }
 
