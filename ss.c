@@ -134,10 +134,8 @@ ss ss_alloc_copy(ss_e_type type, size_t size, void *ptr)
 ss ss_m_catch()
 {
   ss_s_catch *self = ss_alloc(ss_t_catch, sizeof(*self));
-  self->jmp = 0;
-  self->prev = 0;
-  self->body = self->rescue = self->ensure = ss_f;
-  self->val = ss_undef;
+  memset(self, 0, sizeof(*self));
+  self->body = self->rescue = self->ensure = self->value = ss_undef;
   return self;
 }
 
@@ -149,26 +147,16 @@ ss ss_catch(ss_s_env *ss_env, ss body, ss rescue, ss ensure)
     c->body = body;
     c->rescue = rescue;
     c->ensure = ensure;
-    rtn = ss_apply(ss_env, c->body, ss_vec(1, c));
+    rtn = ss_apply(ss_env, c->body, ss_vec1(c));
   }
   ss_CATCH_RESCUE {
-    rtn = ss_apply(ss_env, c->rescue, ss_vec(1, c));
+    rtn = ss_apply(ss_env, c->rescue, ss_vec1(c));
+  }
+  ss_CATCH_ENSURE {
+    ss_apply(ss_env, c->rescue, ss_vec1(c));
   }
   ss_CATCH_END;
   return rtn;
-}
-
-ss ss_throw(ss_s_env *ss_env, ss catch, ss val)
-{
-  ss_s_catch *c = catch;
-  jmp_buf *jmp;
-  if ( ! c ) abort();
-  jmp = c->jmp;
-  if ( ! jmp ) abort();
-  c->val = val;
-  c->jmp = 0;
-  longjmp(*jmp, 1);
-  return 0;
 }
 
 ss ss_error_raise(ss_s_env *ss_env, ss val)
@@ -188,14 +176,14 @@ ss ss_error(ss_s_env *ss_env, const char *format, ss obj, ...)
 {
   va_list vap;
   va_start(vap, obj);
-  fprintf(FP(ss_stderr), "\n  ss: error ");
+  fprintf(FP(ss_stderr), "\n  ;; ss: error ");
   vfprintf(FP(ss_stderr), format, vap);
   fprintf(FP(ss_stderr), ": ");
   ss_write(obj, ss_stderr);
   fprintf(FP(ss_stderr), "\n");
   va_end(vap);
   for ( ss_s_env *env = ss_env; env; env = env->parent ) {
-    fprintf(FP(ss_stderr), "  ss: %3d ", (int) env->depth);
+    fprintf(FP(ss_stderr), "  ;; ss: %3d ", (int) env->depth);
     ss_write(env->expr, ss_stderr);
     fprintf(FP(ss_stderr), "\n");
   }
@@ -661,6 +649,13 @@ ss ss_vecnv(size_t l, const ss *v)
 {
   ss_s_vector *self = ss_vecn(l);
   memcpy(self->v, v, sizeof(self->v[0]) * l);
+  return self;
+}
+
+ss ss_vec1(ss a1)
+{
+  ss_s_vector *self = ss_vecn(1);
+  self->v[0] = a1;
   return self;
 }
 
@@ -1421,29 +1416,32 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
       if ( (expr = ss_prompt(ss_env, input, prompt)) == ss_eos ) goto stop;
 
       if ( prompt != ss_f ) {
-        fprintf(*ss_stderr, ";; read => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+        fprintf(*ss_stderr, "  ;; ss: read => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
       }
 
       value = ss_undef;
       value = ss_eval(expr);
 
       if ( prompt != ss_f ) {
-        fprintf(*ss_stderr, ";; rewrite => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+        fprintf(*ss_stderr, "  ;; ss: rewrite => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
       }
       if ( value != ss_undef ) {
         if ( output != ss_f ) {
           ss_write(value, ss_stdout); fprintf(*ss_stdout, "\n");
         }
         if ( 0 ) {
-          fprintf(*ss_stderr, ";; %lld (%p)\n", (long long) ss_unbox(fixnum, value), (void*) value);
-          fprintf(*ss_stderr, ";; %llu bytes %llu objects\n",
+          fprintf(*ss_stderr, "  ;; ss: %lld (%p)\n", (long long) ss_unbox(fixnum, value), (void*) value);
+          fprintf(*ss_stderr, "  ;; ss: %llu bytes %llu objects\n",
                   (unsigned long long) ss_malloc_bytes,
                   (unsigned long long) ss_malloc_objects);
         }
       }
     }
     ss_CATCH_RESCUE {
-      fprintf(*ss_stderr, ";; recovered from error\n");
+      fprintf(*ss_stderr, "  ;; ss: recovered from error\n");
+    }
+    ss_CATCH_ENSURE {
+      // fprintf(*ss_stderr, "  ;; ss: ensure\n");
     }
     ss_CATCH_END;
   }

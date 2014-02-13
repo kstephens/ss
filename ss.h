@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <setjmp.h>
 #ifndef __APPLE__
 #include <unistd.h> /* ssize_t */
 #include <strings.h> /* strcasecmp */
@@ -176,7 +175,9 @@ static inline
 ss     ss_vector_S(ss x, ss i, ss v)
 { ((ss_s_vector*)(x))->v[ss_I(i)] = v; return x; }
 ss ss_vecn(size_t l);
+ss ss_vecnv(size_t l, const ss *v);
 ss ss_vec(int n, ...);
+ss ss_vec1(ss a1);
 
 typedef char ss_string_t;
 typedef struct ss_s_string {
@@ -213,37 +214,7 @@ typedef struct ss_s_port {
 } ss_s_port;
 #define ss_UNBOX_port(X) (*(ss_s_port*)(X))
 
-typedef struct ss_s_catch {
-  jmp_buf *jmp;
-  ss val;
-  struct ss_s_catch *prev;
-  ss body, rescue, ensure;
-} ss_s_catch;
-#define ss_CATCH(C)                                   \
-  do {                                                \
-  jmp_buf _catch_jb;                                  \
-  ss_s_catch *_catch = (C);                           \
-  switch ( setjmp(_catch_jb) ) {                      \
-  default: abort();                                     \
-  case 0:                                              \
-    _catch->jmp = &_catch_jb;                            \
-    _catch->prev = ss_env->catch;                        \
-    ss_env->catch = _catch;                              \
-    {
-
-#define ss_CATCH_RESCUE                                 \
-    } break;                                            \
-  case 1: ss_env->catch = _catch->prev; {
-#define ss_CATCH_ENSURE                                 \
-    } break; \
-  case 2:  ss_env->catch = _catch->prev; {
-#define ss_CATCH_END                            \
-    } break;                                      \
-  } \
-_catch_end:                                \
-  ss_env->catch = _catch->prev;               \
-} while(0)
-
+struct ss_s_catch;
 typedef struct ss_s_env {
   ss_fixnum_t argc;
   ss *symv;
@@ -252,11 +223,13 @@ typedef struct ss_s_env {
   ss_fixnum_t constantExprQ, constantExprQAll;
   ss_fixnum_t level, depth;
   ss expr;
-  ss_s_catch *catch, *error_catch;
+  struct ss_s_catch *catch, *error_catch;
 } ss_s_env;
 
 #define ss_constantExprQ    ss_env->constantExprQ
 #define ss_constantExprQAll ss_env->constantExprQAll
+
+#include "ss/catch.h"
 
 typedef struct ss_s_prim {
   ss_PROC_DECL((*func));

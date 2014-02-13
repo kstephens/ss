@@ -2,6 +2,7 @@ CFLAGS += -std=c99
 CFLAGS += -g
 CFLAGS += -O3
 CFLAGS += -I.
+CFLAGS += -Iinclude
 CFLAGS += -Igen
 CFLAGS += -Iboot
 CFLAGS += -I/opt/local/include
@@ -27,7 +28,8 @@ HFILES = \
   gen/prim.def \
   gen/cfunc.def \
   gen/syntax.def \
-  lispread/lispread.c
+  lispread/lispread.c \
+  include/ss/*.h
 
 EARLY_FILES = \
 boot/sym.def    \
