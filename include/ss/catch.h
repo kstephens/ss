@@ -5,6 +5,8 @@
 #include <assert.h>
 
 typedef struct ss_s_catch {
+  void *apply; // apply
+  ss data[4];
   jmp_buf *jmp;
   ss value;
   struct ss_s_catch *prev, *dst, *src;
@@ -12,10 +14,10 @@ typedef struct ss_s_catch {
   int level;
   ss body, rescue, ensure;
   struct ss_s_env *env;
-  const char *file, *func; int line;
-#define ss_CATCH_SET_INFO() catch->file = file; catch->line = line; catch->func = func
-#define ss_CATCH_PARAMS ss_s_env *ss_env, ss_s_catch *catch, const char *file, int line, const char *func
+  const char *file, *funcname; int line;
+#define ss_CATCH_PARAMS ss_s_env *ss_env, ss_s_catch *catch, const char *file, int line, const char *funcname
 #define ss_CATCH_ARGS ss_env, _catch, __FILE__, __LINE__, __FUNCTION__
+#define ss_CATCH_SET_INFO() catch->file = file; catch->line = line; catch->funcname = funcname
 } ss_s_catch;
 
 #ifndef ss_CATCH_DEBUG
@@ -23,16 +25,19 @@ typedef struct ss_s_catch {
 #endif
 
 static inline
-void _ss_longjmp(ss_s_env *ss_env, ss_s_catch *catch, ss_s_catch *dst, int sig)
+ss _ss_longjmp(ss_s_env *ss_env, ss_s_catch *catch, ss_s_catch *dst, int sig)
 {
   jmp_buf *jmp;
   if ( ss_CATCH_DEBUG )
     fprintf(stderr, " longjmp(%d) %p prev %p dst %p env %p env->catch %p\n", sig, catch, catch->prev, dst, ss_env, ss_env->catch);
+  if ( ! dst )
+    return ss_error(ss_env, "no-catch-dst", catch, 0);
   assert(dst->jmp);
   jmp = dst->jmp;
   // dst->jmp = 0; // disable for ss_rethrow.
   ss_env->catch = dst;
   longjmp(*jmp, sig);
+  return 0;
 }
 
 static inline
@@ -68,45 +73,34 @@ void _ss_catch_in_body(ss_CATCH_PARAMS)
     fprintf(stderr, "    %3d BODY    %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
 }
 
-#if 0
-#define ss_CATCH_RESTORE_ENV() ss_env = _catch->env; ss_env->catch = _catch
-#else
-#define ss_CATCH_RESTORE_ENV()
-#endif
-
 #define ss_CATCH_RESCUE                                                 \
-  break; case 1: ss_CATCH_RESTORE_ENV(); _ss_catch_in_rescue(ss_CATCH_ARGS);
+  break; case 1: _ss_catch_in_rescue(ss_CATCH_ARGS);
 static inline
 void _ss_catch_in_rescue(ss_CATCH_PARAMS)
 {
-  ss_CATCH_SET_INFO();
   catch->in_rescue = 1;
-  assert(ss_env->catch == catch);
   if ( ss_CATCH_DEBUG ) 
     fprintf(stderr, "    %3d RESCUE  %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
 }
 
 #define ss_CATCH_ENSURE                                 \
-  break; case 2: default: ss_CATCH_RESTORE_ENV(); _ss_catch_in_ensure(ss_CATCH_ARGS);
+  break; case 2: default: _ss_catch_in_ensure(ss_CATCH_ARGS);
 static inline
 void _ss_catch_in_ensure(ss_CATCH_PARAMS)
 {
-  ss_CATCH_SET_INFO();
   catch->in_ensure = 1;
-  assert(ss_env->catch == catch);
   if ( ss_CATCH_DEBUG ) 
     fprintf(stderr, "    %3d ENSURE  %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
 }
 
 #define ss_CATCH_END                                             \
   break;                                                         \
-  } ss_CATCH_RESTORE_ENV();                                      \
+  }                                                              \
   if ( _ss_catch_in_end(ss_CATCH_ARGS) ) goto _catch_again;      \
 } while (0)
 static inline
 int _ss_catch_in_end(ss_CATCH_PARAMS)
 {
-  ss_CATCH_SET_INFO();
   catch->in_end = 1;
   assert(ss_env->catch == catch);
 
@@ -121,23 +115,32 @@ int _ss_catch_in_end(ss_CATCH_PARAMS)
     ss_s_catch *dst = catch->prev;
     if ( ss_CATCH_DEBUG )
       fprintf(stderr, "    %3d RETHROW %p prev %p dst %p env %p env->catch %p\n", catch->level, catch, catch->prev, dst, ss_env, ss_env->catch);
+    if ( ! dst ) {
+      ss_error(ss_env, "no-catch", catch, 0);
+      return 0;
+    }
     dst->dst = catch->dst;
     dst->src = catch->src;
     _ss_longjmp(ss_env, catch, dst, 1);
   }
+  // We are done.
+  catch->in_begin = catch->in_rescue = catch->in_ensure = catch->in_end = 0;
   // Restore previous catch.
   ss_env->catch = catch->prev;
   return 0;
 }
 
 static inline
-ss ss_throw(ss_s_env *ss_env, ss_s_catch *catch, ss value)
+ss __ss_throw(ss_s_env *ss_env, ss_s_catch *catch, ss value)
 {
   ss_s_catch *cur, *dst; int sig;
   assert(catch);
-  assert(ss_env->catch);
-  cur = ss_env->catch;
   catch->value = value;
+
+  cur = ss_env->catch;
+  if ( ! cur )
+    return ss_error(ss_env, "no-active-catch", catch, 0);
+  assert(ss_env->catch);
 
   if ( ss_CATCH_DEBUG ) 
     fprintf(stderr, "   %3d THROW   %p prev %p env %p env->catch %p\n", catch->level, catch, catch->prev, ss_env, ss_env->catch);
@@ -167,16 +170,31 @@ ss ss_throw(ss_s_env *ss_env, ss_s_catch *catch, ss value)
 }
 
 static inline
+ss _ss_throw_INFO(ss value, ss_CATCH_PARAMS)
+{
+  assert(catch);
+  ss_CATCH_SET_INFO();
+  return __ss_throw(ss_env, catch, value);
+}
+
+#define ss_throw_INFO(ENV,CATCH,VALUE) _ss_throw_INFO(VALUE,ENV,CATCH,__FILE__,__LINE__,__FUNCTION__)
+#define ss_throw(ENV,CATCH,VALUE)   ss_throw_INFO(ENV,CATCH,VALUE)
+
+static inline
 ss ss_rethrow(ss_s_env *ss_env)
 {
   ss_s_catch *catch, *dst;
-  assert(ss_env->catch);
+
+  if ( ! (catch = ss_env->catch) )
+    return ss_error(ss_env, "no-active-catch", ss_undef, 0);
   catch = ss_env->catch;
+  if ( ! catch->dst )
+    return ss_error(ss_env, "no-catch-dst", catch, 0);
   assert(catch->dst);
   dst = catch->dst;
   if ( ss_CATCH_DEBUG )
     fprintf(stderr, "    %3d RETHROW %p prev %p dst %p env %p env->catch %p\n", catch->level, catch, catch->prev, dst, ss_env, ss_env->catch);
-  ss_throw(ss_env, dst, dst->value);
+  __ss_throw(ss_env, dst, dst->value);
   return 0;
 }
 

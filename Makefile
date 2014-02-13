@@ -92,6 +92,12 @@ prog-defines :
 test : all
 	echo '(load "t/test.scm")' | ./ss
 
+sh : all
+	./sssh
+
+db : all
+	lldb ./ss
+
 TEST_FILE = t/test*.scm
 test-file : all
 	errors=0; for f in $(TEST_FILE) ;\
