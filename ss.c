@@ -72,6 +72,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv);
 #define ss_expr (*_ss_expr)
 #define ss_eval(X) _ss_eval(ss_env, &(X), 0)
 #define ss_callv(P,ARGS) _ss_eval(ss_env, &(P), ARGS)
+ss ss_apply(ss_s_env *ss_env, ss func, ss args);
 #if 1
 int ss_rewrite_verbose = 0;
 int ss_eval_verbose = 0;
@@ -130,27 +131,56 @@ ss ss_alloc_copy(ss_e_type type, size_t size, void *ptr)
   return self;
 }
 
-void ss_error_init(ss_s_env *ss_env, jmp_buf *jb)
+ss ss_m_catch()
 {
-  ss_env->error_jmp = jb;
-  ss_env->error_val = ss_undef;
+  ss_s_catch *self = ss_alloc(ss_t_catch, sizeof(*self));
+  self->jmp = 0;
+  self->prev = 0;
+  self->body = self->rescue = self->ensure = ss_f;
+  self->val = ss_undef;
+  return self;
+}
+
+ss ss_catch(ss_s_env *ss_env, ss body, ss rescue, ss ensure)
+{
+  ss_s_catch *c = ss_m_catch();
+  ss rtn = ss_undef;
+  ss_CATCH(c) {
+    c->body = body;
+    c->rescue = rescue;
+    c->ensure = ensure;
+    rtn = ss_apply(ss_env, c->body, ss_vec(1, c));
+  }
+  ss_CATCH_RESCUE {
+    rtn = ss_apply(ss_env, c->rescue, ss_vec(1, c));
+  }
+  ss_CATCH_END;
+  return rtn;
+}
+
+ss ss_throw(ss_s_env *ss_env, ss catch, ss val)
+{
+  ss_s_catch *c = catch;
+  jmp_buf *jmp;
+  if ( ! c ) abort();
+  jmp = c->jmp;
+  if ( ! jmp ) abort();
+  c->val = val;
+  c->jmp = 0;
+  longjmp(*jmp, 1);
+  return 0;
 }
 
 ss ss_error_raise(ss_s_env *ss_env, ss val)
 {
   ss_s_env *e = ss_env;
   if ( ! e ) e = ss_current_env;
-  while ( e && ! e->error_jmp ) e = e->parent;
+  while ( e && ! e->error_catch ) e = e->parent;
   if ( ! e ) {
     fprintf(*ss_stderr, "ss: no error catch: aborting\n");
     abort();
   }
-  e->error_val = val;
-  {
-    jmp_buf *tmp = e->error_jmp;
-    e->error_jmp = 0;
-    longjmp(*tmp, 1);
-  }
+  return ss_throw(ss_env, e->error_catch, val);
 }
 
 #define FP(port) (*(FILE**) (port))
@@ -657,8 +687,8 @@ ss ss_m_env(ss_s_env *parent)
   env->level     = parent ? parent->level + 1 : 0;
   env->constantExprQ = env->constantExprQAll = 0;
   env->expr      = ss_undef;
-  env->error_jmp = 0; env->error_val = ss_undef;
-  // fprintf(stderr, "  ss_m_env(#@%p) => #<c E#@%p -> E#@%p>\n", parent, env, env->parent);
+  env->catch     = parent ? parent->catch : 0;
+  env->error_catch = parent ? parent->error_catch : 0;
   return env;
 }
 
@@ -1384,36 +1414,40 @@ ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
 ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
 {
   ss expr, value = ss_undef;
+  ss catch = ss_m_catch();
   while ( 1 ) {
-    jmp_buf jb;
+    ss_CATCH(catch) {
+      if ( trap_error != ss_f ) ss_env->error_catch = catch;
+      if ( (expr = ss_prompt(ss_env, input, prompt)) == ss_eos ) goto stop;
 
-    if ( ! setjmp(jb) ) {
-      if ( trap_error != ss_f ) ss_error_init(ss_env, &jb);
-      if ( (expr = ss_prompt(ss_env, input, prompt)) == ss_eos ) break;
-
-    if ( prompt != ss_f ) {
-      fprintf(*ss_stderr, ";; read => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
-    }
-
-    value = ss_undef;
-    value = ss_eval(expr);
-
-    if ( prompt != ss_f ) {
-      fprintf(*ss_stderr, ";; rewrite => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
-    }
-    if ( value != ss_undef ) {
-      if ( output != ss_f ) {
-        ss_write(value, ss_stdout); fprintf(*ss_stdout, "\n");
+      if ( prompt != ss_f ) {
+        fprintf(*ss_stderr, ";; read => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
       }
-      if ( 0 ) {
-        fprintf(*ss_stderr, ";; %lld (%p)\n", (long long) ss_unbox(fixnum, value), (void*) value);
-        fprintf(*ss_stderr, ";; %llu bytes %llu objects\n",
-                (unsigned long long) ss_malloc_bytes,
-                (unsigned long long) ss_malloc_objects);
+
+      value = ss_undef;
+      value = ss_eval(expr);
+
+      if ( prompt != ss_f ) {
+        fprintf(*ss_stderr, ";; rewrite => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
+      }
+      if ( value != ss_undef ) {
+        if ( output != ss_f ) {
+          ss_write(value, ss_stdout); fprintf(*ss_stdout, "\n");
+        }
+        if ( 0 ) {
+          fprintf(*ss_stderr, ";; %lld (%p)\n", (long long) ss_unbox(fixnum, value), (void*) value);
+          fprintf(*ss_stderr, ";; %llu bytes %llu objects\n",
+                  (unsigned long long) ss_malloc_bytes,
+                  (unsigned long long) ss_malloc_objects);
+        }
       }
     }
+    ss_CATCH_RESCUE {
+      fprintf(*ss_stderr, ";; recovered from error\n");
     }
+    ss_CATCH_END;
   }
+ stop:
   return value;
 }
 
