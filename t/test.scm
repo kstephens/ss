@@ -26,6 +26,7 @@
   (display ";; testing ")(display name)(display "  OK")(newline)
   )
 
+(test-file "t/test-catch.scm")
 (test-file "t/test-equal.scm")
 (test-file "t/test-char.scm")
 (test-file "t/test-string.scm")

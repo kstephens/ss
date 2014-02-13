@@ -36,7 +36,9 @@ Implements lazy, threaded expression rewriting with constant-folding.
 * Character (immediate)
 * Vector
 * Pair
-* Booleans
+* Boolean
+* Port
+* Catch
 
 ## Features
 

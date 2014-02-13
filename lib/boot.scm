@@ -338,4 +338,11 @@
       (%string-equal? a b))
     (else #f)))
 
+(define (%catch body rescue ensure)
+  (C:ss_catch &env body rescue ensure))
+(define (%throw catch value)
+  (C:ss_throw &env catch value))
+
 (display ";; ss - boot.scm loaded.")(newline)
+
+(load "t/test.scm")
