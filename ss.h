@@ -249,15 +249,17 @@ typedef struct ss_s_prim {
 
 #ifndef _ss_prim
 #define _ss_prim(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)         \
+  extern ss ss_sym(NAME);                                               \
   ss ss_p_##NAME;                                                       \
   static ss_PROC_DECL(ss_PASTE2(_ss_pf_,NAME));                         \
   ss_s_prim ss_PASTE2(_ss_p_,NAME) = { ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, NO_SIDE_EFFECT, DOCSTRING } ; \
   static ss_PROC_DECL(ss_PASTE2(_ss_pf_,NAME)) {                        \
   ss ss_rtn = ss_undef;                                                 \
+  (void) ss_sym(NAME);                                                  \
   if ( MINARGS >= 0 && ss_argc < MINARGS )                              \
-    _ss_min_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MINARGS);    \
+    _ss_min_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MINARGS);   \
   if ( MAXARGS >= 0 && ss_argc > MAXARGS )                              \
-    _ss_max_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MAXARGS);    \
+    _ss_max_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MAXARGS);   \
 {
 #endif
 
