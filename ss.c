@@ -189,7 +189,7 @@ ss ss_error(ss_s_env *ss_env, const char *format, ss obj, ...)
     ss_write(env->expr, ss_stderr);
     fprintf(FP(ss_stderr), "\n");
   }
-  ss_error_raise(ss_env, ss_undef);
+  ss_error_raise(ss_env, obj);
   return 0;
 }
 
@@ -1436,7 +1436,7 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
     }
     ss_CATCH_RESCUE {
       fprintf(*ss_stderr, "  ;; ss: recovered from error: ");
-      ss_write(catch->value, ss_stderr);
+      ss_write(catch->src->value, ss_stderr);
       fprintf(*ss_stderr, "\n");
     }
     ss_CATCH_ENSURE {
