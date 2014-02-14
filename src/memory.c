@@ -1,4 +1,5 @@
-ss_e_type ss_immediate_types[] = {
+
+ss_e_type ss_ALIGNED(ss_immediate_types[], 64) = {
   ss_t_null,   0,
   ss_t_undef,  0,
   ss_t_unspec, 0,
