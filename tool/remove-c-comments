@@ -1,0 +1,5 @@
+#!/usr/bin/env perl -wp
+# remove C/C++ style comments
+BEGIN { undef $/; }
+s|/[*].*?[*]/||sg;
+s|//[^\n]*\n/||sg;
