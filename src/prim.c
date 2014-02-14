@@ -1,3 +1,12 @@
+
+static ss prim_list;
+ss ss_prim_list()
+{ return prim_list; }
+
+static ss syntax_list;
+ss ss_syntax_list()
+{ return syntax_list; }
+
 void ss_init_prim(ss_s_env *ss_env)
 {
   static struct {
@@ -14,16 +23,24 @@ void ss_init_prim(ss_s_env *ss_env)
   };
   ss sym;
 
+  prim_list = ss_nil;
   for ( int i = 0; inits[i].name; ++ i ) {
     ss prim = ss_alloc_copy(ss_t_prim, sizeof(ss_s_prim), inits[i].prim_struct);
+    prim_list = ss_cons(prim, prim_list);
     *inits[i].primp = prim;
     sym = ss_box_symbol(inits[i].name);
     ss_define(ss_env, sym, prim);
-    ss_UNBOX(symbol, sym).is_const = 1;
+    ss_UNB(symbol, sym).is_const = 1;
   }
 
+  {
+    ss syntax;
+
 #define ss_syntax_def(NAME,MINARGS,MAXARGS,NO_SIDE_EFFFECT,DOCSTRING)     \
-  sym = ss_sym(NAME);                                           \
-  ss_UNBOX(symbol, sym).syntax = ss_PASTE2(ss_p_ss_syn_,NAME);
+    sym = ss_sym(NAME);                                                 \
+    syntax = ss_PASTE2(ss_p_ss_syn_,NAME);                              \
+    ss_UNB(symbol, sym).syntax = syntax;                                \
+    syntax_list = ss_cons(syntax, syntax_list);
 #include "syntax.def"
+  }
 }

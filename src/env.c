@@ -88,9 +88,9 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     }
     break;
   case ss_t_var:
-    sym  = ss_UNBOX(var, var).name;
-    up   = ss_UNBOX(var, var).up;
-    over = ss_UNBOX(var, var).over;
+    sym  = ss_UNB(var, var).name;
+    up   = ss_UNB(var, var).up;
+    over = ss_UNB(var, var).over;
     while ( up -- > 0 ) env = env->parent;
     assert(env);
 #if 0
@@ -112,9 +112,9 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
   if ( ss_type_e(*ref) == ss_t_global ) {
     sym = ((ss_s_global*) *ref)->name;
     ss_rewrite_expr(*ref, "global binding is known");
-    ref = &ss_UNBOX(global, *ref);
+    ref = &ss_UNB(global, *ref);
   }
-  if ( ss_UNBOX(symbol, sym).is_const && env->parent == 0 ) {
+  if ( ss_UNB(symbol, sym).is_const && env->parent == 0 ) {
     if ( set ) return(ss_error(ss_env, "constant-variable", sym, 0));
     ss_constantExprQ = 1;
     ss_rewrite_expr(ss_box_quote(*ref), "variable constant in top-level");

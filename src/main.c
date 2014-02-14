@@ -1,6 +1,5 @@
 void ss_init_const(ss_s_env *ss_env)
 {
-  symbols = ss_nil;
 }
 void ss_init_global(ss_s_env *ss_env)
 {

@@ -5,7 +5,7 @@ void ss_number_coerce_2(ss *a0, ss *a1)
   case ss_t_fixnum:
     switch ( ss_type_e(*a1) ) {
     case ss_t_flonum:
-      *a0 = ss_box(flonum, ss_UNBOX(fixnum, *a0));
+      *a0 = ss_box(flonum, ss_UNB(fixnum, *a0));
       break;
     case ss_t_fixnum:
       break;
@@ -15,7 +15,7 @@ void ss_number_coerce_2(ss *a0, ss *a1)
   case ss_t_flonum:
     switch ( ss_type_e(*a1) ) {
     case ss_t_fixnum:
-      *a1 = ss_box(flonum, ss_UNBOX(fixnum, *a1));
+      *a1 = ss_box(flonum, ss_UNB(fixnum, *a1));
       break;
     case ss_t_flonum: break;
     default: ss_typecheck_error(*a1);
@@ -106,9 +106,9 @@ ss_end
     ss_number_coerce_2(&a0, &a1);                                       \
     switch ( ss_type_e(a0) ) {                                          \
     case ss_t_fixnum:                                                   \
-      return ss_box(fixnum, ss_UNBOX(fixnum,a0) OP ss_UNBOX(fixnum,a1)); \
+      return ss_box(fixnum, ss_UNB(fixnum,a0) OP ss_UNB(fixnum,a1)); \
     case ss_t_flonum:                                                   \
-      return ss_box(flonum, ss_UNBOX(flonum,a0) OP ss_UNBOX(flonum,a1)); \
+      return ss_box(flonum, ss_UNB(flonum,a0) OP ss_UNB(flonum,a1)); \
     default: return ss_typecheck_error(a0);                             \
     }                                                                   \
   }                                                                     \
@@ -119,9 +119,9 @@ ss_end
   {                                                                     \
     switch ( ss_type_e(a0) ) {                                          \
     case ss_t_fixnum:                                                   \
-      return ss_box(fixnum, OP ss_UNBOX(fixnum,a0));                    \
+      return ss_box(fixnum, OP ss_UNB(fixnum,a0));                    \
     case ss_t_flonum:                                                   \
-      return ss_box(flonum, OP ss_UNBOX(flonum,a0));                    \
+      return ss_box(flonum, OP ss_UNB(flonum,a0));                    \
     default: return ss_typecheck_error(a0);                             \
     }                                                                   \
   }                                                                     \
@@ -133,9 +133,9 @@ ss_end
     ss_number_coerce_2(&a0, &a1);                                       \
     switch ( ss_type_e(a0) ) {                                          \
     case ss_t_fixnum:                                                   \
-      return ss_box(boolean, ss_UNBOX(fixnum,a0) OP ss_UNBOX(fixnum,a1)); \
+      return ss_box(boolean, ss_UNB(fixnum,a0) OP ss_UNB(fixnum,a1));   \
     case ss_t_flonum:                                                   \
-      return ss_box(boolean, ss_UNBOX(flonum,a0) OP ss_UNBOX(flonum,a1)); \
+      return ss_box(boolean, ss_UNB(flonum,a0) OP ss_UNB(flonum,a1));   \
     default: return ss_typecheck_error(a0);                             \
     }                                                                   \
   }                                                                     \
@@ -146,7 +146,7 @@ ss_end
   {                                                                     \
     ss_typecheck(ss_t_fixnum, a0);                                      \
     ss_typecheck(ss_t_fixnum, a1);                                      \
-    return ss_box(fixnum, ss_UNBOX(fixnum,a0) OP ss_UNBOX(fixnum,a1));  \
+    return ss_box(fixnum, ss_UNB(fixnum,a0) OP ss_UNB(fixnum,a1));      \
   }                                                                     \
   PRIM_BOP(NAME,OP)
 
@@ -154,7 +154,7 @@ ss_end
   ss ss_##NAME(ss a0)                                                   \
   {                                                                     \
     ss_typecheck(ss_t_fixnum, a0);                                      \
-    return ss_box(fixnum, OP ss_UNBOX(fixnum,a0));                      \
+    return ss_box(fixnum, OP ss_UNB(fixnum,a0));                        \
   }                                                                     \
   PRIM_UOP(NAME,OP)
 

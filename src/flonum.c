@@ -1,7 +1,7 @@
 ss_flonum_t ss_flonum_(ss v)
 {
   switch ( ss_type_e(v) ) {
-  case ss_t_flonum:  return ss_UNBOX_flonum(v);
+  case ss_t_flonum:  return ss_UNB_flonum(v);
   case ss_t_fixnum:  return ss_I(v);
   default:           ss_typecheck_error(v); return 1.0 / 0.0;
   }

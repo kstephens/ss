@@ -31,7 +31,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
   switch ( ss_type_e(expr) ) {
   case ss_t_quote:
     ss_constantExprQ = 1;
-    return(ss_UNBOX(quote, expr));
+    return(ss_UNB(quote, expr));
   case ss_t_symbol:
     if ( expr == ss_sym(_env) ) return(ss_env);
   case ss_t_var:
@@ -44,7 +44,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
       return(ss_undef);
     }
   case ss_t_global:
-    return(ss_UNBOX(global, expr));
+    return(ss_UNB(global, expr));
   case ss_t_if:
     {
       ss_s_if *self = ss_expr;
@@ -75,7 +75,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     }
   case ss_t_pair:
     rtn = ss_car(expr);
-    if ( ss_type_e(rtn) == ss_t_symbol && (rtn = ss_UNBOX(symbol, rtn).syntax) != ss_f ) {
+    if ( ss_type_e(rtn) == ss_t_symbol && (rtn = ss_UNB(symbol, rtn).syntax) != ss_f ) {
       expr = ss_apply(ss_env, rtn, ss_cdr(expr));
       ss_rewrite_expr(expr, "syntax rewrite");
       goto again;
@@ -105,15 +105,15 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     switch ( ss_type_e(rtn) ) {
     case ss_t_catch:
       {
-        return((ss_UNBOX(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv));
+        return((ss_UNB(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv));
       }
     case ss_t_prim:
       {
-        expr = (ss_UNBOX(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
+        expr = (ss_UNB(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
         if ( ss_eval_verbose ) {
-          if ( const_argsQ ) fprintf(*ss_stderr, "    ;; const_argsQ %s\n", ss_UNBOX(prim, rtn)->no_side_effect ? "no-side-effect" : "");
+          if ( const_argsQ ) fprintf(*ss_stderr, "    ;; const_argsQ %s\n", ss_UNB(prim, rtn)->no_side_effect ? "no-side-effect" : "");
         }
-        if ( (ss_constantExprQ = const_argsQ && ss_UNBOX(prim, rtn)->no_side_effect) )
+        if ( (ss_constantExprQ = const_argsQ && ss_UNB(prim, rtn)->no_side_effect) )
           ss_rewrite_expr(ss_box_quote(expr), "constant folding");
         return(expr);
       }

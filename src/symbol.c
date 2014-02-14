@@ -2,13 +2,16 @@
 #define ss_sym_def(X) ss ss_PASTE2(_ss_sym_,X);
 #include "sym.def"
 
-static ss symbols;
+static ss symbol_list;
+ss ss_symbol_list()
+{ return symbol_list; }
+
 ss ss_box_symbol(const char *name)
 {
   ss_s_symbol *sym;
 
   if ( name ) {
-    for ( ss l = symbols; l != ss_nil; l = ss_cdr(l) ) {
+    for ( ss l = symbol_list; l != ss_nil; l = ss_cdr(l) ) {
       sym = (ss_s_symbol*) ss_car(l);
       if ( strcmp(name, ss_string_V(sym->name)) == 0 )
         goto rtn;
@@ -21,25 +24,22 @@ ss ss_box_symbol(const char *name)
   sym->syntax = ss_f;
   sym->is_const = 0;
   if ( name )
-    symbols = ss_cons(sym, symbols);
+    symbol_list = ss_cons(sym, symbol_list);
 
  rtn:
-  // fprintf(stderr, "  symbol(%s) => %p\n", name, sym);
   return sym;
 }
-
-ss ss_symbols() { return symbols; }
 
 ss ss_make_constant(ss sym)
 {
   ss_typecheck(ss_t_symbol, sym);
-  ss_UNBOX(symbol, sym).is_const = 1;
+  ss_UNB(symbol, sym).is_const = 1;
   return sym;
 }
 ss ss_constantQ(ss sym)
 {
   ss_typecheck(ss_t_symbol, sym);
-  return ss_box(boolean, ss_UNBOX(symbol, sym).is_const);
+  return ss_box(boolean, ss_UNB(symbol, sym).is_const);
 }
 
 void ss_init_symbol(ss_s_env *ss_env)
