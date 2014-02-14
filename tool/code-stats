@@ -6,7 +6,7 @@ count_lines() {
   local f="$1"
   case "$f"
   in
-    *.[hc])
+    *.[hc]|*.cpp|*.hpp|*.cxx|*.hxx)
       "$dir/remove-c-comments" "$f"
     ;;
     *.scm|*.l)
@@ -19,7 +19,7 @@ count_lines() {
 }
 
 (
-  find "$@" -name '*.[ch]' -o -name '*.scm' -o -name '*.gen' |
+  find "$@" -name '*.[ch]' -o -name '*.scm' -o -name '*.l' -o -name '*.gen' |
   sort; echo "TOTAL:"
 ) |
 while read f
