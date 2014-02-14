@@ -43,7 +43,7 @@ ss ss_errstr(ss en)
 {
   int i;
   if ( en == ss_f ) en = ss_errno();
-  i = ss_UNBOX_fixnum(en);
+  i = ss_UNB_fixnum(en);
   return ss_s(strerror(i));
 }
 

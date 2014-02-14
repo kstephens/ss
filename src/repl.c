@@ -29,7 +29,7 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
           ss_write(value, ss_stdout); fprintf(*ss_stdout, "\n");
         }
         if ( 0 ) {
-          fprintf(*ss_stderr, "  ;; ss: %lld (%p)\n", (long long) ss_unbox(fixnum, value), (void*) value);
+          fprintf(*ss_stderr, "  ;; ss: %lld (%p)\n", (long long) ss_unb(fixnum, value), (void*) value);
           fprintf(*ss_stderr, "  ;; ss: %llu bytes %llu objects\n",
                   (unsigned long long) ss_malloc_bytes,
                   (unsigned long long) ss_malloc_objects);

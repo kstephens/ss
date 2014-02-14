@@ -11,6 +11,7 @@
 #endif
 #include <ctype.h>
 #include <unistd.h>
+#include <dlfcn.h> /* dlopen() */
 #include <assert.h>
 
 ss_s_env *ss_top_level_env, *ss_current_env;

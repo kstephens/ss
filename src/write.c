@@ -15,7 +15,7 @@ void ss_minimal_double_str(double x, char *buf, size_t buflen)
 void ss_write_flonum(ss v, ss port)
 {
   char buf[64];
-  ss_minimal_double_str(ss_unbox(flonum, v), buf, 63);
+  ss_minimal_double_str(ss_unb(flonum, v), buf, 63);
   if ( ! (strchr(buf, 'e') || strchr(buf, '.')) ) {
     strcat(buf, ".0");
   }
@@ -43,7 +43,7 @@ ss ss_write_3(ss v, ss port, ss mode)
   FILE *out = FP(port);
   switch ( ss_type_e(v) ) {
   case ss_t_undef:   fprintf(out, "#<undef>"); break;
-  case ss_t_fixnum:  fprintf(out, "%lld", (long long) ss_UNBOX(fixnum, v)); break;
+  case ss_t_fixnum:  fprintf(out, "%lld", (long long) ss_UNB(fixnum, v)); break;
   case ss_t_flonum:  ss_write_flonum(v, port); break;
   case ss_t_string:
     if ( mode == ss_sym(display) ) {
@@ -60,13 +60,13 @@ ss ss_write_3(ss v, ss port, ss mode)
     }
     break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
-  case ss_t_prim:    fprintf(out, "#<p %s>", ss_UNBOX(prim, v)->name); break;
+  case ss_t_prim:    fprintf(out, "#<p %s>", ss_UNB(prim, v)->name); break;
   case ss_t_symbol:
   case ss_t_keyword:
-    if ( ss_UNBOX(symbol, v).name == ss_f ) {
+    if ( ss_UNB(symbol, v).name == ss_f ) {
       fprintf(out, "#<symbol #@%p>", v);
     } else {
-      fprintf(out, "%s",   ss_string_V(ss_UNBOX(symbol, v).name));
+      fprintf(out, "%s",   ss_string_V(ss_UNB(symbol, v).name));
     }
     break;
   case ss_t_if:
@@ -83,14 +83,14 @@ ss ss_write_3(ss v, ss port, ss mode)
     break;
   case ss_t_var:
     fprintf(out, "#<v ");
-    ss_write(ss_UNBOX(var, v).name, port);
-    fprintf(out, " %d %d>", (int) ss_UNBOX(var, v).up, (int) ss_UNBOX(var, v).over);
+    ss_write(ss_UNB(var, v).name, port);
+    fprintf(out, " %d %d>", (int) ss_UNB(var, v).up, (int) ss_UNB(var, v).over);
     break;
   case ss_t_var_set:
     fprintf(out, "(set! ");
-    ss_write(ss_UNBOX(var_set, v).var, port);
+    ss_write(ss_UNB(var_set, v).var, port);
     fprintf(out, " ");
-    ss_write(ss_UNBOX(var_set, v).expr, port);
+    ss_write(ss_UNB(var_set, v).expr, port);
     fprintf(out, ")");
     break;
   case ss_t_global:
@@ -98,26 +98,26 @@ ss ss_write_3(ss v, ss port, ss mode)
     ss_write(((ss_s_global*) v)->name, port);
     fprintf(out, " >");
     break;
-  case ss_t_quote:   fprintf(out, "'"); ss_write(ss_UNBOX(quote, v), port); break;
+  case ss_t_quote:   fprintf(out, "'"); ss_write(ss_UNB(quote, v), port); break;
   case ss_t_eos:     fprintf(out, "#<eos>"); break;
   case ss_t_null:    fprintf(out, "()"); break;
   case ss_t_lambda:
     fprintf(out, "(lambda ");
-    ss_write(ss_UNBOX(lambda, v).formals, port);
+    ss_write(ss_UNB(lambda, v).formals, port);
     fprintf(out, " ");
-    ss_write(ss_UNBOX(lambda, v).body, port);
+    ss_write(ss_UNB(lambda, v).body, port);
     fprintf(out, ")");
     break;
   case ss_t_closure:
-    // fprintf(out, "#<c #@%p E#@%p ", v, ss_UNBOX(closure, v).env);
-    ss_write(ss_UNBOX(closure, v).lambda, port);
+    // fprintf(out, "#<c #@%p E#@%p ", v, ss_UNB(closure, v).env);
+    ss_write(ss_UNB(closure, v).lambda, port);
     // fprintf(out, ">");
     break;
   case ss_t_port:
     fprintf(out, "#<port ");
-    ss_write(ss_UNBOX(port, v).name, port);
+    ss_write(ss_UNB(port, v).name, port);
     fprintf(out, " ");
-    ss_write(ss_UNBOX(port, v).mode, port);
+    ss_write(ss_UNB(port, v).mode, port);
     fprintf(out, ">");
     break;
   case ss_t_env:

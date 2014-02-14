@@ -1,4 +1,6 @@
 
+#undef T
+
 ss_prim(ss_call_cfunc,0,5,1,"call cfunc")
 {
 #define T ss
@@ -37,9 +39,20 @@ ss ss_m_cfunc(void *ptr, const char *name, const char *docstr)
 
 ss ss_cfunc_sym(const char *name)
 {
-  char buf[128];
+  char buf[128] = { 0 };
   snprintf(buf, sizeof(buf) - 1, "C:%s", name);
+  assert(buf[126] == 0);
   return ss_box_symbol(buf);
+}
+
+ss ss_symbol_list();
+ss ss_prim_list();
+ss ss_syntax_list();
+
+ss cfuncs;
+ss ss_cfunc_list()
+{
+  return cfuncs;
 }
 
 #ifdef ss_throw
@@ -73,8 +86,9 @@ void ss_init_cfunc(ss_s_env *ss_env)
           ) ) {
       func->func = _ss_pf_ss_call_cfunc_double;
     }
+    cfuncs = ss_cons(func, cfuncs);
     ss_define(ss_env, sym, func);
-    ss_UNBOX(symbol, sym).is_const = 1;
+    ss_UNB(symbol, sym).is_const = 1;
   }
 }
 
