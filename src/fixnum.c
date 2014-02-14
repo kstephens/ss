@@ -1,5 +1,8 @@
+
 ss ss_box_fixnum(ss_fixnum_t v)
 {
+  if ( ss_UNB_fixnum(ss_BOX_fixnum(v)) != v )
+    return ss_box_flonum(v);
   return ss_BOX_fixnum(v);
 }
 
@@ -9,6 +12,7 @@ ss_fixnum_t ss_unb_fixnum(ss v)
   return ss_UNB_fixnum(v);
 }
 
+static inline
 ss_fixnum_t ss_fixnum_(ss v)
 {
   switch ( ss_type_e(v) ) {

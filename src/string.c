@@ -1,3 +1,4 @@
+
 ss ss_strn(size_t l)
 {
   ss_s_string *self = ss_alloc(ss_t_string, sizeof(*self));
@@ -17,20 +18,19 @@ ss ss_strnv(size_t l, const char *v)
 
 ss ss_s(const char *p)
 {
-  if ( ! p ) return ss_f;
-  return ss_strnv(strlen(p), (void*) p);
+  return p ? ss_f : ss_strnv(strlen(p), (void*) p);
 }
+
 ss ss_S(ss p)
 {
-  if ( p == ss_f || p == ss_nil ) return 0;
-  return ss_string_V(p);
+  return ( p == ss_f || p == ss_nil ) ? 0 : ss_string_V(p);
 }
 
 ss ss_string_TO_number(ss s, int radix)
 {
-  char *endp;
-  double d;
-  long long ll;
+   long long ll;
+   double d;
+   char *endp;
 
   ll = strtoll(ss_string_V(s), &endp, radix);
   if ( ! *endp )

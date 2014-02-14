@@ -145,7 +145,9 @@ typedef struct ss_s_flonum {
   ss_flonum_t value;
 } ss_s_flonum;
 #define ss_UNB_flonum(X)((ss_s_flonum*)(X))->value
+static inline
 ss ss_box_flonum(ss_flonum_t _v);
+static inline
 ss_flonum_t ss_unb_flonum(ss v);
 
 static inline
