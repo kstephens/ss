@@ -1,0 +1,39 @@
+#!/bin/bash
+total=0
+fmt='%-30s %6s\n'
+dir="$(dirname "$0")"
+count_lines() {
+  local f="$1"
+  case "$f"
+  in
+    *.[hc])
+      "$dir/remove-c-comments" "$f"
+    ;;
+    *.scm|*.l)
+      "$dir/remove-lisp-comments" "$f"
+    ;;
+    *)
+      cat "$f"
+    ;;
+  esac | "$dir/remove-blank-lines" | wc -l | tr -d ' '
+}
+
+(
+  find "$@" -name '*.[ch]' -o -name '*.scm' -o -name '*.gen' |
+  sort; echo "TOTAL:"
+) |
+while read f
+do
+  case "$f"
+  in
+    TOTAL:)
+      lines="$total"
+    ;;
+    *)
+      lines=$(count_lines "$f")
+      ((total+=$lines))
+    ;;
+  esac
+  # echo "|$f| |$lines|"
+  printf "$fmt" "$f" "$lines"
+done

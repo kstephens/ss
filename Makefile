@@ -121,3 +121,6 @@ test-file : all
 clean:
 	rm -f ss *.o *.s *.i *.tmp gen/*.def boot/*.def
 
+code-stats :
+	tool/code-stats *.[hc] lib src gen/*.gen
+

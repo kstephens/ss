@@ -1,0 +1,3 @@
+#!/usr/bin/env perl -wp
+# remove blank lines
+$_ = '' if /^\s*\n/;

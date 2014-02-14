@@ -1,0 +1,34 @@
+#!/bin/bash
+
+log='test-forever.log'
+f="FAIL!"; t="PASS:"
+state=""
+fail() {
+  state="$f"
+}
+failing() {
+  [[ "$state" = "$f" ]]
+}
+pass() {
+  state="$t"
+}
+show() {
+  if [ "$state" != "$last_state" -o "$state" = "$f" ]
+  then
+    banner "$state"
+    cat "$log"
+    date
+  fi
+  last_state="$state"
+}
+#set -x
+while true
+do
+  cp /dev/null "$log"; pass
+  date >>"$log"
+  make >>"$log" 2>&1 || fail
+  eval "$@" >>"$log" 2>&1 || fail
+  show
+  sleep 5
+done
+
