@@ -52,12 +52,14 @@ ss ss_write_3(ss v, ss port, ss mode)
       fprintf(out, "\"%s\"", ss_string_V(v));
     }
     break;
-  case ss_t_char:
+  case ss_t_char: {
+    int c = ss_C(v);
     if ( mode == ss_sym(display) ) {
-      fprintf(out, "%c",  ss_C(v));
+      fprintf(out, "%c", c);
     } else {
-      fprintf(out, "#\\%c",  ss_C(v));
+      c == -1 ? fprintf(out, "#<\\eof> ") : fprintf(out, "#\\%c", ss_C(v));
     }
+  }
     break;
   case ss_t_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
   case ss_t_prim:    fprintf(out, "#<p %s>", ss_UNB(prim, v)->name); break;

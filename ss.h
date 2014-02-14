@@ -72,18 +72,19 @@ typedef void *ss;
 typedef size_t  ss_word_t;
 typedef ssize_t ss_fixnum_t;
 
-#define ss_BOX_fixnum(X)   ((ss) ((((ss_fixnum_t)(X)) << 1) | 1))
-#define ss_UNB_fixnum(X)        (((ss_fixnum_t)(X)) >> 1)
+#define ss_BOX_fixnum(X)  ((ss)  ((((ss_fixnum_t)(X)) << 1) | 1))
+#define ss_UNB_fixnum(X)  (       (((ss_fixnum_t)(X)) >> 1)     )
 
-#define ss_BOX_char(X)    ((ss) (((((ss_fixnum_t)(X)) & 0xff) + 16) << 1))
-#define ss_UNB_char(X)         ((((ss_fixnum_t)(X)) >> 1)   - 16)
+// (EOF = -1) + 17 << 1 => 32 => ss_eos
+#define ss_BOX_char(X)    ((ss) (((((ss_fixnum_t)(X)) % 256) + 17) << 1)     )
+#define ss_UNB_char(X)    (       (((ss_fixnum_t)(X))              >> 1) - 17)
 
 #define ss_nil    ((ss)0)
 #define ss_undef  ((ss)2)
 #define ss_unspec ((ss)4)
 #define ss_t      ((ss)6)
 #define ss_f      ((ss)8)
-#define ss_eos    ((ss)10)
+#define ss_eos    ((ss)32)
 #define _ss_type ss_e_type
 extern _ss_type ss_ALIGNED(ss_immediate_types[], 64);
 
@@ -118,7 +119,7 @@ ss_e_type ss_type_e(ss x)
 {
   return                 x == 0 ? ss_t_null :
           ((ss_word_t) x) & 1   ? ss_t_fixnum :
-          ((ss_word_t) x) <= 16 ? ss_immediate_types[(ss_word_t) x] :
+          ((ss_word_t) x) <= 32 ? ss_immediate_types[(ss_word_t) x] :
           x <= ss_BOX_char(255) ? ss_t_char :
                                  (ss_fixnum_t) (((ss*) x)[-1]);
 }
