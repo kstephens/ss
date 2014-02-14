@@ -30,6 +30,9 @@ HFILES = \
   gen/syntax.def \
   lispread/lispread.c \
   include/ss/*.h \
+  $(OTHER_C_FILES)
+
+OTHER_C_FILES = \
   src/*.c \
   src/*.h \
   src/*.def
@@ -57,16 +60,16 @@ boot/cfunc.def  : gen/cfunc.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
 
-gen/sym.def : Makefile gen/sym.def.gen $(CFILES) gen/prim.def gen/syntax.def gen/cfunc.def
+gen/sym.def : Makefile gen/sym.def.gen $(CFILES) $(OTHER_C_FILES) gen/prim.def gen/syntax.def gen/cfunc.def
 	@echo "GEN $@"
 	$(SILENT)$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | $@.gen > $@
 gen/prim.def : Makefile gen/prim.def.gen $(CFILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) | $@.gen > $@
+	$(SILENT)$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) $(OTHER_C_FILES) | $@.gen > $@
 gen/syntax.def : Makefile gen/syntax.def.gen $(CFILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) | $@.gen > $@
-gen/cfunc.def : Makefile gen/cfunc.def.gen $(CFILES)
+	$(SILENT)$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) $(OTHER_C_FILES)| $@.gen > $@
+gen/cfunc.def : Makefile gen/cfunc.def.gen $(CFILES) $(OTHER_C_FILES)
 	@echo "GEN $@"
 	$(SILENT)$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | $@.gen > $@
 
@@ -74,9 +77,9 @@ lispread/lispread.c:
 	git submodule init
 	git submodule update
 
-ss : $(EARLY_FILES) $(CFILES) $(HFILES)
+ss : $(EARLY_FILES) $(CFILES) $(HFILES) $(OTHER_C_FILES)
 	@echo "LINK $@"
-	$(SILENT)$(CC) $(CFLAGS) -o $@ $(CFILES) $(LIBS)
+	$(SILENT)$(CC) $(CFLAGS) -o $@ ss.c $(LIBS)
 
 ss.s : $(EARLY_FILES) $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -S -o $@.tmp $(CFILES) $(LIBS)
