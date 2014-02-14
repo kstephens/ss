@@ -1,7 +1,7 @@
 ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
 {
   if ( ! feof(FP(input)) && prompt != ss_f )
-    fprintf(FP(prompt), " ss> ");
+    fprintf(FP(prompt), " #; ss> ");
   return ss_read(ss_env, input);
 }
 
