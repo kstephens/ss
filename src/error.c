@@ -1,3 +1,4 @@
+#include <execinfo.h> /* backtrace() */
 
 ss ss_error_raise(ss_s_env *ss_env, ss error)
 {
@@ -27,10 +28,23 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
   fprintf(FP(ss_stderr), "\n  ;; ss: error: %s ", code);
   ss_write(obj, ss_stderr);
   fprintf(FP(ss_stderr), ": %s\n", msg);
+
+  fprintf(FP(ss_stderr), ";; ss: backtrace:: \n");
   for ( ss_s_env *env = ss_env; env; env = env->parent ) {
     fprintf(FP(ss_stderr), "  ;; ss: %3d ", (int) env->depth);
     ss_write(env->expr, ss_stderr);
     fprintf(FP(ss_stderr), "\n");
+  }
+
+  {
+    void *bt[16]; int bt_size = 16; char **bts;
+    bt_size = backtrace(bt, bt_size);
+    bts = backtrace_symbols(bt, bt_size);
+    fprintf(FP(ss_stderr), ";; ss: C backtrace:: \n");
+    for ( int i = 0; i < bt_size; ++ i ) {
+      fprintf(FP(ss_stderr), "  ;; ss: %3d %s\n", i, bts[i]);
+    }
+    free(bts);
   }
 
   obj = ss_vec(4, ss_sym(error), ss_box_symbol(code), obj, ss_s(msg));
