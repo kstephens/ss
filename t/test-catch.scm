@@ -25,7 +25,7 @@
       (lambda (_c)
         (set! c _c)
         ;; (display "body")(newline)
-        (%throw _c 'throw)
+        (_c 'throw)
         (set! body #t)
         'body)
       (lambda (_c _v)

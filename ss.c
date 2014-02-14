@@ -28,8 +28,35 @@ ss ss_apply(ss_s_env *ss_env, ss func, ss args);
 static inline
 ss ss_cons(ss a, ss d);
 
+static inline
+ss ss_typecheck_error(ss v)
+{
+  return ss_error(ss_current_env, "typecheck", v, 0);
+}
+
+static inline
+ss ss_typecheck(ss_e_type t, ss v)
+{
+  if ( ss_type_e(v) != t )
+    return ss_typecheck_error(v);
+  return v;
+}
+
+static inline
+void _ss_min_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_argc, int MINARGS)
+{
+  ss_error(ss_env, "not-enough-args", op, "(%s) given %d expected at least %d", DOCSTRING, ss_argc, MINARGS);
+}
+
+static inline
+void _ss_max_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_argc, int MAXARGS)
+{
+  ss_error(ss_env, "too-many-args", op, "(%s) given %d expected %d", DOCSTRING, ss_argc, MAXARGS);
+}
+
 #include "src/memory.c"
 #include "src/slot.c"
+#include "src/catch.c"
 #include "src/error.c"
 #include "src/fixnum.c"
 #include "src/number.c"

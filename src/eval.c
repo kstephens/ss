@@ -103,6 +103,10 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     ss_constantExprQ = 0;
 
     switch ( ss_type_e(rtn) ) {
+    case ss_t_catch:
+      {
+        return((ss_UNBOX(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv));
+      }
     case ss_t_prim:
       {
         expr = (ss_UNBOX(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
@@ -113,7 +117,6 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
           ss_rewrite_expr(ss_box_quote(expr), "constant folding");
         return(expr);
       }
-
     case ss_t_closure:
       {
         ss_s_lambda *self = ((ss_s_closure*) rtn)->lambda;
