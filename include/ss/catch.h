@@ -15,7 +15,18 @@ typedef struct ss_s_catch {
   const char *file, *funcname;
   ss_fixnum_t line, level;
   ss expr;
-  unsigned jmp_to : 2, in_begin : 1, in_body : 1, in_rescue : 1, in_ensure : 1, in_end : 1;
+  unsigned
+    jmp_to   : 2,
+    in_begin : 1,
+    in_body  : 1,
+    in_rescue : 1,
+    in_ensure : 1,
+    in_end    : 1,
+    no_rescue : 1, // if true, this catch will not run rescue block.
+    no_ensure : 1, // if true, this catch will not run ensure block.
+    cannot_be_rescued : 1, // if true, this thrown cannot be rescued.
+    cannot_be_ensured : 1  // if true, this thrown cannot be ensured.
+  ;
 #define ss_CATCH_PARAMS ss_s_env *ss_env, ss_s_catch *catch, const char *file, int line, const char *funcname
 #define ss_CATCH_ARGS ss_env, _catch, __FILE__, __LINE__, __FUNCTION__
 #define ss_CATCH_SET_INFO() catch->file = file; catch->line = line; catch->funcname = funcname
@@ -52,6 +63,8 @@ void _ss_catch_in_begin(ss_CATCH_PARAMS)
   catch->jmp_to = 0;
   catch->jmp = 0;
   catch->in_body = catch->in_rescue = catch->in_ensure = catch->in_end = 0;
+  catch->no_rescue = catch->no_ensure =
+    catch->cannot_be_rescued = catch->cannot_be_ensured = 0;
 }
 
 #define ss_CATCH(C) do {                                                \
@@ -60,7 +73,7 @@ void _ss_catch_in_begin(ss_CATCH_PARAMS)
   _ss_catch_in_begin(ss_CATCH_ARGS);                                    \
 _catch_again:                                                           \
  switch ( _catch->jmp_to ? _catch->jmp_to : setjmp(*(_catch->jmp = &_catch_jmp)) ) { \
- case 0: _ss_catch_in_body(ss_CATCH_ARGS);
+ case 0: _ss_catch_in_body(ss_CATCH_ARGS); {
 static inline
 void _ss_catch_in_body(ss_CATCH_PARAMS)
 {
@@ -75,27 +88,31 @@ void _ss_catch_in_body(ss_CATCH_PARAMS)
 }
 
 #define ss_CATCH_RESCUE                                                 \
-  break; case 1: _ss_catch_in_rescue(ss_CATCH_ARGS);
+  } break; case 1: if ( _ss_catch_in_rescue(ss_CATCH_ARGS) ) {
 static inline
-void _ss_catch_in_rescue(ss_CATCH_PARAMS)
+int _ss_catch_in_rescue(ss_CATCH_PARAMS)
 {
   catch->in_rescue = 1;
   if ( ss_CATCH_DEBUG ) 
     fprintf(stderr, "    %3d RESCUE  %p prev %p env %p env->catch %p\n", (int) catch->level, catch, catch->prev, ss_env, ss_env->catch);
+  if ( catch->src && catch->src->cannot_be_rescued ) return 0;
+  return ! catch->no_rescue;
 }
 
 #define ss_CATCH_ENSURE                                 \
-  break; case 2: default: _ss_catch_in_ensure(ss_CATCH_ARGS);
+  } break; case 2: default: if ( _ss_catch_in_ensure(ss_CATCH_ARGS) ) {
 static inline
-void _ss_catch_in_ensure(ss_CATCH_PARAMS)
+int _ss_catch_in_ensure(ss_CATCH_PARAMS)
 {
   catch->in_ensure = 1;
   if ( ss_CATCH_DEBUG ) 
     fprintf(stderr, "    %3d ENSURE  %p prev %p env %p env->catch %p\n", (int) catch->level, catch, catch->prev, ss_env, ss_env->catch);
+  if ( catch->src && catch->src->cannot_be_ensured ) return 0;
+  return ! catch->no_ensure;
 }
 
 #define ss_CATCH_END                                             \
-  break;                                                         \
+  } break;                                                       \
   }                                                              \
   if ( _ss_catch_in_end(ss_CATCH_ARGS) ) goto _catch_again;      \
 } while (0)
@@ -106,7 +123,7 @@ int _ss_catch_in_end(ss_CATCH_PARAMS)
   assert(ss_env->catch == catch);
 
   // if the ENSURE block was not run, jump back to it.
-  if ( ! catch->in_ensure ) {
+  if ( ! catch->no_ensure && ! catch->in_ensure ) {
     catch->in_ensure = 1;
     catch->jmp_to = 2;
     return 1;
