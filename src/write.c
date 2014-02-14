@@ -1,27 +1,3 @@
-
-void ss_minimal_double_str(double x, char *buf, size_t buflen)
-{
-  char format[8];
-  int len = 1;
-  double y;
-  do {
-    snprintf(format, 8, "%%.%dg", len);
-    snprintf(buf, buflen, format, (double) x);
-    y = strtod(buf, 0);
-    len ++;
-  } while ( y != x && buf[buflen - 1] == 0 );
-}
-
-void ss_write_flonum(ss v, ss port)
-{
-  char buf[64];
-  ss_minimal_double_str(ss_unb(flonum, v), buf, 63);
-  if ( ! (strchr(buf, 'e') || strchr(buf, '.')) ) {
-    strcat(buf, ".0");
-  }
-  fprintf(FP(port), "%s", buf);
-}
-
 void ss_write_vec(size_t n, const ss *v, ss port)
 {
   size_t i = 0;
