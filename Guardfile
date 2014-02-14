@@ -1,8 +1,8 @@
 guard :shell do
-#  watch %r{\.(def\.gen)*$} do | m |
-#    $gq.go "make clean"
-#    $qq.go "make test"
-#  end
+  watch %r{\.(def\.gen)$} do | m |
+    $gq.go "make clean"
+    $qq.go "make test"
+  end
   watch %r{\.(c|h|def)*$} do | m |
     $gq.go "make test"
   end

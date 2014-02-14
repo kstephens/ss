@@ -30,7 +30,9 @@ HFILES = \
   gen/syntax.def \
   lispread/lispread.c \
   include/ss/*.h \
-  src/*.c
+  src/*.c \
+  src/*.h \
+  src/*.def
 
 EARLY_FILES = \
 boot/sym.def    \
