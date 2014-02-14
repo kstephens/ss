@@ -75,7 +75,7 @@ typedef ssize_t ss_fixnum_t;
 #define ss_BOX_fixnum(X)  ((ss)  ((((ss_fixnum_t)(X)) << 1) | 1))
 #define ss_UNB_fixnum(X)  (       (((ss_fixnum_t)(X)) >> 1)     )
 
-// (EOF = -1) + 17 << 1 => 32 => ss_eos
+// ((EOF = -1) + 17) << 1 => 32 => ss_eos
 #define ss_BOX_char(X)    ((ss) (((((ss_fixnum_t)(X)) % 256) + 17) << 1)     )
 #define ss_UNB_char(X)    (       (((ss_fixnum_t)(X))              >> 1) - 17)
 
@@ -111,8 +111,8 @@ ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 #define ss_UNB(T,X)ss_PASTE2(ss_UNB_,T)(X)
 
 static inline
-ss  ss_c(int c) { return ss_BOX_char(c); }
-int ss_C(ss v)  { return ss_UNB_char(v); }
+ss          ss_c(ss_fixnum_t c) { return ss_BOX_char(c); }
+ss_fixnum_t ss_C(ss v)          { return ss_UNB_char(v); }
 
 static inline
 ss_e_type ss_type_e(ss x)

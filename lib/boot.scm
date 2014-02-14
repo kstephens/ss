@@ -90,6 +90,8 @@
   (C:ss_i (C:ss_C c)))
 (define (integer->char i)
   (C:ss_c (C:ss_I i)))
+(define %eos (integer->char -1))
+(C:ss_make_constant '%eos)
 
 (define %<vector> (%type '#(1 2)))
 (C:ss_make_constant '%<vector>)

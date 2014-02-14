@@ -57,7 +57,7 @@ ss ss_write_3(ss v, ss port, ss mode)
     if ( mode == ss_sym(display) ) {
       fprintf(out, "%c", c);
     } else {
-      c == -1 ? fprintf(out, "#<\\eof> ") : fprintf(out, "#\\%c", ss_C(v));
+      c == -1 ? fprintf(out, "#<\\eof> ") : fprintf(out, "#\\%c", c);
     }
   }
     break;
