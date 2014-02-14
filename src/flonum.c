@@ -31,3 +31,32 @@ ss ss_R(ss v)
   return rtn[0];
 }
 
+void ss_minimal_double_str(double x, char *buf, size_t buflen)
+{
+  char format[8];
+  int len = 1;
+  double y;
+  do {
+    snprintf(format, 8, "%%.%dg", len);
+    snprintf(buf, buflen, format, (double) x);
+    y = strtod(buf, 0);
+    len ++;
+  } while ( y != x && buf[buflen - 1] == 0 );
+  if ( ! (strchr(buf, 'e') || strchr(buf, '.')) ) {
+    strcat(buf, ".0");
+  }
+}
+
+ss ss_flonum_to_string(ss v, ss radix /* ignored */)
+{
+  char buf[64];
+  ss_minimal_double_str(ss_unb(flonum, v), buf, 63);
+  return ss_s(buf);
+}
+
+void ss_write_flonum(ss v, ss port)
+{
+  char buf[64];
+  ss_minimal_double_str(ss_unb(flonum, v), buf, 63);
+  fprintf(FP(port), "%s", buf);
+}
