@@ -18,16 +18,10 @@ ss_fixnum_t ss_fixnum_(ss v)
   }
 }
 
-ss ss_box_flonum(ss_flonum_t v)
+ss ss_fixnum_to_string(ss v, ss radix /* ignored */)
 {
-  ss_s_flonum *self = ss_alloc(ss_t_flonum, sizeof(*self));
-  self->value = v;
-  return self;
-}
-
-ss_flonum_t ss_unb_flonum(ss v)
-{
-  ss_typecheck(ss_t_flonum, v);
-  return ss_UNB_flonum(v);
+  char buf[64];
+  snprintf(buf, sizeof(buf) - 1, "%lld", (long long) ss_UNB(fixnum, v));
+  return ss_s(buf);
 }
 
