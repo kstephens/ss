@@ -19,6 +19,13 @@ int main(int argc, char **argv)
   ss_init_global(ss_env);
   ss_init_prim(ss_env);
   ss_init_cfunc(ss_env);
+  {
+    ss args = ss_vecn(argc);
+    for ( int i = 0; i < argc; ++ i ) {
+      ss_vector_V(args)[i] = ss_s(argv[i]);
+    }
+    ss_define(ss_env, ss_sym(ss_main_args), args);
+  }
   if ( 1 ) {
     FILE *fp = fopen("lib/boot.scm", "r");
     ss out = ss_f; // ss_stderr;
