@@ -74,6 +74,7 @@ void _ss_max_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_a
 #include "src/syntax.c"
 #include "src/port.c"
 #include "src/sort.c"
+#include "src/hash.c"
 #include "src/repl.c"
 
 #include "src/main.c"
