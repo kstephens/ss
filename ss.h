@@ -21,6 +21,8 @@
 #include "gc/gc.h"
 #endif
 
+#define ss_ALIGNED(DECL,X) DECL __attribute__ ((aligned (X)))
+
 #define _ss_PASTE2(A,B)A##B
 #define ss_PASTE2(A,B)_ss_PASTE2(A,B)
 #define _ss_STRINGTIZE(A)#A
@@ -83,7 +85,7 @@ typedef ssize_t ss_fixnum_t;
 #define ss_f      ((ss)8)
 #define ss_eos    ((ss)10)
 #define _ss_type ss_e_type
-extern _ss_type ss_immediate_types[];
+extern _ss_type ss_ALIGNED(ss_immediate_types[], 64);
 
 struct ss_s_env;
 struct ss_s_prim;
