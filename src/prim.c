@@ -26,11 +26,11 @@ void ss_init_prim(ss_s_env *ss_env)
   prim_list = ss_nil;
   for ( int i = 0; inits[i].name; ++ i ) {
     ss prim = ss_alloc_copy(ss_t_prim, sizeof(ss_s_prim), inits[i].prim_struct);
-    prim_list = ss_cons(prim, prim_list);
     *inits[i].primp = prim;
     sym = ss_box_symbol(inits[i].name);
     ss_define(ss_env, sym, prim);
     ss_UNB(symbol, sym).is_const = 1;
+    prim_list = ss_cons(ss_cons(sym, prim), prim_list);
   }
 
   {
@@ -40,7 +40,7 @@ void ss_init_prim(ss_s_env *ss_env)
     sym = ss_sym(NAME);                                                 \
     syntax = ss_PASTE2(ss_p_ss_syn_,NAME);                              \
     ss_UNB(symbol, sym).syntax = syntax;                                \
-    syntax_list = ss_cons(syntax, syntax_list);
+    syntax_list = ss_cons(ss_cons(sym, syntax), syntax_list);
 #include "syntax.def"
   }
 }

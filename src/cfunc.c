@@ -49,10 +49,11 @@ ss ss_symbol_list();
 ss ss_prim_list();
 ss ss_syntax_list();
 
-ss cfuncs;
+static
+ss cfunc_list;
 ss ss_cfunc_list()
 {
-  return cfuncs;
+  return cfunc_list;
 }
 
 #ifdef ss_throw
@@ -86,9 +87,9 @@ void ss_init_cfunc(ss_s_env *ss_env)
           ) ) {
       func->func = _ss_pf_ss_call_cfunc_double;
     }
-    cfuncs = ss_cons(func, cfuncs);
     ss_define(ss_env, sym, func);
     ss_UNB(symbol, sym).is_const = 1;
+    cfunc_list = ss_cons(ss_cons(sym, func), cfunc_list);
   }
 }
 
