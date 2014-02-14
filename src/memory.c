@@ -1,11 +1,11 @@
 
-ss_e_type ss_ALIGNED(ss_immediate_types[], 64) = {
-  ss_t_null,   0,
-  ss_t_undef,  0,
-  ss_t_unspec, 0,
-  ss_t_boolean, 0,
-  ss_t_boolean, 0,
-  ss_t_eos, 0,
+ss_e_type ss_ALIGNED(ss_immediate_types[64], 64) = {
+  ss_t_null,   0,   // 0
+  ss_t_undef,  0,   // 2
+  ss_t_unspec, 0,   // 4
+  ss_t_boolean, 0,  // 6
+  ss_t_boolean, 0,  // 8
+  0, 0,
 };
 
 size_t ss_malloc_bytes, ss_malloc_objects;
