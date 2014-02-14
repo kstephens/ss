@@ -1,3 +1,5 @@
+
+static inline
 ss ss_box_flonum(ss_flonum_t v)
 {
   ss_s_flonum *self = ss_alloc(ss_t_flonum, sizeof(*self));
@@ -5,13 +7,14 @@ ss ss_box_flonum(ss_flonum_t v)
   return self;
 }
 
+static inline
 ss_flonum_t ss_unb_flonum(ss v)
 {
   ss_typecheck(ss_t_flonum, v);
   return ss_UNB_flonum(v);
 }
 
-
+static inline
 ss_flonum_t ss_flonum_(ss v)
 {
   switch ( ss_type_e(v) ) {
