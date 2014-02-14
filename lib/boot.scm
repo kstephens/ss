@@ -291,12 +291,6 @@
 (define (%gensym x)
   (C:ss_box_symbol (C:ss_I 0)))
 
-(define (%or tmp terms)
-  (if (null? terms) #f
-    `(begin
-       (set! ,tmp ,(car terms))
-       (if ,tmp ,tmp ,(%or tmp (cdr terms))))))
-
 (define-macro (letrec bindings . body)
   `(let ,(map (lambda (b) `(,(car b) ',%unspec)) bindings)
      ,@(map (lambda (b) `(set! ,(car b) ,@(cdr b))) bindings)
@@ -305,9 +299,14 @@
 (define-macro (or . terms)
   (if (null? terms) #f
     (if (null? (cdr terms)) (car terms)
-      (let ((tmp (%gensym 'or)))
+      (letrec ( (tmp (%gensym 'or))
+                (%or (lambda (terms)
+                       (if (null? terms) #f
+                         `(begin
+                            (set! ,tmp ,(car terms))
+                            (if ,tmp ,tmp ,(%or (cdr terms))))))) )
         `(let ((,tmp ,(car terms)))
-           (if ,tmp ,tmp ,(%or tmp (cdr terms))))))))
+           (if ,tmp ,tmp ,(%or (cdr terms))))))))
 
 (define-macro (and . terms)
   (if (null? terms) #t
