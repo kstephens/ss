@@ -344,8 +344,10 @@
 
 (define-constant (%catch body rescue ensure)
   (C:ss_catch &env body rescue ensure))
+(define-constant (%make-throwable value)
+  (C:ss_m_throwable value))
 (define-constant (%throw catch value)
-  (C:ss_throw &env catch value))
+  (C:ss_throw &env catch (%make-throwable value)))
 (define-constant (%rethrow)
   (C:ss_rethrow &env))
 (define-macro (catch name body rescue . ensure)
