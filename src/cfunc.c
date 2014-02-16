@@ -60,11 +60,12 @@ ss ss_cfunc_list()
 #undef ss_throw
 #endif
 static inline
-ss ss_throw (ss_s_env *ss_env, ss_s_catch *catch, ss value)
+ss ss_throw (ss_s_env *ss_env, ss_s_catch *catch, ss_s_throwable *thrown)
 {
   assert(catch);
-  catch->expr = ss_env->expr;
-  return __ss_throw(ss_env, catch, value);
+  thrown->data.env = ss_env;
+  thrown->data.expr = ss_env->expr;
+  return __ss_throw(ss_env, catch, thrown);
 }
 
 void ss_init_cfunc(ss_s_env *ss_env)

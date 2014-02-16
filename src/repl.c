@@ -8,7 +8,7 @@ ss ss_prompt(ss_s_env *ss_env, ss input, ss prompt)
 ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
 {
   ss expr, value = ss_undef;
-  ss_s_catch *catch = ss_m_catch();
+  ss_s_catch *catch = ss_m_catch(ss_undef);
   while ( 1 ) {
     ss_CATCH(catch) {
       if ( trap_error != ss_f ) ss_env->error_catch = catch;
@@ -38,7 +38,7 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
     }
     ss_CATCH_RESCUE {
       fprintf(*ss_stderr, "  ;; ss: recovered from error: ");
-      ss_write(catch->src->value, ss_stderr);
+      ss_write(catch->thrown->data.value, ss_stderr);
       fprintf(*ss_stderr, "\n");
     }
     ss_CATCH_ENSURE {
