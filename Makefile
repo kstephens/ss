@@ -102,7 +102,10 @@ sh : all
 	./sssh
 
 db : all
-	lldb ./ss
+	lldb -f ./ss
+
+db-test : all
+	lldb -f ./ss t/test.scm
 
 TEST_FILE = t/test*.scm
 test-file : all
