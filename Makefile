@@ -1,6 +1,8 @@
 CFLAGS += -std=c99 
 CFLAGS += -g
+ifneq "$(NO_OPTIMIZE)" ""
 CFLAGS += -O3
+endif
 CFLAGS += -I.
 CFLAGS += -Iinclude
 CFLAGS += -Igen
@@ -28,6 +30,7 @@ HFILES = \
   gen/prim.def \
   gen/cfunc.def \
   gen/syntax.def \
+  gen/cstruct.def \
   lispread/lispread.c \
   include/ss/*.h \
   $(OTHER_C_FILES)
@@ -41,7 +44,8 @@ EARLY_FILES = \
 boot/sym.def    \
 boot/prim.def   \
 boot/syntax.def \
-boot/cfunc.def
+boot/cfunc.def \
+boot/cstruct.def
 
 SILENT=@
 
@@ -59,6 +63,9 @@ boot/syntax.def : gen/syntax.def.gen
 boot/cfunc.def  : gen/cfunc.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
+boot/cstruct.def  : gen/cstruct.def.gen
+	@echo "GEN $@"
+	$(SILENT)$< </dev/null >$@
 
 gen/sym.def : Makefile gen/sym.def.gen $(CFILES) $(OTHER_C_FILES) gen/prim.def gen/syntax.def gen/cfunc.def
 	@echo "GEN $@"
@@ -72,6 +79,9 @@ gen/syntax.def : Makefile gen/syntax.def.gen $(CFILES)
 gen/cfunc.def : Makefile gen/cfunc.def.gen $(CFILES) $(OTHER_C_FILES)
 	@echo "GEN $@"
 	$(SILENT)$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | $@.gen > $@
+gen/cstruct.def : Makefile gen/cstruct.def.gen $(CFILES)
+	@echo "GEN $@"
+	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@
 
 lispread/lispread.c:
 	git submodule init
