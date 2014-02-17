@@ -1,0 +1,76 @@
+#!/usr/bin/env perl
+%types = ();
+%elements = ();
+$file = "stdin";
+$lineno = 0;
+$in_struct = 0;
+my ($type, $name, $line);
+$_ = '';
+while ( $line = <> ) {
+  chomp $line;
+  $_ .= $line;
+  # print STDERR "  line |", $_, "|\n";
+  if (      s/^#\s*(\d+)\s+"([^"]+)".*$// ) {
+    $lineno = $1; $file = $2;
+    next;
+  } elsif ( s/^#\s*(\d+)\s*$// ) {
+    $lineno = $1;
+    next;
+  }
+  $lineno ++;
+  #while ( $_ =~ s/,\s*$/,/ ) {
+  #  $lineno ++;
+  #  chomp;
+  #  $_ .= <>;
+  #}
+  # while ( $_ =~ s/\)\s*;\s*$/\);\n/ ) {
+  #   chomp;
+  #   $_ .= <>;
+  # }
+  chomp;
+  s/^\s*(typedef)\s+//;
+  s/\b(const)\b//g;
+  s/^([a-z0-9_]+)\s+(([*]\s*)+)/$1$2 /i;
+  if ( s/^\s*(struct|union)\s+([a-zA-Z0-9_]{2,})\s*[{]// ) {
+    $in_struct ++;
+    print STDERR "  begin struct |", $_, "|\n";
+    $type = $1;
+    $name = $2;
+    next if ( $type =~ /^(union)$/ );
+    if ( 0 ) {
+      print STDERR "  line = ", $_, "\n";
+      print STDERR "    type = ", $type, "\n";
+      print STDERR "    func = ", $func, "\n";
+      print STDERR "    args = ", $args, "\n";
+    }
+    $key = "$type,$name,\"$file\",$lineno";
+    $types{$key} = 1;
+  } elsif ( $in_struct > 0 && s/^\s*}\s*([a-zA-Z0-9_]{2,})?\s*;// ) {
+    $in_struct --;
+    print STDERR "  end struct |", $_, "|\n";
+  } elsif ( $in_struct > 0 && s/^\s*(((struct|unsigned|signed|long)\s+)*[a-zA-Z0-9_]{2,}[*\s]*)([a-zA-Z0-9_]{1,}(\s*,\s*[a-zA-Z0-9_]{1,})*)\s*;// ) {
+    $element_type = $1;
+    $element_type =~ s/^\s+|\s+$//g;
+    $element_names = $4;
+    $element_names =~ s/^\s+|\s+$//g;
+    foreach my $element_name ( split(/\s*,\s*/, $element_names) ) {
+      $key = "$type,$name,$element_type,$element_name,\"$file\",$lineno";
+      $elements{$key} = 1;
+    }
+  } elsif ( $in_struct > 0 ) {
+    # print STDERR "  in struct |", $_, "|\n";
+    s/^[^;]*;//;
+  } else {
+    s/^[^;]*;//;
+  }
+}
+foreach ( sort keys %types ) {
+  print "ss_cstruct_def(", $_, ")\n";
+}
+foreach ( sort keys %elements ) {
+  print "ss_cstruct_element_def(", $_, ")\n";
+}
+print "#undef ss_cstruct_def\n";
+print "#undef ss_cstruct_element_def\n";
+
+
