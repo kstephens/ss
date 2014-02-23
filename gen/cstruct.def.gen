@@ -4,7 +4,7 @@
 $file = "stdin";
 $lineno = 0;
 $in_struct = 0;
-my ($type, $name, $line);
+my ($struct_type, $struct_name, $line, $pre_line);
 $_ = '';
 while ( $line = <> ) {
   chomp $line;
@@ -31,11 +31,12 @@ while ( $line = <> ) {
   s/^\s*(typedef)\s+//;
   s/\b(const)\b//g;
   s/^([a-z0-9_]+)\s+(([*]\s*)+)/$1$2 /i;
-  if ( s/^\s*(struct|union)\s+([a-zA-Z0-9_]{2,})\s*[{]// ) {
+  $pre_line = $_;
+  if ( s/^\s*(struct|union)\s+([_a-zA-Z][_a-zA-Z0-9]*)\s*[{]// ) {
     $in_struct ++;
-    print STDERR "  begin struct |", $_, "|\n";
-    $type = $1;
-    $name = $2;
+    # print STDERR "  begin struct |", $_, "|\n";
+    $struct_type = $1;
+    $struct_name = $2;
     next if ( $type =~ /^(union)$/ );
     if ( 0 ) {
       print STDERR "  line = ", $_, "\n";
@@ -43,22 +44,32 @@ while ( $line = <> ) {
       print STDERR "    func = ", $func, "\n";
       print STDERR "    args = ", $args, "\n";
     }
-    $key = "$type,$name,\"$file\",$lineno";
+    $key = "$struct_type,$struct_name,\"$file\",$lineno";
     $types{$key} = 1;
+    # print STDERR "  struct ", $key, "\n";
   } elsif ( $in_struct > 0 && s/^\s*}\s*([a-zA-Z0-9_]{2,})?\s*;// ) {
     $in_struct --;
-    print STDERR "  end struct |", $_, "|\n";
-  } elsif ( $in_struct > 0 && s/^\s*(((struct|unsigned|signed|long)\s+)*[a-zA-Z0-9_]{2,}[*\s]*)([a-zA-Z0-9_]{1,}(\s*,\s*[a-zA-Z0-9_]{1,})*)\s*;// ) {
+    # print STDERR "  end struct |", $_, "|\n";
+  } elsif ( $in_struct > 0 && s/^\s*(struct\s+[_a-zA-Z][_a-zA-Z0-9]*[*\s]*|(unsigned\s+|signed\s+|short\s+|long\s+)?[_a-zA-Z][_a-zA-Z0-9]*[*\s]*?)([_a-zA-Z][_a-zA-Z0-9]*(\s*,[*\s]*[_a-zA-Z][_a-zA-Z0-9]*)*)\s*;// ) {
+    # print STDERR "    BEFORE |", $pre_line, "|\n" if /\*/;
     $element_type = $1;
     $element_type =~ s/^\s+|\s+$//g;
-    $element_names = $4;
+    $element_names = $3;
     $element_names =~ s/^\s+|\s+$//g;
-    foreach my $element_name ( split(/\s*,\s*/, $element_names) ) {
-      $key = "$type,$name,$element_type,$element_name,\"$file\",$lineno";
+    if ( $element_type =~ s/\s*([*\s]+)$// ) {
+      $element_names = $1 . $element_names;
+    }
+    foreach my $e_name ( split(/\s*,\s*/, $element_names) ) {
+      my ($e_type) = ( $element_type );
+      # print STDERR "      ELEMENT |$e_type| |$e_name|\n";
+      $e_type .= $1 if ( $e_name =~ s/^\s*([*\s]+)//g );
+      $e_type =~ s/^\s+|\s+$//g;
+      $key = "$struct_type,$struct_name,$e_type,$e_name,\"$file\",$lineno";
       $elements{$key} = 1;
+      print STDERR "    element ", $key, "\n";
     }
   } elsif ( $in_struct > 0 ) {
-    # print STDERR "  in struct |", $_, "|\n";
+    # print STDERR "  in struct |", $pre_line, "|\n" if /\*/;
     s/^[^;]*;//;
   } else {
     s/^[^;]*;//;
