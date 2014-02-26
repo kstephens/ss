@@ -66,9 +66,10 @@ void ss_init_cfunc(ss_s_env *ss_env)
 {
   static struct {
     const char *rtn, *name, *args, *desc;
+    int nargs, sig_id;
     void *ptr;
   } inits[] = {
-#define ss_cfunc_def(TYPE,NAME,ARGS) { TYPE, #NAME, ARGS, TYPE " " #NAME ARGS, &NAME },
+#define ss_cfunc_def(TYPE,NAME,NARGS,ARGS,SIG_ID) { TYPE, #NAME, ARGS, TYPE " " #NAME ARGS, NARGS, SIG_ID, &NAME },
 #include "cfunc.def"
     { 0 }
   };
