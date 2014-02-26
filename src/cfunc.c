@@ -7,9 +7,6 @@ ss_prim(ss_call_cfunc,0,5,1,"call cfunc")
 #define A(X) X
 #define R(X) ss_return(X)
 #include "cfunc_call.h"
-#undef T
-#undef A
-#undef R
 }
 ss_end
 
@@ -19,9 +16,6 @@ ss_prim(ss_call_cfunc_double,0,5,1,"call cfunc double")
 #define A(X) ss_flonum_(X)
 #define R(X) ss_return(ss_box_flonum(X))
 #include "cfunc_call.h"
-#undef T
-#undef A
-#undef R
 }
 ss_end
 
