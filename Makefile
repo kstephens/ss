@@ -19,6 +19,7 @@ CFLAGS += -DNO_GC=$(NO_GC)
 else
 LIBS += -lgc
 endif
+LIBS += -L/opt/local/lib/x86_64 -ljit -ljitdynamic -ljitplus
 LIBS += -lm
 
 CFILES = \
