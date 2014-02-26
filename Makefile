@@ -31,7 +31,7 @@ HFILES = \
   gen/prim.def \
   gen/cfunc.def \
   gen/syntax.def \
-  gen/cstruct.def \
+  gen/ctype.def \
   lispread/lispread.c \
   include/ss/*.h \
   $(OTHER_C_FILES)
@@ -46,7 +46,7 @@ boot/sym.def    \
 boot/prim.def   \
 boot/syntax.def \
 boot/cfunc.def \
-boot/cstruct.def
+boot/ctype.def
 
 SILENT=@
 
@@ -64,7 +64,7 @@ boot/syntax.def : gen/syntax.def.gen
 boot/cfunc.def  : gen/cfunc.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
-boot/cstruct.def  : gen/cstruct.def.gen
+boot/ctype.def  : gen/ctype.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
 
@@ -80,7 +80,7 @@ gen/syntax.def : Makefile gen/syntax.def.gen $(CFILES)
 gen/cfunc.def : Makefile gen/cfunc.def.gen $(CFILES) $(OTHER_C_FILES)
 	@echo "GEN $@"
 	$(SILENT)$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | tee $@.i | $@.gen > $@
-gen/cstruct.def : Makefile gen/cstruct.def.gen $(CFILES)
+gen/ctype.def : Makefile gen/ctype.def.gen $(CFILES)
 	@echo "GEN $@"
 	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@
 
