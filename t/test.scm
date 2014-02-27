@@ -14,6 +14,8 @@
 (define-macro (test cmp a b)
   `(%test ,cmp ,a ,b '(test ,cmp ,a ,b)))
 
+(define (not-eq? a b) (not (eq? a b)))
+
 (define (epsilon? e)
   (lambda (a b)
     (if (< (- b e) a)
