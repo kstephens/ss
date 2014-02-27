@@ -28,7 +28,7 @@ ss ss_load_file(ss_s_env *ss_env, const char *filename)
   fprintf(stderr, "  load-file %s FILE* %p\n", filename, fh);
   if ( ! fh )
     return ss_error(ss_env, "load-file", ss_s(filename), "cannot open");
-  rtn = ss_repl(ss_env, &fh, ss_stderr, ss_stderr, ss_stderr);
+  rtn = ss_repl(ss_env, &fh, ss_stderr, ss_stderr, ss_f);
   fclose(fh);
   return rtn;
 }
