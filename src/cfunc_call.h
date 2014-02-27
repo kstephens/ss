@@ -13,3 +13,6 @@
     R(((T(*)(T,T,T,T,T)) ss_prim->c_func)(A(ss_argv[0]), A(ss_argv[1]), A(ss_argv[2]), A(ss_argv[3]), A(ss_argv[4])));
   default: abort();
   }
+#undef T
+#undef A
+#undef R

@@ -19,6 +19,7 @@ CFLAGS += -DNO_GC=$(NO_GC)
 else
 LIBS += -lgc
 endif
+LIBS += -L/opt/local/lib/x86_64 -ljit -ljitdynamic -ljitplus
 LIBS += -lm
 
 CFILES = \
@@ -30,7 +31,7 @@ HFILES = \
   gen/prim.def \
   gen/cfunc.def \
   gen/syntax.def \
-  gen/cstruct.def \
+  gen/ctype.def \
   lispread/lispread.c \
   include/ss/*.h \
   $(OTHER_C_FILES)
@@ -45,7 +46,7 @@ boot/sym.def    \
 boot/prim.def   \
 boot/syntax.def \
 boot/cfunc.def \
-boot/cstruct.def
+boot/ctype.def
 
 SILENT=@
 
@@ -63,23 +64,23 @@ boot/syntax.def : gen/syntax.def.gen
 boot/cfunc.def  : gen/cfunc.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
-boot/cstruct.def  : gen/cstruct.def.gen
+boot/ctype.def  : gen/ctype.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
 
 gen/sym.def : Makefile gen/sym.def.gen $(CFILES) $(OTHER_C_FILES) gen/prim.def gen/syntax.def gen/cfunc.def
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | $@.gen > $@
+	$(SILENT)$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | tee $@.i | $@.gen > $@
 gen/prim.def : Makefile gen/prim.def.gen $(CFILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) $(OTHER_C_FILES) | $@.gen > $@
+	$(SILENT)$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@
 gen/syntax.def : Makefile gen/syntax.def.gen $(CFILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) $(OTHER_C_FILES)| $@.gen > $@
+	$(SILENT)$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@
 gen/cfunc.def : Makefile gen/cfunc.def.gen $(CFILES) $(OTHER_C_FILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | $@.gen > $@
-gen/cstruct.def : Makefile gen/cstruct.def.gen $(CFILES)
+	$(SILENT)$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | tee $@.i | $@.gen > $@
+gen/ctype.def : Makefile gen/ctype.def.gen $(CFILES)
 	@echo "GEN $@"
 	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@
 

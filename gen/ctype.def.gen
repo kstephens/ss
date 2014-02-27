@@ -1,10 +1,11 @@
 #!/usr/bin/env perl
 %types = ();
 %elements = ();
+%typedefs = ();
 $file = "stdin";
 $lineno = 0;
 $in_struct = 0;
-my ($struct_type, $struct_name, $line, $pre_line);
+my ($struct_type, $struct_name, $line, $pre_line, $in_typedef);
 $_ = '';
 while ( $line = <> ) {
   chomp $line;
@@ -28,11 +29,12 @@ while ( $line = <> ) {
   #   $_ .= <>;
   # }
   chomp;
-  s/^\s*(typedef)\s+//;
   s/\b(const)\b//g;
   s/^([a-z0-9_]+)\s+(([*]\s*)+)/$1$2 /i;
   $pre_line = $_;
-  if ( s/^\s*(struct|union)\s+([_a-zA-Z][_a-zA-Z0-9]*)\s*[{]// ) {
+  if ( s/^\s*(typedef)\s+// ) {
+    $in_typedef = 1;
+  } elsif ( s/^\s*(struct|union)\s+([_a-zA-Z][_a-zA-Z0-9]*)\s*[{]// ) {
     $in_struct ++;
     # print STDERR "  begin struct |", $_, "|\n";
     $struct_type = $1;
@@ -46,42 +48,53 @@ while ( $line = <> ) {
     }
     $key = "$struct_type,$struct_name,\"$file\",$lineno";
     $types{$key} = 1;
-    # print STDERR "  struct ", $key, "\n";
-  } elsif ( $in_struct > 0 && s/^\s*}\s*([a-zA-Z0-9_]{2,})?\s*;// ) {
+    print "ss_cstruct_def(", $key, ")\n";
+    print STDERR "  struct ", $key, "\n";
+  } elsif ( $in_struct > 0 && s/^\s*}\s*([_a-zA-Z][_a-zA-Z0-9]*)?\s*;// ) {
     $in_struct --;
     # print STDERR "  end struct |", $_, "|\n";
-  } elsif ( $in_struct > 0 && s/^\s*(struct\s+[_a-zA-Z][_a-zA-Z0-9]*[*\s]*|(unsigned\s+|signed\s+|short\s+|long\s+)?[_a-zA-Z][_a-zA-Z0-9]*[*\s]*?)([_a-zA-Z][_a-zA-Z0-9]*(\s*,[*\s]*[_a-zA-Z][_a-zA-Z0-9]*)*)\s*;// ) {
-    # print STDERR "    BEFORE |", $pre_line, "|\n" if /\*/;
+  } elsif ( s/^\s*(struct\s+[_a-zA-Z][_a-zA-Z0-9]*[*\s]*|unsigned\s+|unsigned\s+char\s+|unsigned\s+short\s+|unsigned\s+int\s+|unsigned\s+long\s+|unsigned\s+long\s+long\s+|signed\s+char\s+|signed\s+short\s+|signed\s+int\s+|signed\s+long\s+|short\s+|long\s+|long\s+int\s+|long\s+long\s+|float\s+|double\s+|long\s+double\s+|[_a-zA-Z][_a-zA-Z0-9]*)([*\s]*[_a-zA-Z][_a-zA-Z0-9]*(\s*,[*\s]*[_a-zA-Z][_a-zA-Z0-9]*)*)\s*;// ) {
     $element_type = $1;
     $element_type =~ s/^\s+|\s+$//g;
-    $element_names = $3;
+    # $element_type = $t if ( $t = $typedefs{$element_type} );
+    $element_names = $2;
     $element_names =~ s/^\s+|\s+$//g;
-    if ( $element_type =~ s/\s*([*\s]+)$// ) {
-      $element_names = $1 . $element_names;
-    }
     foreach my $e_name ( split(/\s*,\s*/, $element_names) ) {
       my ($e_type) = ( $element_type );
       # print STDERR "      ELEMENT |$e_type| |$e_name|\n";
       $e_type .= $1 if ( $e_name =~ s/^\s*([*\s]+)//g );
       $e_type =~ s/^\s+|\s+$//g;
-      $key = "$struct_type,$struct_name,$e_type,$e_name,\"$file\",$lineno";
-      $elements{$key} = 1;
-      print STDERR "    element ", $key, "\n";
+      $e_type =~ s/\s\s+/ /g;
+      while ( $e_type =~ s/\s+\*/*/g ) {
+      }
+      $m_type = $e_type;
+      $m_type =~ tr/ */_P/;
+      if ( 0 ) {
+      } elsif ( $in_struct > 0 ) {
+        $key = "$struct_type,$struct_name,$e_type,$m_type,$e_name,\"$file\",$lineno";
+        $elements{$key} = 1;
+        print STDERR "    element ", $key, "\n";
+        print "ss_cstruct_element_def(", $key, ")\n";
+      } elsif ( $in_typedef ) {   
+        $key = "$e_type,$m_type,$e_name,\"$file\",$lineno";
+        $typedefs{$e_name} = $e_type;
+        print STDERR "  typedef ", $key, "\n";
+        print "ss_typedef_def(", $_, ")\n";
+      } else {
+      }
     }
+    $in_typedef = 0;
   } elsif ( $in_struct > 0 ) {
     # print STDERR "  in struct |", $pre_line, "|\n" if /\*/;
     s/^[^;]*;//;
+    $in_typedef = 0;
   } else {
     s/^[^;]*;//;
+    $in_typedef = 0;
   }
-}
-foreach ( sort keys %types ) {
-  print "ss_cstruct_def(", $_, ")\n";
-}
-foreach ( sort keys %elements ) {
-  print "ss_cstruct_element_def(", $_, ")\n";
 }
 print "#undef ss_cstruct_def\n";
 print "#undef ss_cstruct_element_def\n";
+print "#undef ss_typedef_def\n";
 
 
