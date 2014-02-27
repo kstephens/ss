@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <dlfcn.h> /* dlopen() */
 #include <assert.h>
+#include <jit/jit.h>
 
 ss_s_env *ss_top_level_env, *ss_current_env;
 FILE **ss_stdin = &stdin, **ss_stdout = &stdout, **ss_stderr = &stderr;

@@ -1,4 +1,5 @@
 
+;; (C:ss_set_eval_verbose 10)
 (let ((c #f) (body #f) (rescue #f) (ensure #f) (result #f))
   (set! result
     (%catch

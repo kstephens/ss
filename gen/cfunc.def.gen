@@ -1,5 +1,8 @@
 #!/usr/bin/env perl
 %syms = ();
+$cfunc_sig_id = 0;
+%cfunc_sigs = ();
+print "#ifndef ss_cfunc_sig_def\n#define ss_cfunc_sig_def(_1,_2,_3,_4)\n#endif\n";
 while ( <> ) {
   while ( $_ =~ s/,\s*$/,/ ) {
     chomp;
@@ -32,18 +35,30 @@ while ( <> ) {
     next if ( $type =~ /^(typedef|__inline|inline)$/ );
     next if ( $func =~ /^(__typeof__|alloca|GC_win32_free_heap|zopen|add_profil|profil|unwhiteout)$/ );
     next if ( /^(ss_prim|ss_syntax|ss_end)/ );
+    if ( $args eq '()' ) {
+      $nargs = 0;
+    } else {
+      $nargs = ($args =~ tr/,/,/) + 1;
+    }
     if ( 0 ) {
       print STDERR "  line = ", $_, "\n";
       print STDERR "    type = ", $type, "\n";
       print STDERR "    func = ", $func, "\n";
       print STDERR "    args = ", $args, "\n";
     }
-    $key = "\"$type\",$func,\"$args\"";
+    $key = "\"$type\",$nargs,\"$args\"";
+    $id = $cfunc_sigs{$key} ||= ($cfunc_sig_id += 1);
+    $key = "\"$type\",$func,$nargs,\"$args\",$id";
     $syms{$key} = 1;
   }
 }
+foreach ( sort keys %cfunc_sigs ) {
+  my $id = $cfunc_sigs{$_};
+  print "ss_cfunc_sig_def($_,$id)\n";
+}
 foreach ( sort keys %syms ) {
-  print "ss_cfunc_def(", $_, ")\n";
+  print "ss_cfunc_def($_)\n";
 }
 print "#undef ss_cfunc_def\n";
+print "#undef ss_cfunc_sig_def\n";
 
