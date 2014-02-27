@@ -36,11 +36,6 @@ ss ss_make_constant(ss sym)
   ss_UNB(symbol, sym).is_const = 1;
   return sym;
 }
-ss ss_constantQ(ss sym)
-{
-  ss_typecheck(ss_t_symbol, sym);
-  return ss_box(boolean, ss_UNB(symbol, sym).is_const);
-}
 
 void ss_init_symbol(ss_s_env *ss_env)
 {
