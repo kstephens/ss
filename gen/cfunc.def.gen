@@ -1,8 +1,9 @@
 #!/usr/bin/env perl
+print "#ifndef ss_cfunc_sig_def\n#define ss_cfunc_sig_def(_1,_2,_3,_4)\n#endif\n";
+print "#ifndef ss_cfunc_def\n#define ss_cfunc_def(_1,_2,_3,_4)\n#endif\n";
 %syms = ();
 $cfunc_sig_id = 0;
 %cfunc_sigs = ();
-print "#ifndef ss_cfunc_sig_def\n#define ss_cfunc_sig_def(_1,_2,_3,_4)\n#endif\n";
 while ( <> ) {
   while ( $_ =~ s/,\s*$/,/ ) {
     chomp;

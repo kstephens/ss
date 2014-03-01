@@ -1,6 +1,9 @@
 #ifndef _ss_h_
 #define _ss_h_
 
+#include <stddef.h>
+#include <stdarg.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #ifndef __APPLE__
