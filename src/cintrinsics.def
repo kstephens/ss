@@ -1,0 +1,17 @@
+ITYPE(char,char)
+ITYPE(unsigned char,unsigned_char)
+ITYPE(short,short)
+ITYPE(unsigned short,unsigned_short)
+ITYPE(int,int)
+ITYPE(unsigned int,unsigned_int)
+ITYPE(long,long)
+ITYPE(unsigned long,unsigned_long)
+ITYPE(long long,long_long)
+ITYPE(unsigned long long,unsigned_long_long)
+FTYPE(float,float)
+FTYPE(double,double)
+FTYPE(long double,long_double)
+#undef TYPE
+#undef TYPE_
+#undef ITYPE
+#undef FTYPE

@@ -1,100 +1,210 @@
 #!/usr/bin/env perl
+print "#ifndef ss_ctypedef_def\n#define ss_ctypedef_def(_1,_2,_3,_4,_5)\n#endif\n";
+print "#ifndef ss_cstruct_def\n#define ss_cstruct_def(_1,_2,_3,_4)\n#endif\n";
+print "#ifndef ss_cstruct_element_def\n#define ss_cstruct_element_def(_1,_2,_3,_4,_5,_6,_7)\n#endif\n";
+print "#ifndef ss_cfunc_def\n#define ss_cfunc_def(_1,_2,_3,_4,_5,_6,_7,_8)\n#endif\n";
 %types = ();
+%real_types =
+  (
+   'long unsigned int', 'unsigned long',
+   'unsigned long int', 'unsigned long',
+   'long long int', 'long long',
+   'unsigned long long int', 'unsigned long long',
+   'unsigned', 'unsigned int',
+   'signed char', 'char',
+   'signed short', 'short',
+   'signed int', 'int',
+   'signed long', 'long',
+   'signed long int', 'long',
+   'long signed int', 'long',
+   'signed long long', 'long long',
+   'long long int', 'long long',
+   'signed long long int', 'long long',
+);
+sub to_real_type {
+  my ($t) = @_;
+  my ($x, $y, $ptr);
+  while ( $t =~ s/\s+\*/*/g ) { }
+  $t =~ s/([*]+)$//; $ptr = $1;
+  $x = $t;
+  do {
+    $y = $x;
+    $x = $real_types{$y} || $y;
+  } while ( $y ne $x );
+  $real_types{$t} ||= $x;
+  $x .= $ptr;
+  $real_types{$t . $ptr} ||= $x;
+  $x;
+}
+sub typedef {
+  my ($e_type, $e_name) = @_;
+  while ( $e_type =~ s/\s+\*/*/g ) { }
+  ($e_type_m = $e_type) =~ tr/ *[]/_PAA/;
+  $key = "$e_type,$e_type_m,$e_name,\"$file\",$lineno";
+  $typedefs{$e_name} = $e_type;
+  $real_types{$e_name} ||= to_real_type($e_type);
+  # print STDERR "  TYPEDEF $key\n";
+  print "ss_ctypedef_def($key)\n";
+}
+
 %elements = ();
 %typedefs = ();
 $file = "stdin";
 $lineno = 0;
 $in_struct = 0;
-my ($struct_type, $struct_name, $line, $pre_line, $in_typedef);
+$name_re = "([_a-zA-Z][_a-zA-Z0-9]*)";
+$array_re = "((\\[\\d+\\])*)";
 $_ = '';
 while ( $line = <> ) {
-  chomp $line;
   $_ .= $line;
-  # print STDERR "  line |", $_, "|\n";
-  if (      s/^#\s*(\d+)\s+"([^"]+)".*$// ) {
+  # print STDERR "  line |$_|\n" if ( /^\s*#/ );
+  if (      s/^\s*#\s*(\d+)\s+"([^"]+)"(\s*\d+)*/ / ) {
     $lineno = $1; $file = $2;
     next;
-  } elsif ( s/^#\s*(\d+)\s*$// ) {
+  } elsif ( s/^\s*#\s*(\d+)\s+/ / ) {
     $lineno = $1;
     next;
   }
   $lineno ++;
-  #while ( $_ =~ s/,\s*$/,/ ) {
-  #  $lineno ++;
-  #  chomp;
-  #  $_ .= <>;
-  #}
-  # while ( $_ =~ s/\)\s*;\s*$/\);\n/ ) {
-  #   chomp;
-  #   $_ .= <>;
-  # }
+  s/[\r\n\t]/ /g;
+
+  $typedef_re = join("|", map { "$_\\b" } sort { length($b) <=> length($a) } keys %typedefs);
+  $typedef_re = "|$typedef_re" if ( $typedef_re ne '' );
+  $type_re = "(struct\\s+$name_re|union\\s+$name_re|long\\s+unsigned\\s+int\\b|unsigned\\s+char\\b|unsigned\\s+short\\b|unsigned\\s+int\\b|unsigned\\s+long\\s+long\\b|unsigned\\s+long\\b|unsigned\\b|signed\\s+char\\b|signed\\s+short\\b|signed\\s+int\\b|signed\\s+long\\b|signed\\b|char\\b|short\\b|long\\s+int\\b|long\\s+long\\s+int\\b|long\\s+long\\b|long\\s+double\\b|float\\b|double\\b|int\\b|long\\b|void\\b|__builtin_va_list\\b$typedef_re)";
+  if ( $type_re_last ne $type_re ) {
+    $type_re_last = $type_re;
+    # print STDERR "  type_re = $type_re\n";
+  }
+  $type_ptr_re = "($type_re\[*\\s\]*)";
+  $param_re = "($type_ptr_re\\s*$name_re?\s*$array_re|[.][.][.])";
   chomp;
-  s/\b(const)\b//g;
+  s/\b(extern|static|__inline|inline|__restrict|restrict|const|register)\b//g;
+  s/\b__attribute[(][(][^)]*[)][)]//g;
+  s/\[\s*\]/*/g;
   s/^([a-z0-9_]+)\s+(([*]\s*)+)/$1$2 /i;
   $pre_line = $_;
+  # if ( /^\s*$type_re/ ) { print STDERR "  type |$1|\n"; }
   if ( s/^\s*(typedef)\s+// ) {
-    $in_typedef = 1;
-  } elsif ( s/^\s*(struct|union)\s+([_a-zA-Z][_a-zA-Z0-9]*)\s*[{]// ) {
+    # print STDERR "  typedef $_...\n";
+    $in_typedef = 'typedef';
+  } elsif ( s/^\s*(struct|union)\s+$name_re\s*[{]// ) {
     $in_struct ++;
-    # print STDERR "  begin struct |", $_, "|\n";
+    # print STDERR "  begin struct |$_|\n";
     $struct_type = $1;
     $struct_name = $2;
-    next if ( $type =~ /^(union)$/ );
-    if ( 0 ) {
-      print STDERR "  line = ", $_, "\n";
-      print STDERR "    type = ", $type, "\n";
-      print STDERR "    func = ", $func, "\n";
-      print STDERR "    args = ", $args, "\n";
-    }
     $key = "$struct_type,$struct_name,\"$file\",$lineno";
     $types{$key} = 1;
-    print "ss_cstruct_def(", $key, ")\n";
-    print STDERR "  struct ", $key, "\n";
-  } elsif ( $in_struct > 0 && s/^\s*}\s*([_a-zA-Z][_a-zA-Z0-9]*)?\s*;// ) {
+    # print STDERR "  struct $key\n";
+    print "ss_cstruct_def($key)\n";
+  } elsif ( $in_struct > 0 && s/^\s*}([\s*]*)$name_re\s*$array_re\s*;// ) {
     $in_struct --;
+    $ptr = $1;
+    $name = $2;
+    $array = $3;
+    # print STDERR "  struct end |$ptr| |$name| |$array| $in_typedef\n" if ( $in_struct == 0 );
+    if ( $in_struct == 0 && $name ne '' ) {
+      if ( $in_typedef ) {
+        while ( $ptr =~ s/\s+\*/*/g ) { }
+        while ( $array =~ s/\s+//g ) { }
+        $e_name = $name;
+        $e_type = "$struct_type $struct_name$ptr$array";
+        typedef($e_type, $e_name);
+        $in_typedef = 0;
+      }
+    }
     # print STDERR "  end struct |", $_, "|\n";
-  } elsif ( s/^\s*(struct\s+[_a-zA-Z][_a-zA-Z0-9]*[*\s]*|unsigned\s+|unsigned\s+char\s+|unsigned\s+short\s+|unsigned\s+int\s+|unsigned\s+long\s+|unsigned\s+long\s+long\s+|signed\s+char\s+|signed\s+short\s+|signed\s+int\s+|signed\s+long\s+|short\s+|long\s+|long\s+int\s+|long\s+long\s+|float\s+|double\s+|long\s+double\s+|[_a-zA-Z][_a-zA-Z0-9]*)([*\s]*[_a-zA-Z][_a-zA-Z0-9]*(\s*,[*\s]*[_a-zA-Z][_a-zA-Z0-9]*)*)\s*;// ) {
+  } elsif ( $in_struct > 0 && s/^\s*}// ) {
+    $in_struct --;
+  } elsif ( s/^\s*$type_re([*\s]*$name_re\s*$array_re(\s*,[*\s]*$name_re\s*$array_re)*)\s*;// ) {
+    # print STDERR " decl match 1|$1| 2|$2| 3|$3| 4|$4| 5|$5| 6|$6|\n";
     $element_type = $1;
+    $element_names = $4;
     $element_type =~ s/^\s+|\s+$//g;
     # $element_type = $t if ( $t = $typedefs{$element_type} );
-    $element_names = $2;
     $element_names =~ s/^\s+|\s+$//g;
+    $_in_typedef = $in_typedef;
     foreach my $e_name ( split(/\s*,\s*/, $element_names) ) {
       my ($e_type) = ( $element_type );
       # print STDERR "      ELEMENT |$e_type| |$e_name|\n";
       $e_type .= $1 if ( $e_name =~ s/^\s*([*\s]+)//g );
+      $e_type .= $1 if ( $e_name =~ s/\s*$array_re\s*$//g );
       $e_type =~ s/^\s+|\s+$//g;
       $e_type =~ s/\s\s+/ /g;
-      while ( $e_type =~ s/\s+\*/*/g ) {
-      }
-      $m_type = $e_type;
-      $m_type =~ tr/ */_P/;
+      while ( $e_type =~ s/\s+\*/*/g ) { }
+      ($e_type_m = $e_type) =~ tr/ *[]/_PAA/;
       if ( 0 ) {
       } elsif ( $in_struct > 0 ) {
-        $key = "$struct_type,$struct_name,$e_type,$m_type,$e_name,\"$file\",$lineno";
+        $key = "$struct_type,$struct_name,$e_type,$e_type_m,$e_name,\"$file\",$lineno";
         $elements{$key} = 1;
-        print STDERR "    element ", $key, "\n";
-        print "ss_cstruct_element_def(", $key, ")\n";
-      } elsif ( $in_typedef ) {   
-        $key = "$e_type,$m_type,$e_name,\"$file\",$lineno";
-        $typedefs{$e_name} = $e_type;
-        print STDERR "  typedef ", $key, "\n";
-        print "ss_typedef_def(", $_, ")\n";
+        # print STDERR "    element $key\n";
+        print "ss_cstruct_element_def($key)\n";
+      } elsif ( $_in_typedef ) {
+        $in_typedef = 0;
+        typedef($e_type, $e_name);
       } else {
       }
     }
-    $in_typedef = 0;
+  } elsif ( s/^\s*$type_ptr_re\s*$name_re\s*[(]\s*(void\b|($param_re(\s*,\s*$param_re)*))\s*[)]\s*[;{]// ) {
+    # print STDERR " func match 1|$1| 2|$2| 3|$3| 4|$4| 5|$5| 6|$6|\n";
+    $rtn_type = $1;
+    $func_name = $5;
+    $args = $6;
+    while ( $rtn_type =~ s/\s+\*/*/g ) { }
+    $rtn_type =~ s/^\s+|\s+$//g;
+    ($rtn_type_m = $rtn_type) =~ tr/ *[]/_PAA/;
+    $func_name =~ s/^\s+|\s+$//g;
+    $args =~ s/^\s+|\s+$//g;
+    $args = '' if ( $args eq 'void');
+    # print STDERR "  func |$rtn_type| |$func_name| |$args|\n";
+    # $element_type = $t if ( $t = $typedefs{$element_type} );
+    @args = split(/\s*,\s*/, $args);
+    $args_n = @args;
+    @args_m = ();
+    @args_s = ();
+    foreach my $arg ( @args ) {
+      $arg =~ /^\s*$type_ptr_re\s*$name_re?/;
+      my ($a_type, $a_name) = ($1, $3);
+      $a_i = @args_m;
+      $a_name ||= "_$a_i";
+      while ( $a_type =~ s/\s+\*/*/g ) { }
+      $a_type =~ s/^\s+|\s+$//g;
+      $r_type = to_real_type($a_type);
+      ($a_type_m = $a_type) =~ tr/ *[]/_PAA/;
+      # print STDERR "      PARAM |$a_type| => |$r_type| |$a_name| \n";
+      push(@args_m, "PARAM($a_type,$a_type_m,$a_i,$a_name)");
+      push(@args_s, $a_type);
+    }
+    $args_m = join(',', @args_m);
+    $args_s = join(',', @args_s);
+    $key = "$rtn_type,$rtn_type_m,$func_name,$args_n,PARAMS_$args_n($args_m),\"$args_s\",\"$file\",$lineno";
+    print "ss_cfunc_def($key)\n";
   } elsif ( $in_struct > 0 ) {
     # print STDERR "  in struct |", $pre_line, "|\n" if /\*/;
     s/^[^;]*;//;
-    $in_typedef = 0;
+  } elsif ( s/^\s*}\s*// ) {
+  } elsif ( s/^\s*;\s*// ) {
   } else {
+    if ( 0 && /^([^\(]+[(][^\)]+[)]\s*[;{])/ ) {
+      print STDERR "  unmatch func? |$1|\n";
+      if ( s/^\s*$type_ptr_re// ) {
+        print STDERR "    rtn_type=|$1|\n";
+        if ( s/^\s*$name_re// ) {
+          print STDERR "    func_name=|$1|\n";
+          if ( s/^\s*[(]// ) {
+            print STDERR "    (\n";
+            while ( s/^\s*$type_ptr_re\s*$name_re?// ) {
+              print STDERR "      arg_type=|$1| arg_name=|$4|\n";
+              s/^\s*,//;
+            }
+          }
+        }
+      }
+    }
     s/^[^;]*;//;
-    $in_typedef = 0;
   }
 }
 print "#undef ss_cstruct_def\n";
 print "#undef ss_cstruct_element_def\n";
-print "#undef ss_typedef_def\n";
-
+print "#undef ss_ctypedef_def\n";
+print "#undef ss_cfunc_def\n";
 
