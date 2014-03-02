@@ -18,7 +18,7 @@ ss_fixnum_t ss_fixnum_(ss v)
   switch ( ss_type_te(v) ) {
   case ss_te_flonum:  return ss_UNB_flonum(v);
   case ss_te_fixnum:  return ss_I(v);
-  default:           ss_typecheck_error(v); return 0;
+  default:           ss_typecheck_error(ss_t_number, v); return 0;
   }
 }
 
