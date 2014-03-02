@@ -9,7 +9,7 @@ void ss_number_coerce_2(ss *a0, ss *a1)
       break;
     case ss_te_fixnum:
       break;
-    default: ss_typecheck_error(*a1);
+    default: ss_typecheck_error(ss_t_number, *a1);
     }
     break;
   case ss_te_flonum:
@@ -18,10 +18,10 @@ void ss_number_coerce_2(ss *a0, ss *a1)
       *a1 = ss_box(flonum, ss_UNB(fixnum, *a1));
       break;
     case ss_te_flonum: break;
-    default: ss_typecheck_error(*a1);
+    default: ss_typecheck_error(ss_t_number, *a1);
     }
     break;
-  default: ss_typecheck_error(*a1);
+  default: ss_typecheck_error(ss_t_number, *a1);
   }
 }
 
@@ -109,7 +109,7 @@ ss_end
       return ss_box(fixnum, ss_UNB(fixnum,a0) OP ss_UNB(fixnum,a1));    \
     case ss_te_flonum:                                                  \
       return ss_box(flonum, ss_UNB(flonum,a0) OP ss_UNB(flonum,a1));    \
-    default: return ss_typecheck_error(a0);                             \
+    default: return ss_typecheck_error(ss_t_number, a0);                \
     }                                                                   \
   }                                                                     \
   PRIM_BOP(NAME,OP)
@@ -122,7 +122,7 @@ ss_end
       return ss_box(fixnum, OP ss_UNB(fixnum,a0));                      \
     case ss_te_flonum:                                                  \
       return ss_box(flonum, OP ss_UNB(flonum,a0));                      \
-    default: return ss_typecheck_error(a0);                             \
+    default: return ss_typecheck_error(ss_t_number, a0);                \
     }                                                                   \
   }                                                                     \
   PRIM_UOP(NAME,OP)
@@ -136,7 +136,7 @@ ss_end
       return ss_box(boolean, ss_UNB(fixnum,a0) OP ss_UNB(fixnum,a1));   \
     case ss_te_flonum:                                                  \
       return ss_box(boolean, ss_UNB(flonum,a0) OP ss_UNB(flonum,a1));   \
-    default: return ss_typecheck_error(a0);                             \
+    default: return ss_typecheck_error(ss_t_number, a0);                \
     }                                                                   \
   }                                                                     \
   PRIM_BOP(NAME,OP)
