@@ -22,9 +22,17 @@ ss ss_typecheck_error(ss v)
 }
 
 static inline
-ss ss_typecheck(ss_e_type t, ss v)
+ss ss_typecheck_e(ss_te t, ss v)
 {
-  if ( ss_type_e(v) != t )
+  if ( ss_type_te(v) != t )
+    return ss_typecheck_error(v);
+  return v;
+}
+
+static inline
+ss ss_typecheck(ss t, ss v)
+{
+  if ( ss_type(v) != t )
     return ss_typecheck_error(v);
   return v;
 }
@@ -42,6 +50,29 @@ void _ss_max_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_a
 }
 
 #include "src/memory.c"
+
+ss_s_type* ss_te_to_t[ss_te_LAST];
+#define ss_t_def(N) ss_s_type *ss_t_##N;
+#include "t.def"
+ss_s_type* ss_ALIGNED(ss_immediate_types[64], 64);
+void ss_init_type(ss_s_env *ss_env)
+{
+  (void) ss_t_type;
+#define ss_t_def(N) ss_te_to_t[ss_te_##N] = ss_t_##N = ss_alloc(ss_t_type, sizeof(ss_s_type));
+#include "t.def"
+#define ss_t_def(N)                          \
+  ((ss*) ss_t_##N)[-1] = ss_t_type;          \
+  ((ss_s_type *)ss_t_##N)->e = ss_te_##N;    \
+  ((ss_s_type *)ss_t_##N)->name = #N;
+#include "t.def"
+  for ( int i = 0; i < 64; ++ i ) ss_immediate_types[i] = ss_t_undef;
+  ss_immediate_types[0] = ss_t_null;
+  ss_immediate_types[2] = ss_t_undef;
+  ss_immediate_types[4] = ss_t_unspec;
+  ss_immediate_types[6] = ss_t_boolean;
+  ss_immediate_types[8] = ss_t_boolean;
+}
+
 #include "src/slot.c"
 #include "src/catch.c"
 #include "src/error.c"

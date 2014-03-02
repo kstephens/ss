@@ -27,14 +27,14 @@ size_t ss_list_length(ss x)
   size_t l = 0;
   
   again:
-  switch ( ss_type_e(x) ) {
-  case ss_t_pair:
+  switch ( ss_type_te(x) ) {
+  case ss_te_pair:
     x = ss_CDR(x);
     l ++;
     goto again;
-  case ss_t_null:    return l;
-  case ss_t_vector:  return l + ss_vector_L(x);
-  default:           return l + 1;
+  case ss_te_null:    return l;
+  case ss_te_vector:  return l + ss_vector_L(x);
+  default:            return l + 1;
   }
 }
 
@@ -43,14 +43,14 @@ ss ss_list_to_vector(ss x)
   size_t l = 0;
   ss v = ss_vecn(ss_list_length(x));
   again:
-  switch ( ss_type_e(x) ) {
-  case ss_t_pair:
+  switch ( ss_type_te(x) ) {
+  case ss_te_pair:
     ss_vector_V(v)[l ++] = ss_CAR(x);
     x = ss_CDR(x);
     goto again;
-  case ss_t_null:
+  case ss_te_null:
     break;
-  case ss_t_vector:
+  case ss_te_vector:
     memcpy(ss_vector_V(v) + l, ss_vector_V(x), sizeof(ss_vector_V(v)[0]) * ss_vector_L(x));
     break;
   default:

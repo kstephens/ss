@@ -26,7 +26,7 @@
 
 (define (not x) (if x #f #t))
 
-(define (%type x) (C:ss_i (C:ss_type x)))
+(define (%type x) (C:ss_type x))
 (C:ss_make_constant '%type)
 
 (define %<null> (%type '()))

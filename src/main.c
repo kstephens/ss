@@ -35,11 +35,12 @@ ss ss_load_file(ss_s_env *ss_env, const char *filename)
 
 int main(int argc, char **argv)
 {
-  ss_s_env *ss_env;
+  ss_s_env *ss_env = 0;
   const char *file = 0;
 
   GC_INIT();
   // GC_register_displacement(sizeof(ss) * 2);
+  ss_init_type(ss_env);
   ss_top_level_env = ss_current_env = ss_env = ss_m_env(0);
   ss_init_const(ss_env);
   ss_init_symbol(ss_env);

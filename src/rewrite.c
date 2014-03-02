@@ -1,6 +1,6 @@
 ss ss_box_quote(ss v)
 {
-  if ( ss_literalQ(v) && ss_type_e(v) != ss_t_quote ) {
+  if ( ss_literalQ(v) && ss_type_te(v) != ss_te_quote ) {
     return(v);
   } else {
     ss_s_quote *self = ss_alloc(ss_t_quote, sizeof(*self));

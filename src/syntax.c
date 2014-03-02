@@ -7,7 +7,7 @@ ss ss_make_syntax(ss sym, ss proc)
 
 ss_syntax(define,1,-1,0,"define name value") {
   ss name = ss_argv[0];
-  if ( ss_type_e(name) == ss_t_pair ) {
+  if ( ss_type_te(name) == ss_te_pair ) {
     ss_return(ss_cons(ss_sym(define), ss_cons(ss_car(name), ss_cons(ss_cons(ss_sym(lambda), ss_cons(ss_cdr(name), ss_listnv(ss_argc - 1, ss_argv + 1))), ss_nil))));
   } else {
     ss_return(ss_cons(ss_sym(_define), ss_cons(ss_box_quote(name), ss_cons(ss_argv[1], ss_nil))));
@@ -47,7 +47,7 @@ ss_syntax(lambda,1,-1,0,"lambda formals body...") {
   if ( ss_vector_L(self->params) > 0 ) {
     rest_i = ss_vector_L(self->params) - 1;
     rest = ss_vector_V(self->params)[rest_i];
-    if ( ss_type_e(rest) == ss_t_pair && ss_CAR(rest) == ss_sym(_rest) ) {
+    if ( ss_type_te(rest) == ss_te_pair && ss_CAR(rest) == ss_sym(_rest) ) {
       self->rest_i = rest_i;
       ss_vector_V(self->params)[rest_i] = self->rest = ss_CDR(rest);
     }
