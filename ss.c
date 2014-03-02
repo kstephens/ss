@@ -16,24 +16,15 @@ static inline
 ss ss_cons(ss a, ss d);
 
 static inline
-ss ss_typecheck_error(ss v)
+ss ss_typecheck_error(ss t, ss v)
 {
-  return ss_error(ss_current_env, "typecheck", v, 0);
+  return ss_error(ss_current_env, "typecheck", t, "given %s", ss_type(v)->name);
 }
-
-static inline
-ss ss_typecheck_e(ss_te t, ss v)
-{
-  if ( ss_type_te(v) != t )
-    return ss_typecheck_error(v);
-  return v;
-}
-
 static inline
 ss ss_typecheck(ss t, ss v)
 {
   if ( ss_type(v) != t )
-    return ss_typecheck_error(v);
+    return ss_typecheck_error(t, v);
   return v;
 }
 
