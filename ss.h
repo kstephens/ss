@@ -2,16 +2,26 @@
 #define _ss_h_
 
 #include <stddef.h>
-#include <stdarg.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
+#include <math.h>
+#include <errno.h>
+#include <string.h> /* memcpy(), strerror(), strcasecmp() */
+#include <strings.h> /* strcasecmp() alt. */
+#ifdef __APPLE__
+#define _DONT_USE_CTYPE_INLINE_ 1
+#define _ANSI_SOURCE 1
+#endif
+#include <ctype.h>
+#include <sys/types.h>
+#include <unistd.h> /* ssize_t? */
+#include <dlfcn.h> /* dlopen() */
+#include <assert.h>
 #ifndef __APPLE__
-#include <unistd.h> /* ssize_t */
-#include <strings.h> /* strcasecmp */
-#include <string.h> /* strcasecmp */
 #include <alloca.h>
 #endif
+#include <jit/jit.h>
 
 #ifdef NO_GC
 #define GC_malloc(X) malloc(X)

@@ -1,19 +1,4 @@
 #include "ss.h"
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <math.h>
-#include <errno.h>
-#include <string.h> /* memcpy(), strerror() */
-#ifdef __APPLE__
-#define _DONT_USE_CTYPE_INLINE_ 1
-#define _ANSI_SOURCE 1
-#endif
-#include <ctype.h>
-#include <unistd.h>
-#include <dlfcn.h> /* dlopen() */
-#include <assert.h>
-#include <jit/jit.h>
 
 ss_s_env *ss_top_level_env, *ss_current_env;
 FILE **ss_stdin = &stdin, **ss_stdout = &stdout, **ss_stderr = &stderr;
@@ -83,4 +68,6 @@ void _ss_max_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_a
 #include "src/read.c"
 #include "src/cfunc.c"
 #include "src/prim.c"
-
+#if 0
+#include "src/cwrap.c"
+#endif
