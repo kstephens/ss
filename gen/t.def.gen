@@ -1,0 +1,12 @@
+#!/usr/bin/env perl
+%names = ();
+while ( <> ) {
+  while ( s/\bss_t_(\w+)// ) {
+    $names{$1} = 1;
+  }
+}
+foreach ( sort keys %names ) {
+  print "ss_t_def($_)\n";
+}
+print "#undef ss_t_def\n";
+

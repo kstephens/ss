@@ -1,23 +1,23 @@
 static inline
 void ss_number_coerce_2(ss *a0, ss *a1)
 {
-  switch ( ss_type_e(*a0) ) {
-  case ss_t_fixnum:
-    switch ( ss_type_e(*a1) ) {
-    case ss_t_flonum:
+  switch ( ss_type_te(*a0) ) {
+  case ss_te_fixnum:
+    switch ( ss_type_te(*a1) ) {
+    case ss_te_flonum:
       *a0 = ss_box(flonum, ss_UNB(fixnum, *a0));
       break;
-    case ss_t_fixnum:
+    case ss_te_fixnum:
       break;
     default: ss_typecheck_error(*a1);
     }
     break;
-  case ss_t_flonum:
-    switch ( ss_type_e(*a1) ) {
-    case ss_t_fixnum:
+  case ss_te_flonum:
+    switch ( ss_type_te(*a1) ) {
+    case ss_te_fixnum:
       *a1 = ss_box(flonum, ss_UNB(fixnum, *a1));
       break;
-    case ss_t_flonum: break;
+    case ss_te_flonum: break;
     default: ss_typecheck_error(*a1);
     }
     break;
@@ -104,11 +104,11 @@ ss_end
   ss ss_##NAME(ss a0, ss a1)                                            \
   {                                                                     \
     ss_number_coerce_2(&a0, &a1);                                       \
-    switch ( ss_type_e(a0) ) {                                          \
-    case ss_t_fixnum:                                                   \
-      return ss_box(fixnum, ss_UNB(fixnum,a0) OP ss_UNB(fixnum,a1)); \
-    case ss_t_flonum:                                                   \
-      return ss_box(flonum, ss_UNB(flonum,a0) OP ss_UNB(flonum,a1)); \
+    switch ( ss_type_te(a0) ) {                                         \
+    case ss_te_fixnum:                                                  \
+      return ss_box(fixnum, ss_UNB(fixnum,a0) OP ss_UNB(fixnum,a1));    \
+    case ss_te_flonum:                                                  \
+      return ss_box(flonum, ss_UNB(flonum,a0) OP ss_UNB(flonum,a1));    \
     default: return ss_typecheck_error(a0);                             \
     }                                                                   \
   }                                                                     \
@@ -117,11 +117,11 @@ ss_end
 #define UOP(NAME,OP)                                                    \
   ss ss_##NAME(ss a0)                                                   \
   {                                                                     \
-    switch ( ss_type_e(a0) ) {                                          \
-    case ss_t_fixnum:                                                   \
-      return ss_box(fixnum, OP ss_UNB(fixnum,a0));                    \
-    case ss_t_flonum:                                                   \
-      return ss_box(flonum, OP ss_UNB(flonum,a0));                    \
+    switch ( ss_type_te(a0) ) {                                         \
+    case ss_te_fixnum:                                                  \
+      return ss_box(fixnum, OP ss_UNB(fixnum,a0));                      \
+    case ss_te_flonum:                                                  \
+      return ss_box(flonum, OP ss_UNB(flonum,a0));                      \
     default: return ss_typecheck_error(a0);                             \
     }                                                                   \
   }                                                                     \
@@ -131,10 +131,10 @@ ss_end
   ss ss_##NAME(ss a0, ss a1)                                            \
   {                                                                     \
     ss_number_coerce_2(&a0, &a1);                                       \
-    switch ( ss_type_e(a0) ) {                                          \
-    case ss_t_fixnum:                                                   \
+    switch ( ss_type_te(a0) ) {                                         \
+    case ss_te_fixnum:                                                  \
       return ss_box(boolean, ss_UNB(fixnum,a0) OP ss_UNB(fixnum,a1));   \
-    case ss_t_flonum:                                                   \
+    case ss_te_flonum:                                                  \
       return ss_box(boolean, ss_UNB(flonum,a0) OP ss_UNB(flonum,a1));   \
     default: return ss_typecheck_error(a0);                             \
     }                                                                   \

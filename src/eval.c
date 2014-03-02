@@ -28,24 +28,24 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
   if ( ss_eval_verbose ) {
     fprintf(*ss_stderr, "  ;; eval %3d E#@%p #@%p ", (int) ss_env->depth, ss_env, _ss_expr); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
   }
-  switch ( ss_type_e(expr) ) {
-  case ss_t_quote:
+  switch ( ss_type_te(expr) ) {
+  case ss_te_quote:
     ss_constantExprQ = 1;
     return(ss_UNB(quote, expr));
-  case ss_t_symbol:
+  case ss_te_symbol:
     if ( expr == ss_sym(_env) ) return(ss_env);
-  case ss_t_var:
+  case ss_te_var:
     return(ss_var_get(ss_env, _ss_expr, expr));
-  case ss_t_var_set:
+  case ss_te_var_set:
     {
       ss_s_var_set *self = expr;
       rtn = ss_eval(self->expr);
       ss_var_set(ss_env, &self->var, self->var, rtn);
       return(ss_undef);
     }
-  case ss_t_global:
+  case ss_te_global:
     return(ss_UNB(global, expr));
-  case ss_t_if:
+  case ss_te_if:
     {
       ss_s_if *self = ss_expr;
       ss *subexpr;
@@ -58,14 +58,14 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
       expr = *subexpr;
       goto again;
     }
-  case ss_t_begin:
+  case ss_te_begin:
     {
       size_t i;
       for ( i = 0; i < ss_vector_L(expr) - 1; ++ i )
         ss_eval(ss_vector_V(expr)[i]);
       ss_eval_tail(ss_vector_V(expr)[i]);
     }
-  case ss_t_lambda:
+  case ss_te_lambda:
     {
       ss_s_closure *self = ss_alloc(ss_t_closure, sizeof(*self));
       self->lambda = expr;
@@ -73,20 +73,20 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
       // fprintf(stderr, "  #@%p => #<c #@%p E#@%p>\n", expr, self, self->env);
       return(self);
     }
-  case ss_t_pair:
+  case ss_te_pair:
     rtn = ss_car(expr);
-    if ( ss_type_e(rtn) == ss_t_symbol && (rtn = ss_UNB(symbol, rtn).syntax) != ss_f ) {
+    if ( ss_type_te(rtn) == ss_te_symbol && (rtn = ss_UNB(symbol, rtn).syntax) != ss_f ) {
       expr = ss_apply(ss_env, rtn, ss_cdr(expr));
       ss_rewrite_expr(expr, "syntax rewrite");
       goto again;
     }
     expr = ss_list_to_vector(expr);
     /* FALL THROUGH */
-  case ss_t_vector: /* FIXME: Some syntaxes expand into vectors. */
+  case ss_te_vector: /* FIXME: Some syntaxes expand into vectors. */
     ss_set_type(ss_t_app, expr);
     ss_rewrite_expr(expr, "application vector");
     /* FALL THROUGH */
-  case ss_t_app: {
+  case ss_te_app: {
     if ( ss_vector_L(expr) < 1 ) return(ss_error(ss_env, "apply-empty", expr, 0));
     ss_argc = ss_vector_L(expr) - 1;
 
@@ -102,12 +102,12 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     call:
     ss_constantExprQ = 0;
 
-    switch ( ss_type_e(rtn) ) {
-    case ss_t_catch:
+    switch ( ss_type_te(rtn) ) {
+    case ss_te_catch:
       {
         return((ss_UNB(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv));
       }
-    case ss_t_prim:
+    case ss_te_prim:
       {
         expr = (ss_UNB(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
         if ( ss_eval_verbose ) {
@@ -117,7 +117,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
           ss_rewrite_expr(ss_box_quote(expr), "constant folding");
         return(expr);
       }
-    case ss_t_closure:
+    case ss_te_closure:
       {
         ss_s_lambda *self = ((ss_s_closure*) rtn)->lambda;
         ss_s_env *env;
@@ -166,7 +166,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
       }
       break;
     default:
-      return(ss_error(ss_env, "typecheck", rtn, "cannot apply type=%d", (int) ss_type_e(rtn)));
+      return(ss_error(ss_env, "typecheck", rtn, "cannot apply type %s", ss_type(rtn)->name));
     }
   }
   default:
@@ -189,7 +189,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
 
 ss ss_apply(ss_s_env *ss_env, ss func, ss args)
 {
-  if ( ss_type_e(args) != ss_t_vector )
+  if ( ss_type_te(args) != ss_te_vector )
     args = ss_list_to_vector(args);
   return _ss_eval(ss_env, &func, args);
 }

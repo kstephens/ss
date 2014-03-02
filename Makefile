@@ -27,6 +27,7 @@ CFILES = \
 
 HFILES = \
   ss.h \
+  gen/t.def \
   gen/sym.def \
   gen/prim.def \
   gen/cfunc.def \
@@ -42,6 +43,7 @@ OTHER_C_FILES = \
   src/*.def
 
 EARLY_FILES = \
+boot/t.def \
 boot/sym.def    \
 boot/prim.def   \
 boot/syntax.def \
@@ -52,6 +54,9 @@ SILENT=@
 
 all : ss
 
+boot/t.def      : gen/t.def.gen
+	@echo "GEN $@"
+	$(SILENT)$< </dev/null >$@
 boot/sym.def    : gen/sym.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
@@ -68,6 +73,9 @@ boot/ctype.def  : gen/ctype.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
 
+gen/t.def : Makefile gen/t.def.gen $(CFILES) $(OTHER_C_FILES)
+	@echo "GEN $@"
+	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) | tee $@.i | $@.gen > $@
 gen/sym.def : Makefile gen/sym.def.gen $(CFILES) $(OTHER_C_FILES) gen/prim.def gen/syntax.def gen/cfunc.def
 	@echo "GEN $@"
 	$(SILENT)$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | tee $@.i | $@.gen > $@

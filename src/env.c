@@ -72,8 +72,8 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
   int up, over;
   ss sym, *ref;
   ss_constantExprQ = 0;
-  switch ( ss_type_e(var) ) {
-  case ss_t_symbol:
+  switch ( ss_type_te(var) ) {
+  case ss_te_symbol:
     sym = var;
     up = 0;
     while ( env ) {
@@ -87,7 +87,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
       env = env->parent;
     }
     break;
-  case ss_t_var:
+  case ss_te_var:
     sym  = ss_UNB(var, var).name;
     up   = ss_UNB(var, var).up;
     over = ss_UNB(var, var).over;
@@ -109,7 +109,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
  rtn:
   ref = &env->argv[over];
  ref:
-  if ( ss_type_e(*ref) == ss_t_global ) {
+  if ( ss_type_te(*ref) == ss_te_global ) {
     sym = ((ss_s_global*) *ref)->name;
     ss_rewrite_expr(*ref, "global binding is known");
     ref = &ss_UNB(global, *ref);

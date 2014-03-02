@@ -43,48 +43,15 @@
 
 #define ss_malloc(X) GC_malloc(X)
 
-typedef enum ss_e_type {
-  ss_t_UNDEF = 0,
-  ss_t_LITERAL_MIN,
-  ss_t_undef = ss_t_LITERAL_MIN,
-  ss_t_unspec,
-  ss_t_fixnum,
-  ss_t_flonum,
-  ss_t_string,
-  ss_t_char,
-  ss_t_boolean,
-  ss_t_prim,
-  ss_t_lambda,
-  ss_t_closure,
-  ss_t_quote,
-  ss_t_eos,
-  ss_t_type,
-  ss_t_keyword,
-  ss_t_catch,
-  ss_t_throwable,
-  ss_t_LITERAL_MAX = ss_t_throwable,
-
-  ss_t_pair,
-  ss_t_null,
-  ss_t_vector,
-  ss_t_symbol,
-  ss_t_var,
-  ss_t_var_set,
-  ss_t_global,
-  ss_t_if,
-  ss_t_begin,
-  ss_t_app,
-
-  ss_t_port,
-  
-  ss_t_env,
-
-  ss_t_LAST
-} ss_e_type;
-
 typedef void *ss;
 typedef size_t  ss_word_t;
 typedef ssize_t ss_fixnum_t;
+
+struct ss_s_env;
+struct ss_s_prim;
+
+#define ss_PROC_DECL(X) \
+  ss X (struct ss_s_env *ss_env, ss *_ss_expr, struct ss_s_prim *ss_prim, unsigned int ss_argc, ss *ss_argv)
 
 #define ss_BOX_fixnum(X)  ((ss)  ((((ss_fixnum_t)(X)) << 1) | 1))
 #define ss_UNB_fixnum(X)  (       (((ss_fixnum_t)(X)) >> 1)     )
@@ -99,22 +66,59 @@ typedef ssize_t ss_fixnum_t;
 #define ss_t      ((ss)6)
 #define ss_f      ((ss)8)
 #define ss_eos    ((ss)32)
-#define _ss_type ss_e_type
-extern _ss_type ss_ALIGNED(ss_immediate_types[], 64);
 
-struct ss_s_env;
-struct ss_s_prim;
+typedef enum ss_te {
+  ss_te_UNDEF = 0,
+  ss_te_LITERAL_MIN,
+  ss_te_undef = ss_te_LITERAL_MIN,
+  ss_te_unspec,
+  ss_te_fixnum,
+  ss_te_flonum,
+  ss_te_string,
+  ss_te_char,
+  ss_te_boolean,
+  ss_te_prim,
+  ss_te_lambda,
+  ss_te_closure,
+  ss_te_quote,
+  ss_te_eos,
+  ss_te_type,
+  ss_te_keyword,
+  ss_te_catch,
+  ss_te_throwable,
+  ss_te_LITERAL_MAX = ss_te_throwable,
 
-#define ss_PROC_DECL(X) \
-  ss X (struct ss_s_env *ss_env, ss *_ss_expr, struct ss_s_prim *ss_prim, unsigned int ss_argc, ss *ss_argv)
+  ss_te_pair,
+  ss_te_null,
+  ss_te_vector,
+  ss_te_symbol,
+  ss_te_var,
+  ss_te_var_set,
+  ss_te_global,
+  ss_te_if,
+  ss_te_begin,
+  ss_te_app,
+
+  ss_te_port,
+  
+  ss_te_env,
+
+  ss_te_LAST
+} ss_te;
 
 typedef struct ss_s_type {
   ss_PROC_DECL((*func));
-  ss_word_t e;
+  const char *name;
+  ss_word_t e; // ss_te
   size_t instance_size;
   ss supers;
   ss methods;
 } ss_s_type;
+
+#define ss_t_def(N) extern ss_s_type *ss_t_##N;
+#include "t.def"
+extern ss_s_type* ss_te_to_t[];
+extern ss_s_type* ss_ALIGNED(ss_immediate_types[], 64);
 
 static inline
 ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
@@ -129,22 +133,22 @@ ss          ss_c(ss_fixnum_t c) { return ss_BOX_char(c); }
 ss_fixnum_t ss_C(ss v)          { return ss_UNB_char(v); }
 
 static inline
-ss_e_type ss_type_e(ss x)
+ss_s_type* ss_type(ss x)
 {
   return                 x == 0 ? ss_t_null :
           ((ss_word_t) x) & 1   ? ss_t_fixnum :
           ((ss_word_t) x) <= 32 ? ss_immediate_types[(ss_word_t) x] :
           x <= ss_BOX_char(255) ? ss_t_char :
-                                 (ss_fixnum_t) (((ss*) x)[-1]);
+                                  (((ss*) x)[-1]);
 }
 static inline
-ss ss_type(ss x)
-{ return (ss) ss_type_e(x); }
+ss_te ss_type_te(ss x)
+{ return ss_type(x)->e; }
 
 static inline
 int ss_literalQ(ss X)
 {
-  return ss_t_LITERAL_MIN <= ss_type_e(X) && ss_type_e(X) <= ss_t_LITERAL_MAX;
+  return ss_te_LITERAL_MIN <= ss_type_te(X) && ss_type_te(X) <= ss_te_LITERAL_MAX;
 }
 
 ss ss_box_fixnum(ss_fixnum_t _v);

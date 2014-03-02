@@ -15,9 +15,9 @@ ss_fixnum_t ss_unb_fixnum(ss v)
 static inline
 ss_fixnum_t ss_fixnum_(ss v)
 {
-  switch ( ss_type_e(v) ) {
-  case ss_t_flonum:  return ss_UNB_flonum(v);
-  case ss_t_fixnum:  return ss_I(v);
+  switch ( ss_type_te(v) ) {
+  case ss_te_flonum:  return ss_UNB_flonum(v);
+  case ss_te_fixnum:  return ss_I(v);
   default:           ss_typecheck_error(v); return 0;
   }
 }
