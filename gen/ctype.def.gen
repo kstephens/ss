@@ -2,7 +2,7 @@
 print "#ifndef ss_ctypedef_def\n#define ss_ctypedef_def(_1,_2,_3,_4,_5)\n#endif\n";
 print "#ifndef ss_cstruct_def\n#define ss_cstruct_def(_1,_2,_3,_4)\n#endif\n";
 print "#ifndef ss_cstruct_element_def\n#define ss_cstruct_element_def(_1,_2,_3,_4,_5,_6,_7)\n#endif\n";
-print "#ifndef ss_cfunc_def\n#define ss_cfunc_def(_1,_2,_3,_4,_5,_6,_7,_8)\n#endif\n";
+print "#ifndef ss_cfunc_def\n#define ss_cfunc_def(_1,_2,_3,_4,_5,_6,_7,_8,_9)\n#endif\n";
 %types = ();
 %real_types =
   (
@@ -25,7 +25,7 @@ sub to_real_type {
   my ($t) = @_;
   my ($x, $y, $ptr);
   while ( $t =~ s/\s+\*/*/g ) { }
-  $t =~ s/([*]+)$//; $ptr = $1;
+  $ptr = $t =~ s/([*]+)$// ? $1 : '';
   $x = $t;
   do {
     $y = $x;
@@ -36,6 +36,7 @@ sub to_real_type {
   $real_types{$t . $ptr} ||= $x;
   $x;
 }
+%typedefs = ();
 sub typedef {
   my ($e_type, $e_name) = @_;
   while ( $e_type =~ s/\s+\*/*/g ) { }
@@ -48,7 +49,6 @@ sub typedef {
 }
 
 %elements = ();
-%typedefs = ();
 $file = "stdin";
 $lineno = 0;
 $in_struct = 0;
@@ -151,7 +151,9 @@ while ( $line = <> ) {
     $args = $6;
     while ( $rtn_type =~ s/\s+\*/*/g ) { }
     $rtn_type =~ s/^\s+|\s+$//g;
+    $rtn_type_r = to_real_type($rtn_type);
     ($rtn_type_m = $rtn_type) =~ tr/ *[]/_PAA/;
+    ($rtn_type_r = $rtn_type_r) =~ tr/ *[]/_PAA/;
     $func_name =~ s/^\s+|\s+$//g;
     $args =~ s/^\s+|\s+$//g;
     $args = '' if ( $args eq 'void');
@@ -170,13 +172,14 @@ while ( $line = <> ) {
       $a_type =~ s/^\s+|\s+$//g;
       $r_type = to_real_type($a_type);
       ($a_type_m = $a_type) =~ tr/ *[]/_PAA/;
+      ($r_type_m = $r_type) =~ tr/ *[]/_PAA/;
       # print STDERR "      PARAM |$a_type| => |$r_type| |$a_name| \n";
-      push(@args_m, "PARAM($a_type,$a_type_m,$a_i,$a_name)");
+      push(@args_m, "PARAM($a_type,$a_type_m,$r_type_m,$a_i,$a_name)");
       push(@args_s, $a_type);
     }
     $args_m = join(',', @args_m);
     $args_s = join(',', @args_s);
-    $key = "$rtn_type,$rtn_type_m,$func_name,$args_n,PARAMS_$args_n($args_m),\"$args_s\",\"$file\",$lineno";
+    $key = "$rtn_type,$rtn_type_m,$rtn_type_r,$func_name,$args_n,PARAMS_$args_n($args_m),\"$args_s\",\"$file\",$lineno";
     print "ss_cfunc_def($key)\n";
   } elsif ( $in_struct > 0 ) {
     # print STDERR "  in struct |", $pre_line, "|\n" if /\*/;

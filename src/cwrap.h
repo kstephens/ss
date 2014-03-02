@@ -8,35 +8,58 @@
 #define ss_PASTE4(A,B,C,D)ss_PASTE4_(A,B,C,D)
 #define ss_PASTE4_(A,B,C,D)A##B##C##D
 
-#define ss_ss(V) (V)
-#define ss_ss_(V) (V)
+#define ss_B_ss(V) (V)
+#define ss_U_ss(V) (V)
 
-#define ss_ss_s_envP(V) (V)
-#define ss_ss_s_envP_(V) (V)
+#define ss_B_ss_s_envP(V) (V)
+#define ss_U_ss_s_envP(V) (V)
 
-#define ss_void_(V) (void) (V)
-#define ss_void(V) ((V), ss_unspec)
+#define ss_B_void(V) ((V), ss_unspec)
+#define ss_U_void(V) (void) (V)
 
-#define ss_int_(V) ss_I(V)
-#define ss_int(V)  ss_i(V)
+#define ss_B_char(V) ss_i(V)
+#define ss_U_char(V) ss_I(V)
 
-#define ss_size_t_(V) ss_I(V)
-#define ss_size_t(V)  ss_i(V)
+#define ss_B_short(V) ss_i(V)
+#define ss_U_short(V) ss_I(V)
 
-#define ss_unsigned_int_(V) ss_I(V)
-#define ss_unsigned_int(V)  ss_i(V)
+#define ss_B_int(V) ss_i(V)
+#define ss_U_int(V) ss_I(V)
 
-#define UNBOX(T,V) ss_PASTE3(ss_,T,_)(V)
-#define BOX(D,T,V) D = ss_PASTE2(ss_,T)(V)
+#define ss_B_long(V) ss_i(V)
+#define ss_U_long(V) ss_I(V)
+
+#define ss_B_long_long(V) ss_i(V)
+#define ss_U_long_long(V) ss_I(V)
+
+#define ss_B_unsigned_char(V) ss_i(V)
+#define ss_U_unsigned_char(V) ss_I(V)
+
+#define ss_B_unsigned_short(V) ss_i(V)
+#define ss_U_unsigned_short(V) ss_I(V)
+
+#define ss_B_unsigned_int(V) ss_i(V)
+#define ss_U_unsigned_int(V) ss_I(V)
+
+#define ss_B_unsigned_long(V) ss_i(V)
+#define ss_U_unsigned_long(V) ss_I(V)
+
+#define ss_B_unsigned_long_long(V) ss_i(V)
+#define ss_U_unsigned_long_long(V) ss_I(V)
+
+#define BOX(D,T,V) D = ss_PASTE2(ss_B_,T)(V)
+#define UNBOX(T,V) ss_PASTE2(ss_U_,T)(V)
 
 #define PARAM_ctype(P) ctype_##P
-#define ctype_PARAM(T,M,I,N) T
+#define ctype_PARAM(T,M,R,I,N) T
 #define PARAM_mtype(P) mtype_##P
-#define mtype_PARAM(T,M,I,N) M
+#define mtype_PARAM(T,M,R,I,N) M
+#define PARAM_rtype(P) rtype_##P
+#define rtype_PARAM(T,M,R,I,N) R
 #define PARAM_i(P)     i_##P
-#define i_PARAM(T,M,I,N)     I
+#define i_PARAM(T,M,R,I,N)     I
 #define PARAM_name(P)  name_##P
-#define name_PARAM(T,M,I,N)  N
+#define name_PARAM(T,M,R,I,N)  N
 
 #define PARAMS_ss(PARAMS) PARAMS_ss_##PARAMS
 #define PARAMS_ss_PARAMS_0()
@@ -47,9 +70,10 @@
 #define PARAMS_ss_PARAMS_5(P1,P2,P3,P4,P5) ss PARAM_name(P1), ss PARAM_name(P2), ss PARAM_name(P3), ss PARAM_name(P4), ss PARAM_name(P5)
 #define PARAMS_ss_PARAMS_6(P1,P2,P3,P4,P5,P6) ss PARAM_name(P1), ss PARAM_name(P2), ss PARAM_name(P3), ss PARAM_name(P4), ss PARAM_name(P5), ss PARAM_name(P6)
 #define PARAMS_ss_PARAMS_7(P1,P2,P3,P4,P5,P6,P7) ss PARAM_name(P1), ss PARAM_name(P2), ss PARAM_name(P3), ss PARAM_name(P4), ss PARAM_name(P5), ss PARAM_name(P6), ss PARAM_name(P7)
+#define PARAMS_ss_PARAMS_8(P1,P2,P3,P4,P5,P6,P7,P8) ss PARAM_name(P1), ss PARAM_name(P2), ss PARAM_name(P3), ss PARAM_name(P4), ss PARAM_name(P5), ss PARAM_name(P6), ss PARAM_name(P7), ss PARAM_name(P8)
 
 #define PARAM_param(P) ss_PASTE2(param_,PARAM_name(P))
-#define PARAM_unbox(P) PARAM_ctype(P) PARAM_param(P) = UNBOX(PARAM_mtype(P),PARAM_name(P))
+#define PARAM_unbox(P) PARAM_ctype(P) PARAM_param(P) = UNBOX(PARAM_rtype(P),PARAM_name(P))
 #define PARAMS_unbox(PARAMS) PARAMS_unbox_##PARAMS
 #define PARAMS_unbox_PARAMS_0()
 #define PARAMS_unbox_PARAMS_1(P1) PARAM_unbox(P1);
@@ -59,6 +83,7 @@
 #define PARAMS_unbox_PARAMS_5(P1,P2,P3,P4,P5) PARAM_unbox(P1); PARAM_unbox(P2); PARAM_unbox(P3); PARAM_unbox(P4); PARAM_unbox(P5);
 #define PARAMS_unbox_PARAMS_6(P1,P2,P3,P4,P5,P6) PARAM_unbox(P1); PARAM_unbox(P2); PARAM_unbox(P3); PARAM_unbox(P4); PARAM_unbox(P5); PARAM_unbox(P6);
 #define PARAMS_unbox_PARAMS_7(P1,P2,P3,P4,P5,P6,P7) PARAM_unbox(P1); PARAM_unbox(P2); PARAM_unbox(P3); PARAM_unbox(P4); PARAM_unbox(P5); PARAM_unbox(P6); PARAM_unbox(P7);
+#define PARAMS_unbox_PARAMS_8(P1,P2,P3,P4,P5,P6,P7,P8) PARAM_unbox(P1); PARAM_unbox(P2); PARAM_unbox(P3); PARAM_unbox(P4); PARAM_unbox(P5); PARAM_unbox(P6); PARAM_unbox(P7); PARAM_unbox(P8);
 
 #define PARAMS_params(PARAMS)PARAMS_params_##PARAMS
 #define PARAMS_params_PARAMS_0()
@@ -69,16 +94,17 @@
 #define PARAMS_params_PARAMS_5(P1,P2,P3,P4,P5) PARAM_param(P1), PARAM_param(P2), PARAM_param(P3), PARAM_param(P4), PARAM_param(P5)
 #define PARAMS_params_PARAMS_6(P1,P2,P3,P4,P5,P6) PARAM_param(P1), PARAM_param(P2), PARAM_param(P3), PARAM_param(P4), PARAM_param(P5), PARAM_param(P6)
 #define PARAMS_params_PARAMS_7(P1,P2,P3,P4,P5,P6,P7) PARAM_param(P1), PARAM_param(P2), PARAM_param(P3), PARAM_param(P4), PARAM_param(P5), PARAM_param(P6), PARAM_param(P7)
+#define PARAMS_params_PARAMS_8(P1,P2,P3,P4,P5,P6,P7,P8) PARAM_param(P1), PARAM_param(P2), PARAM_param(P3), PARAM_param(P4), PARAM_param(P5), PARAM_param(P6), PARAM_param(P7), PARAM_param(P8)
 
 #define PARAMS_free(PARAMS)
 
-#define ss_NAME_CF(RTYPE,MTYPE,NAME,PARAMS) ss_##NAME
-#define DECLARE_CF(RTYPE,MTYPE,NAME,PARAMS) ss ss_C_##NAME(PARAMS_ss(PARAMS))
-#define DEFINE_CF(RTYPE,MTYPE,NAME,PARAMS)              \
-  DECLARE_CF(RTYPE,MTYPE,NAME,PARAMS) {                 \
+#define ss_NAME_CF(CTYPE,MTYPE,RTYPE,NAME,PARAMS) ss_##NAME
+#define DECLARE_CF(CTYPE,MTYPE,RTYPE,NAME,PARAMS) ss ss_C_##NAME(PARAMS_ss(PARAMS))
+#define DEFINE_CF(CTYPE,MTYPE,RTYPE,NAME,PARAMS)        \
+  DECLARE_CF(CTYPE,MTYPE,RTYPE,NAME,PARAMS) {           \
     ss __return;                                        \
     PARAMS_unbox(PARAMS);                               \
-    BOX(__return,MTYPE,NAME (PARAMS_params(PARAMS)));   \
+    BOX(__return,RTYPE,NAME (PARAMS_params(PARAMS)));   \
     PARAMS_free(PARAMS);                                \
     return __return;                                    \
   }

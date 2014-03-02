@@ -90,7 +90,7 @@ lispread/lispread.c:
 
 ss : $(EARLY_FILES) $(CFILES) $(HFILES) $(OTHER_C_FILES)
 	@echo "LINK $@"
-	$(SILENT)$(CC) $(CFLAGS) -o $@ ss.c $(LIBS)
+	$(SILENT)$(CC) $(CFLAGS) -Dss_cwrap_c=1 -o $@ ss.c $(LIBS)
 
 ss.s : $(EARLY_FILES) $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -S -o $@.tmp $(CFILES) $(LIBS)
