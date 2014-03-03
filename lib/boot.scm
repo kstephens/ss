@@ -307,6 +307,11 @@
 (define (%gensym x)
   (C:ss_box_symbol #f))
 
+(define-macro (let* bindings . body)
+  (if (null? bindings) `(begin ,@body)
+    `(let ((,(caar bindings) ,@(cdar bindings)))
+       (let* ,(cdr bindings) ,@body))))
+
 (define-macro (letrec bindings . body)
   `(let ,(map (lambda (b) `(,(car b) ',%unspec)) bindings)
      ,@(map (lambda (b) `(set! ,(car b) ,@(cdr b))) bindings)
