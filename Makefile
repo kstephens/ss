@@ -98,7 +98,7 @@ ss : $(EARLY_FILES) $(CFILES) $(HFILES) $(OTHER_C_FILES)
 	$(SILENT)$(CC) $(CFLAGS) -Dss_cwrap_c=1 -o $@ ss.c $(LIBS)
 
 ss.s : early-files $(CFILES) $(HFILES)
-	$(CC) $(CFLAGS) -S -o $@.tmp $(CFILES) $(LIBS)
+	$(CC) $(CFLAGS) -Dss_cwrap_c=1 -S -o $@.tmp $(CFILES) $(LIBS)
 	tool/asm-source $@.tmp > $@
 	rm $@.tmp
 
