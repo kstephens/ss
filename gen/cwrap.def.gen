@@ -2,7 +2,8 @@
 print "#ifndef ss_ctypedef_def\n#define ss_ctypedef_def(_1,_2,_3,_4,_5)\n#endif\n";
 print "#ifndef ss_cstruct_decl\n#define ss_cstruct_decl(_1,_2,_3,_4)\n#endif\n";
 print "#ifndef ss_cstruct_def\n#define ss_cstruct_def(_1,_2,_3,_4)\n#endif\n";
-print "#ifndef ss_cstruct_element_def\n#define ss_cstruct_element_def(_1,_2,_3,_4,_5,_6,_7,_8)\n#endif\n";
+print "#ifndef ss_cstruct_element_def\n#define ss_cstruct_element_def(_1,_2,_3,_4,_5,_6,_7,_8,_9)\n#endif\n";
+print "#ifndef ss_cstruct_elemptr_def\n#define ss_cstruct_elemptr_def(_1,_2,_3,_4,_5,_6,_7,_8,_9)\n#endif\n";
 print "#ifndef ss_cfunc_def\n#define ss_cfunc_def(_1,_2,_3,_4,_5,_6,_7,_8,_9)\n#endif\n";
 %types = ();
 %real_types =
@@ -155,7 +156,8 @@ while ( $line = <> ) {
     foreach my $e_name ( split(/\s*,\s*/, $element_names) ) {
       my ($e_type, $e_type_m) = ( $element_type );
       # print STDERR "      ELEMENT |$e_type| |$e_name|\n";
-      $e_name =~ s/\s*:\s*\d+\s*$//;
+      my $e_bitfield = '0';
+      $e_bitfield = $1 if ( $e_name =~ s/\s*:\s*(\d+)\s*$// );
       $e_type .= $1  if ( $e_name =~ s/^\s*([*\s]+)// );
       $e_type .= '*' if ( $e_name =~ s/\s*$array_x_re\s*$// );
       $e_type =~ s/^\s+|\s+$//g;
@@ -170,9 +172,12 @@ while ( $line = <> ) {
         $key = "$struct_type,$struct_name,$e_name";
         if ( ! $elements{$key} ) {
           $elements{$key} = 1;
-          $key = "$struct_type,$struct_name,$e_type,$e_type_r,$e_type_m,$e_name,\"$file\",$lineno";
+          $key = "$struct_type,$struct_name,$e_type,$e_type_r,$e_type_m,$e_name,$e_bitfield,\"$file\",$lineno";
           # print STDERR "    element $key\n";
           print "ss_cstruct_element_def($key)\n";
+          if ( $e_bitfield eq '0' ) {
+            print "ss_cstruct_elemptr_def($key)\n";
+          }
         }
       } elsif ( $_in_typedef ) {
         $in_typedef = 0;
@@ -255,6 +260,7 @@ for my $k ( sort keys %structs_forward ) {
 print "#undef ss_cstruct_decl\n";
 print "#undef ss_cstruct_def\n";
 print "#undef ss_cstruct_element_def\n";
+print "#undef ss_cstruct_elemptr_def\n";
 print "#undef ss_ctypedef_def\n";
 print "#undef ss_cfunc_def\n";
 
