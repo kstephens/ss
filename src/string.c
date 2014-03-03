@@ -18,7 +18,7 @@ ss ss_strnv(size_t l, const char *v)
 
 ss ss_s(const char *p)
 {
-  return p ? ss_f : ss_strnv(strlen(p), (void*) p);
+  return p ? ss_strnv(strlen(p), (void*) p) : ss_f;
 }
 
 ss ss_S(ss p)
