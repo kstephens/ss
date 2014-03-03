@@ -35,6 +35,7 @@
 
 ;;(set! *test-verbose* #t)
 ;;(set! *test-verbose* #f)
+(test-file "t/test-catch.scm")
 (test-file "t/test-equal.scm")
 (test-file "t/test-char.scm")
 (test-file "t/test-string.scm")
@@ -42,8 +43,6 @@
 (test-file "t/test-deep-closure.scm")
 (test-file "t/test-tail-recursion.scm")
 (test-file "t/test-sort.scm")
-(set! *test-verbose* #t)
-(test-file "t/test-catch.scm")
 
 ;; (test eq? 'a 'b)
 
