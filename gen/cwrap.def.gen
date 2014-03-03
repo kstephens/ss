@@ -155,25 +155,31 @@ while ( $line = <> ) {
     foreach my $e_name ( split(/\s*,\s*/, $element_names) ) {
       my ($e_type, $e_type_m) = ( $element_type );
       # print STDERR "      ELEMENT |$e_type| |$e_name|\n";
-      $e_type .= $1  if ( $e_name =~ s/^\s*([*\s]+)//g );
-      $e_type .= '*' if ( $e_name =~ s/\s*$array_x_re\s*$//g );
+      $e_name =~ s/\s*:\s*\d+\s*$//;
+      $e_type .= $1  if ( $e_name =~ s/^\s*([*\s]+)// );
+      $e_type .= '*' if ( $e_name =~ s/\s*$array_x_re\s*$// );
       $e_type =~ s/^\s+|\s+$//g;
       $e_type =~ s/\s\s+/ /g;
+      $e_type_r = to_real_type($e_type);
       while ( $e_type =~ s/\s+\*/*/g ) { }
+      while ( $e_type_r =~ s/\s+\*/*/g ) { }
       struct($e_type, 0);
-      ($e_type_m = $e_type) =~ tr/ *[]/_PAA/;
+      ($e_type_m = $e_type_r) =~ tr/ *[]/_PAA/;
       if ( 0 ) {
       } elsif ( $in_struct > 0 ) {
-        $key = "$struct_type,$struct_name,$e_type,$e_type_m,$e_name,\"$file\",$lineno";
-        $elements{$key} = 1;
-        # print STDERR "    element $key\n";
-        print "ss_cstruct_element_def($key)\n";
+        $key = "$struct_type,$struct_name,$e_name";
+        if ( ! $elements{$key} ) {
+          $elements{$key} = 1;
+          $key = "$struct_type,$struct_name,$e_type,$e_type_r,$e_type_m,$e_name,\"$file\",$lineno";
+          # print STDERR "    element $key\n";
+          print "ss_cstruct_element_def($key)\n";
+        }
       } elsif ( $_in_typedef ) {
         $in_typedef = 0;
         typedef($e_type, $e_name);
       }
     }
-  } elsif ( s/^\s*$type_ptr_re\s*$name_re\s*[(]\s*(void\b|($param_re(\s*,\s*$param_re)*))\s*[)]\s*[;{]// ) {
+  } elsif ( s/^\s*$type_ptr_re\s*$name_re\s*[(]\s*(void\b|($param_re(\s*,\s*$param_re)*)|)\s*[)]\s*[;{]// ) {
     # print STDERR " func match 1|$1| 2|$2| 3|$3| 4|$4| 5|$5| 6|$6|\n";
     my ($rtn_type, $func_name, $args) = ($1, $5, $6);
     my ($rtn_type_r, $rtn_type_m);
