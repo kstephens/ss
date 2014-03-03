@@ -55,7 +55,7 @@ typedef ssize_t ss_fixnum_t;
 struct ss_s_env;
 struct ss_s_prim;
 
-#define ss_PROC_DECL(X) \
+#define ss_PRIM_DECL(X) \
   ss X (struct ss_s_env *ss_env, ss *_ss_expr, struct ss_s_prim *ss_prim, unsigned int ss_argc, ss *ss_argv)
 
 #define ss_BOX_fixnum(X)  ((ss)  ((((ss_fixnum_t)(X)) << 1) | 1))
@@ -82,7 +82,7 @@ typedef enum ss_te {
 } ss_te;
 
 typedef struct ss_s_type {
-  ss_PROC_DECL((*proc));
+  ss_PRIM_DECL((*prim));
   const char *name;
   ss_word_t e; // ss_te
   size_t instance_size;
@@ -251,7 +251,7 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
 #include "ss/catch.h"
 
 typedef struct ss_s_prim {
-  ss_PROC_DECL((*proc));
+  ss_PRIM_DECL((*prim));
   const char *name;
   ss_fixnum_t min_args, max_args, no_side_effect;
   const char *docstring;
@@ -263,9 +263,9 @@ typedef struct ss_s_prim {
 #define _ss_prim(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)         \
   extern ss ss_sym(NAME);                                               \
   ss ss_p_##NAME;                                                       \
-  static ss_PROC_DECL(ss_PASTE2(_ss_pf_,NAME));                         \
+  static ss_PRIM_DECL(ss_PASTE2(_ss_pf_,NAME));                         \
   ss_s_prim ss_PASTE2(_ss_p_,NAME) = { ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, NO_SIDE_EFFECT, DOCSTRING } ; \
-  static ss_PROC_DECL(ss_PASTE2(_ss_pf_,NAME)) {                        \
+  static ss_PRIM_DECL(ss_PASTE2(_ss_pf_,NAME)) {                        \
   ss ss_rtn = ss_undef;                                                 \
   (void) ss_sym(NAME);                                                  \
   if ( MINARGS >= 0 && ss_argc < MINARGS )                              \
@@ -302,7 +302,7 @@ typedef struct ss_s_lambda {
 #define ss_UNB_lambda(X) (*(ss_s_lambda*)(X))
 
 typedef struct ss_s_closure {
-  ss_PROC_DECL((*proc));
+  ss_PRIM_DECL((*prim));
   ss_s_lambda *lambda;
   ss_s_env *env;
 } ss_s_closure;
