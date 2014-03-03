@@ -2,6 +2,7 @@
 
 ss_s_env *ss_top_level_env, *ss_current_env;
 FILE **ss_stdin = &stdin, **ss_stdout = &stdout, **ss_stderr = &stderr;
+char *ss_prog_path, *ss_prog_name, *ss_prog_dir, *ss_lib_dir;
 
 ss ss_write(ss obj, ss port);
 ss ss_write_3(ss v, ss port, ss mode);
