@@ -71,7 +71,12 @@
   ss   ss_PASTE2(ss_B_C_,NAME) (TYPE value) {                           \
     struct ss_PASTE2(ss_ts_,NAME) *self = ss_alloc(ss_PASTE2(ss_t_C_,NAME), sizeof(*self)); \
     self->value = value;                                                \
-    return (ss) self;                                                   \
+    return self;                                                        \
+  }                                                                     \
+  ss   ss_PASTE2(ss_BP_C_,NAME) (TYPE *value) {                         \
+    struct ss_PASTE2(ss_ts_,NAME) *self = ss_alloc(ss_PASTE2(ss_t_C_,NAME), sizeof(*self)); \
+    self->value = *value;                                               \
+    return self;                                                        \
   }                                                                     \
   ss   ss_PASTE2(ss_B0_C_,NAME) () {                                    \
     static TYPE _zero;                                                  \
@@ -86,10 +91,20 @@
   TYPE* ss_PASTE2(ss_UP_C_,NAME) (ss self) {                            \
     return &((struct ss_PASTE2(ss_ts_,NAME) *) self)->value;            \
   }
+#define WRAP_CT1_PTR(TYPE,NAME)                                         \
+  ss ss_PASTE3(ss_B_C_,NAME,P) (TYPE* value);                           \
+  ss ss_PASTE3(ss_D_C_,NAME,P) (ss ptrobj) {                            \
+    return BOX(NAME, **(TYPE**) ptrobj);                                \
+  }                                                                     \
+  ss ss_PASTE2(ss_P_C_,NAME) (ss self) {                                \
+    return BOX(ss_PASTE2(NAME,P), &((struct ss_PASTE2(ss_ts_,NAME) *) self)->value); \
+  }
 
 #define WRAP_CT(TYPE,NAME)                                              \
   WRAP_CT1(TYPE,NAME)                                                   \
+  WRAP_CT1_PTR(TYPE,NAME)                                               \
   WRAP_CT1(TYPE*,ss_PASTE2(NAME,P))                                     \
+  WRAP_CT1_PTR(TYPE*,ss_PASTE2(NAME,P))                                 \
   WRAP_CT1(TYPE**,ss_PASTE2(NAME,PP))                                   \
   ss ss_PASTE3(ss_B_C_,NAME,Pv) (ss count, ss value) {                  \
     size_t i;                                                           \
