@@ -82,6 +82,7 @@ typedef enum ss_te {
 } ss_te;
 
 typedef struct ss_s_type {
+  void *c_func;
   ss_PRIM_DECL((*prim));
   const char *name;
   ss_word_t e; // ss_te
@@ -251,11 +252,11 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
 #include "ss/catch.h"
 
 typedef struct ss_s_prim {
+  void *c_func;
   ss_PRIM_DECL((*prim));
   const char *name;
   ss_fixnum_t min_args, max_args, no_side_effect;
   const char *docstring;
-  void *c_func;
 } ss_s_prim;
 #define ss_UNB_prim(X)((ss_s_prim*)(X))
 
@@ -264,7 +265,7 @@ typedef struct ss_s_prim {
   extern ss ss_sym(NAME);                                               \
   ss ss_p_##NAME;                                                       \
   static ss_PRIM_DECL(ss_PASTE2(_ss_pf_,NAME));                         \
-  ss_s_prim ss_PASTE2(_ss_p_,NAME) = { ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, NO_SIDE_EFFECT, DOCSTRING } ; \
+  ss_s_prim ss_PASTE2(_ss_p_,NAME) = { 0, ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, NO_SIDE_EFFECT, DOCSTRING } ; \
   static ss_PRIM_DECL(ss_PASTE2(_ss_pf_,NAME)) {                        \
   ss ss_rtn = ss_undef;                                                 \
   (void) ss_sym(NAME);                                                  \
@@ -302,6 +303,7 @@ typedef struct ss_s_lambda {
 #define ss_UNB_lambda(X) (*(ss_s_lambda*)(X))
 
 typedef struct ss_s_closure {
+  void *c_func;
   ss_PRIM_DECL((*prim));
   ss_s_lambda *lambda;
   ss_s_env *env;
