@@ -110,7 +110,7 @@ WRAP_CT(ss*,ssP)
 #undef stpcpy
 #endif
 
-#define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,FILE,LINE)       \
+#define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)    \
   ss ss_SR_C_##ST##_##SN##__##EN(ss x) {                          \
     ST SN *ptr = x;                                               \
     return BOX(MT,ptr->EN);                                       \
@@ -119,6 +119,11 @@ WRAP_CT(ss*,ssP)
     ST SN *ptr = x;                                               \
     ptr->EN = UNBOX(MT,v);                                        \
     return x;                                                     \
+  }
+#define ss_cstruct_elemptr_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)  \
+  ss ss_SP_C_##ST##_##SN##__##EN(ss x) {                        \
+    ST SN *ptr = x;                                             \
+    return BOX(MT##P,&ptr->EN);                                 \
   }
 #include "cwrap.def"
 
@@ -163,9 +168,11 @@ void ss_init_cwrap(ss_s_env *ss_env)
     { F(ss_B0_C_##ST##_##NAME),       0, 0, 0, #ST "-" #NAME    , 0, #ST " " #NAME },
 #define ss_cstruct_decl(ST,NAME,FILE,LINE)                              \
     { F(ss_B0_C_##ST##_##NAME##P),    0, 0, 0, #ST "-" #NAME "*", 0, #ST "-" #NAME "*" },
-#define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,FILE,LINE)             \
-    { F(ss_SR_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN,     1, #ST " " #SN "." #EN     }, \
+#define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)          \
+    { F(ss_SR_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN    , 1, #ST " " #SN "." #EN     }, \
     { F(ss_SS_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN "=", 2, #ST " " #SN "." #EN "=" },
+#define ss_cstruct_elemptr_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)          \
+    { F(ss_SP_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN "&", 1, #ST " " #SN "." #EN "&" },
 #include "cwrap.def"
     { 0, }
   }, *d;
