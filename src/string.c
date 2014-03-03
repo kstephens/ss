@@ -31,10 +31,11 @@ ss ss_string_TO_number(ss s, int radix)
    long long ll;
    double d;
    char *endp;
+   ss n;
 
   ll = strtoll(ss_string_V(s), &endp, radix);
-  if ( ! *endp )
-    return ss_box(fixnum, ll);
+  if ( ! *endp && ss_I(n = ss_i(ll)) == ll )
+    return n;
   d = strtod(ss_string_V(s), &endp);
   if ( ! *endp )
     return ss_box(flonum, d);
