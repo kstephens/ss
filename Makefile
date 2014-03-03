@@ -34,7 +34,7 @@ HFILES = \
   gen/sym.def \
   gen/prim.def \
   gen/syntax.def \
-  gen/ctype.def \
+  gen/cwrap.def \
   lispread/lispread.c \
   include/ss/*.h \
   $(OTHER_C_FILES)
@@ -49,7 +49,7 @@ boot/t.def \
 boot/sym.def    \
 boot/prim.def   \
 boot/syntax.def \
-boot/ctype.def
+boot/cwrap.def
 
 SILENT=@
 
@@ -67,11 +67,11 @@ boot/prim.def   : gen/prim.def.gen
 boot/syntax.def : gen/syntax.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
-boot/ctype.def  : gen/ctype.def.gen
+boot/cwrap.def  : gen/cwrap.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
 
-gen/t.def : Makefile gen/t.def.gen $(CFILES) $(OTHER_C_FILES) gen/ctype.def
+gen/t.def : Makefile gen/t.def.gen $(CFILES) $(OTHER_C_FILES) gen/cwrap.def
 	@echo "GEN $@"
 	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 gen/sym.def : Makefile gen/sym.def.gen $(CFILES) $(OTHER_C_FILES) gen/prim.def gen/syntax.def
@@ -83,7 +83,7 @@ gen/prim.def : Makefile gen/prim.def.gen $(CFILES)
 gen/syntax.def : Makefile gen/syntax.def.gen $(CFILES)
 	@echo "GEN $@"
 	$(SILENT)$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
-gen/ctype.def : Makefile gen/ctype.def.gen $(CFILES) $(OTHER_C_FILES)
+gen/cwrap.def : Makefile gen/cwrap.def.gen $(CFILES) $(OTHER_C_FILES)
 	@echo "GEN $@"
 	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 

@@ -2,7 +2,7 @@
 
 #if 0
 #define ss_cfunc_def(CT,MT,RT,NAME,NPARAM,PARAMS,SPARAMS,FILE,LINE) DECLARE_CF(CT,MT,RT,NAME,PARAMS);
-#include "ctype.def"
+#include "cwrap.def"
 #endif
 
 #define ITYPE(T,N) extern ss_s_type *ss_t_C_##N, *ss_t_C_##N##P, *ss_t_C_##N##PP;
@@ -13,7 +13,7 @@ ITYPE(void*,voidP)
 #define ss_cstruct_def(ST,NAME,FILE,LINE) extern ss_s_type *ss_t_C_##ST##_##NAME, *ss_t_C_##ST##_##NAME##P, *ss_t_C_##ST##_##NAME##PP;
 #define ss_cstruct_decl(ST,NAME,FILE,LINE) extern ss_s_type *ss_t_C_##ST##_##NAME##P, *ss_t_C_##ST##_##NAME##PP, *ss_t_C_##ST##_##NAME##PPP;
 extern ss_s_type *ss_t_C_ssP, *ss_t_C_ssPP, *ss_t_C_ssPPP;
-#include "ctype.def"
+#include "cwrap.def"
 
 #if ss_cwrap_c
 
@@ -70,7 +70,7 @@ ITYPE(void*,voidP)
 #define ss_cstruct_def(ST,NAME,FILE,LINE)  WRAP_CT(ST NAME,  ss_PASTE3(ST,_,NAME))
 #define ss_cstruct_decl(ST,NAME,FILE,LINE) WRAP_CT(ST NAME*, ss_PASTE4(ST,_,NAME,P))
 WRAP_CT(ss*,ssP)
-#include "ctype.def"
+#include "cwrap.def"
 
 #define ss_B_C_ss(V) (V)
 #define ss_U_C_ss(V) (V)
@@ -116,7 +116,7 @@ WRAP_CT(ss*,ssP)
 #endif
 
 #define ss_cfunc_def(CT,MT,RT,NAME,NPARAM,PARAMS,SPARAMS,FILE,LINE) DEFINE_CF(CT,MT,RT,NAME,PARAMS);
-#include "ctype.def"
+#include "cwrap.def"
 
 void ss_init_cwrap(ss_s_env *ss_env)
 {
@@ -126,10 +126,10 @@ void ss_init_cwrap(ss_s_env *ss_env)
     const char *fname, *docstr;
   } inits[] = {
 #define ss_cfunc_def(CT,MT,RT,NAME,NPARAMS,PARAMS,SPARAMS,FILE,LINE) { &NAME, &ss_Cf_##NAME, NPARAMS, #NAME, #CT "(" SPARAMS ")"},
-#include "ctype.def"
+#include "cwrap.def"
 #define ss_cstruct_def(ST,NAME,FILE,LINE)  { &ss_B0_C_##ST##_##NAME, 0, 0, "ss_B0_C_" #ST "_" #NAME, #ST " " #NAME },
 #define ss_cstruct_decl(ST,NAME,FILE,LINE) { &ss_B0_C_##ST##_##NAME##P, 0, 0, "ss_B0_C_" #ST "_" #NAME "P", #ST " " #NAME "*" },
-#include "ctype.def"
+#include "cwrap.def"
     { 0, }
   };
   for ( int i = 0; inits[i].fname; ++ i ) {
