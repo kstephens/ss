@@ -93,14 +93,18 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     over = ss_UNB(var, var).over;
     while ( up -- > 0 ) env = env->parent;
     assert(env);
-#if 0
-    // Does not work because env->argv can grow.
+    // if var is at top-level,
     if ( ! env->parent ) {
       ref = &env->argv[over];
-      ss_rewrite_expr(ss_m_global(sym, ref), "var is global");
+      // box value with a global reference to a new cell.
+      if ( ss_type_te(*ref) != ss_te_global ) {
+        ss *cell = ss_malloc(sizeof(*cell));
+        *cell = *ref;
+        *ref = ss_m_global(sym, cell);
+        ss_rewrite_expr(*ref, "var is global");
+      }
       goto ref;
     }
-#endif
     goto rtn;
   default: break;
   }
@@ -114,7 +118,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     ss_rewrite_expr(*ref, "global binding is known");
     ref = &ss_UNB(global, *ref);
   }
-  if ( ss_UNB(symbol, sym).is_const && env->parent == 0 ) {
+  if ( ss_UNB(symbol, sym).is_const && ! env->parent ) {
     if ( set ) return(ss_error(ss_env, "constant-variable", sym, 0));
     ss_constantExprQ = 1;
     ss_rewrite_expr(ss_box_quote(*ref), "variable constant in top-level");
