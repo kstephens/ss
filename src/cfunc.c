@@ -3,16 +3,7 @@
 
 ss_prim(ss_call_cfunc,-1,-1,1,"call cfunc")
 {
-#define MINARGS ss_prim->min_args
-#define MAXARGS ss_prim->max_args
-#define DOCSTRING ss_prim->docstring
-  if ( MINARGS >= 0 && ss_argc < MINARGS )
-    _ss_min_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MINARGS);
-  if ( MAXARGS >= 0 && ss_argc > MAXARGS )
-    _ss_max_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MAXARGS);
-#undef MINARGS
-#undef MAXARGS
-#undef DOCSTRING
+  _ss_prim_arity_check(ss_prim->min_args, ss_prim->max_args, ss_prim->docstring);
 #define T ss
 #define A(X) X
 #define R(X) ss_return(X)
