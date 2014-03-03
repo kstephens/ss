@@ -1,8 +1,18 @@
 
 #undef T
 
-ss_prim(ss_call_cfunc,0,5,1,"call cfunc")
+ss_prim(ss_call_cfunc,0,7,1,"call cfunc")
 {
+#define MINARGS ss_prim->min_args
+#define MAXARGS ss_prim->max_args
+#define DOCSTRING ss_prim->docstring
+  if ( MINARGS >= 0 && ss_argc < MINARGS )
+    _ss_min_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MINARGS);
+  if ( MAXARGS >= 0 && ss_argc > MAXARGS )
+    _ss_max_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MAXARGS);
+#undef MINARGS
+#undef MAXARGS
+#undef DOCSTRING
 #define T ss
 #define A(X) X
 #define R(X) ss_return(X)
@@ -45,6 +55,7 @@ ss ss_define_cfunc(ss_s_env *ss_env, const char *name, void *func, int nargs, co
 {
   ss sym = ss_cfunc_sym(name ? name : fname);
   ss_s_prim *prim = ss_m_cfunc(func, fname, docstr);
+  prim->min_args = prim->max_args = nargs;
   ss_define(ss_env, sym, prim);
   ss_UNB(symbol, sym).is_const = 1;
   cfunc_list = ss_cons(ss_cons(sym, prim), cfunc_list);
