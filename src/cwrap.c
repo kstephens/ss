@@ -128,26 +128,32 @@ WRAP_CT(ss*,ssP)
 void ss_init_cwrap(ss_s_env *ss_env)
 {
   static struct init {
-    void *cfunc, *primfunc;
+    void *cfunc; const char *cfuncn, *cname; // raw cfunc
+    void *wfunc; const char *wfuncn, *wname; // wrapped cfunc
     int nparams;
-    const char *fname, *docstr;
+    const char *docstr;
   } inits[] = {
-#define ss_cfunc_def(CT,MT,RT,NAME,NPARAMS,PARAMS,SPARAMS,FILE,LINE) { &NAME, &ss_Cf_##NAME, NPARAMS, #NAME, #CT "(" SPARAMS ")"},
-#define ss_cstruct_def(ST,NAME,FILE,LINE)  { &ss_B0_C_##ST##_##NAME, 0, 0, #ST "-" #NAME, #ST " " #NAME },
-#define ss_cstruct_decl(ST,NAME,FILE,LINE) { &ss_B0_C_##ST##_##NAME##P, 0, 0, #ST "-" #NAME "*", #ST " " #NAME "*" },
+#undef F
+#define F(NAME) &NAME, ss_STRINGTIZE(NAME)
+#define ss_cfunc_def(CT,MT,RT,NAME,NPARAMS,PARAMS,SPARAMS,FILE,LINE)    \
+    { F(NAME), #NAME, F(ss_Cf_##NAME), #NAME, NPARAMS, #CT "(*)(" SPARAMS ")"},
+#define ss_cstruct_def(ST,NAME,FILE,LINE)                               \
+    { F(ss_B0_C_##ST##_##NAME),       0, 0, 0, #ST "-" #NAME    , 0, #ST " " #NAME },
+#define ss_cstruct_decl(ST,NAME,FILE,LINE)                              \
+    { F(ss_B0_C_##ST##_##NAME##P),    0, 0, 0, #ST "-" #NAME "*", 0, #ST "-" #NAME "*" },
 #define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,FILE,LINE)             \
-    { &ss_SR_C_##ST##_##SN##__##EN, &ss_SR_C_##ST##_##SN##__##EN, 1, #ST "-" #SN "." #EN, #ST " " #SN "." #EN }, \
-    { &ss_SS_C_##ST##_##SN##__##EN, &ss_SS_C_##ST##_##SN##__##EN, 2, #ST "-" #SN "." #EN "=", #ST " " #SN "." #EN "=" },
+    { F(ss_SR_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN,     1, #ST " " #SN "." #EN     }, \
+    { F(ss_SS_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN "=", 2, #ST " " #SN "." #EN "=" },
 #include "cwrap.def"
     { 0, }
-  };
-  for ( int i = 0; inits[i].fname; ++ i ) {
-    char buf[64];
-    ss_define_cfunc(ss_env, 0, inits[i].primfunc, inits[i].nparams, inits[i].fname, inits[i].docstr);
-    if ( inits[i].cfunc ) {
-      snprintf(buf, 63, "%%%s", inits[i].fname);
-      ss_define_cfunc(ss_env, buf, inits[i].cfunc, inits[i].nparams, inits[i].fname, inits[i].docstr);
-    }
+  }, *d;
+  for ( int i = 0; (d = &inits[i])->cfunc; ++ i ) {
+    char cname[64];
+    if ( ! d->wfunc )  d->wfunc  = d->cfunc;
+    if ( ! d->wfuncn ) d->wfuncn = d->cfuncn;
+    snprintf(cname, 63, "%%%s", d->cname ? d->cname : d->wname);
+    ss_define_cfunc(ss_env, cname   , d->cfunc, -1        , d->cfuncn, d->docstr);
+    ss_define_cfunc(ss_env, d->wname, d->wfunc, d->nparams, d->wfuncn, d->docstr);
   }
 }
 #endif

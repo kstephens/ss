@@ -38,7 +38,10 @@ ss ss_write_3(ss v, ss port, ss mode)
   }
     break;
   case ss_te_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
-  case ss_te_prim:    fprintf(out, "#<p %s %s >", ss_UNB(prim, v)->name, ss_UNB(prim, v)->docstring); break;
+  case ss_te_prim: {
+    ss_s_prim *p = v;
+    fprintf(out, "#<p %s #@%p %s %s >", p->name, p->c_func, p->docstring, p->min_args < 0 && p->max_args < 0 ? ":UNSAFE" : ":safe");
+  } break;
   case ss_te_symbol:
   case ss_te_keyword:
     if ( ss_UNB(symbol, v).name == ss_f ) {
