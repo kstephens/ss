@@ -260,6 +260,12 @@ typedef struct ss_s_prim {
 } ss_s_prim;
 #define ss_UNB_prim(X)((ss_s_prim*)(X))
 
+#define _ss_prim_arity_check(MINARGS,MAXARGS,DOCSTRING)                 \
+  if ( MINARGS >= 0 && ss_argc < MINARGS )                              \
+    _ss_min_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MINARGS);   \
+  if ( MAXARGS >= 0 && ss_argc > MAXARGS )                              \
+    _ss_max_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MAXARGS)
+
 #ifndef _ss_prim
 #define _ss_prim(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)         \
   extern ss ss_sym(NAME);                                               \
@@ -268,11 +274,7 @@ typedef struct ss_s_prim {
   ss_s_prim ss_PASTE2(_ss_p_,NAME) = { 0, ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, NO_SIDE_EFFECT, DOCSTRING } ; \
   static ss_PRIM_DECL(ss_PASTE2(_ss_pf_,NAME)) {                        \
   ss ss_rtn = ss_undef;                                                 \
-  (void) ss_sym(NAME);                                                  \
-  if ( MINARGS >= 0 && ss_argc < MINARGS )                              \
-    _ss_min_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MINARGS);   \
-  if ( MAXARGS >= 0 && ss_argc > MAXARGS )                              \
-    _ss_max_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MAXARGS);   \
+  _ss_prim_arity_check(MINARGS,MAXARGS,DOCSTRING);                      \
 {
 #endif
 

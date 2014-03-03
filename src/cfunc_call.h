@@ -19,7 +19,9 @@
     R(((T(*)(T,T,T,T,T,T,T,T)) ss_prim->c_func)(A(ss_argv[0]), A(ss_argv[1]), A(ss_argv[2]), A(ss_argv[3]), A(ss_argv[4]), A(ss_argv[5]), A(ss_argv[6]), A(ss_argv[7])));
   case 9:
     R(((T(*)(T,T,T,T,T,T,T,T,T)) ss_prim->c_func)(A(ss_argv[0]), A(ss_argv[1]), A(ss_argv[2]), A(ss_argv[3]), A(ss_argv[4]), A(ss_argv[5]), A(ss_argv[6]), A(ss_argv[7]), A(ss_argv[8])));
-  default: _ss_max_args_error(ss_env, ss_prim, ss_prim->docstring, ss_argc, 7); abort();
+  case 10:
+    R(((T(*)(T,T,T,T,T,T,T,T,T,T)) ss_prim->c_func)(A(ss_argv[0]), A(ss_argv[1]), A(ss_argv[2]), A(ss_argv[3]), A(ss_argv[4]), A(ss_argv[5]), A(ss_argv[6]), A(ss_argv[7]), A(ss_argv[8]), A(ss_argv[9])));
+  default: _ss_max_args_error(ss_env, ss_prim, ss_prim->docstring, ss_argc, 10); abort();
   }
 #undef T
 #undef A
