@@ -107,7 +107,7 @@ while ( $line = <> ) {
   $type_ptr_re = "($type_re\[*\\s\]*)";
   $param_re = "($type_ptr_re\\s*$name_re?\s*$array_re|[.][.][.])";
   chomp;
-  s/\b(extern|static|__inline|inline|__restrict|restrict|const|register)\b//g;
+  s/\b(extern|static|__inline|inline|__restrict|restrict|const|register|__pure2|__dead2)\b//g;
   s/\b__attribute[(][(][^)]*[)][)]//g;
   s/\b__asm[(][^)]*[)]//g;
   s/\[\s*\]/*/g;
@@ -229,7 +229,7 @@ while ( $line = <> ) {
   } elsif ( s/^\s*}\s*// ) {
   } elsif ( s/^\s*;\s*// ) {
   } else {
-    if ( 0 && /^([^\(]+[(][^\)]+[)]\s*[;{])/ ) {
+    if ( /exit/ && /^([^\(]+[(][^\)]+[)]\s*[;{])/ ) {
       print STDERR "  unmatch func? |$1|\n";
       if ( s/^\s*$type_ptr_re// ) {
         print STDERR "    rtn_type=|$1|\n";
