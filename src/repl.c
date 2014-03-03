@@ -14,14 +14,14 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
       if ( trap_error != ss_f ) ss_env->error_catch = catch;
       if ( (expr = ss_prompt(ss_env, input, prompt)) == ss_eos ) goto stop;
 
-      if ( prompt != ss_f ) {
+      if ( 0 && prompt != ss_f ) {
         fprintf(*ss_stderr, "  ;; ss: read => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
       }
 
       value = ss_undef;
       value = ss_eval(expr);
 
-      if ( prompt != ss_f ) {
+      if ( 0 && prompt != ss_f ) {
         fprintf(*ss_stderr, "  ;; ss: rewrite => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
       }
       if ( value != ss_undef ) {
