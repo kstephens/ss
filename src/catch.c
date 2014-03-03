@@ -60,9 +60,11 @@ ss ss_catch(ss_s_env *ss_env, ss body, ss rescue, ss ensure)
     rtn = ss_apply(ss_env, c->body, ss_vec1(c));
   }
   ss_CATCH_RESCUE {
-    if ( c->rescue != ss_f && c->thrown )
+    if ( c->rescue != ss_f && c->thrown ) {
       rtn = ss_apply(ss_env, c->rescue, ss_vec2(c, c->thrown->data.value));
-    ss_rethrow(ss_env);
+    } else {
+      ss_rethrow(ss_env);
+    }
   }
   ss_CATCH_ENSURE {
     if ( c->ensure != ss_f )

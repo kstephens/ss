@@ -1,54 +1,8 @@
 #ifndef _SS_WRAP_H
 #define _SS_WRAP_H
 
-#define ss_PASTE2(A,B)ss_PASTE2_(A,B)
-#define ss_PASTE2_(A,B)A##B
-#define ss_PASTE3(A,B,C)ss_PASTE3_(A,B,C)
-#define ss_PASTE3_(A,B,C)A##B##C
-#define ss_PASTE4(A,B,C,D)ss_PASTE4_(A,B,C,D)
-#define ss_PASTE4_(A,B,C,D)A##B##C##D
-
-#define ss_B_ss(V) (V)
-#define ss_U_ss(V) (V)
-
-#define ss_B_ss_s_envP(V) (V)
-#define ss_U_ss_s_envP(V) (V)
-
-#define ss_B_void(V) ((V), ss_unspec)
-#define ss_U_void(V) (void) (V)
-
-#define ss_B_char(V) ss_i(V)
-#define ss_U_char(V) ss_I(V)
-
-#define ss_B_short(V) ss_i(V)
-#define ss_U_short(V) ss_I(V)
-
-#define ss_B_int(V) ss_i(V)
-#define ss_U_int(V) ss_I(V)
-
-#define ss_B_long(V) ss_i(V)
-#define ss_U_long(V) ss_I(V)
-
-#define ss_B_long_long(V) ss_i(V)
-#define ss_U_long_long(V) ss_I(V)
-
-#define ss_B_unsigned_char(V) ss_i(V)
-#define ss_U_unsigned_char(V) ss_I(V)
-
-#define ss_B_unsigned_short(V) ss_i(V)
-#define ss_U_unsigned_short(V) ss_I(V)
-
-#define ss_B_unsigned_int(V) ss_i(V)
-#define ss_U_unsigned_int(V) ss_I(V)
-
-#define ss_B_unsigned_long(V) ss_i(V)
-#define ss_U_unsigned_long(V) ss_I(V)
-
-#define ss_B_unsigned_long_long(V) ss_i(V)
-#define ss_U_unsigned_long_long(V) ss_I(V)
-
-#define BOX(D,T,V) D = ss_PASTE2(ss_B_,T)(V)
-#define UNBOX(T,V) ss_PASTE2(ss_U_,T)(V)
+#define BOX(T,V)   ss_PASTE2(ss_B_C_,T)(V)
+#define UNBOX(T,V) ss_PASTE2(ss_U_C_,T)(V)
 
 #define PARAM_ctype(P) ctype_##P
 #define ctype_PARAM(T,M,R,I,N) T
@@ -99,56 +53,61 @@
 #define PARAMS_free(PARAMS)
 
 #define ss_NAME_CF(CTYPE,MTYPE,RTYPE,NAME,PARAMS) ss_##NAME
-#define DECLARE_CF(CTYPE,MTYPE,RTYPE,NAME,PARAMS) ss ss_C_##NAME(PARAMS_ss(PARAMS))
+#define DECLARE_CF(CTYPE,MTYPE,RTYPE,NAME,PARAMS) ss ss_Cf_##NAME (PARAMS_ss(PARAMS))
 #define DEFINE_CF(CTYPE,MTYPE,RTYPE,NAME,PARAMS)        \
   DECLARE_CF(CTYPE,MTYPE,RTYPE,NAME,PARAMS) {           \
     ss __return;                                        \
     PARAMS_unbox(PARAMS);                               \
-    BOX(__return,RTYPE,NAME (PARAMS_params(PARAMS)));   \
+    __return = BOX(RTYPE,NAME (PARAMS_params(PARAMS))); \
     PARAMS_free(PARAMS);                                \
     return __return;                                    \
   }
 
 #define WRAP_CT1(TYPE,NAME)                                             \
-  static ss ss_t_##NAME;                                                \
-  struct ss_ts_##NAME {                                                 \
+  struct ss_PASTE2(ss_ts_,NAME) {                                       \
     TYPE value;                                                         \
     ss size;                                                            \
   };                                                                    \
-  static ss ss_##NAME(TYPE value) {                                     \
-    struct ss_ts_##NAME *self = ss_allocate(ss_t_##NAME, sizeof(*self)); \
+  ss   ss_PASTE2(ss_B_C_,NAME) (TYPE value) {                           \
+    struct ss_PASTE2(ss_ts_,NAME) *self = ss_alloc(ss_PASTE2(ss_t_C_,NAME), sizeof(*self)); \
     self->value = value;                                                \
     return (ss) self;                                                   \
   }                                                                     \
-  static ss ss_##NAME##_FORCE(ss self) {                                \
-    return ss_##NAME(*(TYPE*) &self);                                   \
+  ss   ss_PASTE2(ss_B0_C_,NAME) () {                                    \
+    static TYPE _zero;                                                  \
+    return ss_PASTE2(ss_B_C_,NAME)(_zero);                              \
   }                                                                     \
-  static TYPE ss_##NAME##_(ss self) {                                   \
-    return ((struct ss_ts_##NAME *) self)->value;                       \
+  ss   ss_PASTE2(ss_BF_C_,NAME) (ss self) {                             \
+    return ss_PASTE2(ss_B_C_,NAME) (*(TYPE*) &self);                    \
+  }                                                                     \
+  TYPE ss_PASTE2(ss_U_C_,NAME) (ss self) {                              \
+    return ((struct ss_PASTE2(ss_ts_,NAME) *) self)->value;             \
   }
 
 #define WRAP_CT(TYPE,NAME)                                              \
   WRAP_CT1(TYPE,NAME)                                                   \
-  typedef TYPE *NAME##P;                                                \
-  WRAP_CT1(TYPE##P,NAME##P)                                             \
-  static ss ss_##NAME##Pv(ss count, ss value) {                         \
+  WRAP_CT1(TYPE*,ss_PASTE2(NAME,P))                                     \
+  WRAP_CT1(TYPE**,ss_PASTE2(NAME,PP))                                   \
+  ss ss_PASTE3(ss_B_C_,NAME,Pv) (ss count, ss value) {                  \
     size_t i;                                                           \
-    struct ss_ts_##NAME##P *self = ss_allocate(ss_t_##NAME##P, sizeof(*self)); \
-    self->value = GC_malloc(sizeof(self->value[0]) * ss_I(count));      \
+    struct ss_PASTE3(ss_ts_,NAME,P) *self =                             \
+      ss_alloc(ss_PASTE3(ss_t_C_,NAME,P), sizeof(*self));               \
+    self->value = ss_malloc(sizeof(self->value[0]) * ss_I(count));      \
     self->size = count;                                                 \
-    for ( i = 0; i < ss_I(count); ++ i ) self->value[i] = ss_##NAME##_(value); \
+    for ( i = 0; i < ss_I(count); ++ i )                                \
+      self->value[i] = UNBOX(NAME,value);                               \
     return self;                                                        \
   }                                                                     \
-  static ss ss_##NAME##P_get(ss self, ss i) {                             \
-    return ss_##NAME(((struct ss_ts_##NAME##P *) self)->value[ss_I(i)]); \
+  ss ss_PASTE3(ss_R_C_,NAME,P) (ss self, ss i) {                        \
+    return BOX(NAME, ((struct ss_PASTE3(ss_ts_,NAME,P) *) self)->value[ss_I(i)]); \
   }                                                                     \
-  static ss ss_##NAME##P_setE(ss self, ss i, ss value) {                   \
-    ((struct ss_ts_##NAME##P *) self)->value[ss_I(i)] =                 \
-      ss_##NAME##_(value);                                              \
+  ss ss_PASTE3(ss_S_C_,NAME,P) (ss self, ss i, ss value) {              \
+    ((struct ss_PASTE3(ss_ts_,NAME,P) *) self)->value[ss_I(i)] =        \
+      UNBOX(NAME,value);                                                \
     return self;                                                        \
   }                                                                     \
-  static ss ss_##NAME##_array(ss self) {                                    \
-    return ss_##NAME##P(&((struct ss_ts_##NAME *) self)->value);        \
+  ss ss_PASTE2(ss_A_C_,NAME) (ss self) {                                \
+    return BOX(ss_PASTE2(NAME,P), (&((struct ss_PASTE2(ss_ts_,NAME) *) self)->value)); \
   }                                                                     \
 
 #endif

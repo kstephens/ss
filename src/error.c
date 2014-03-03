@@ -6,7 +6,9 @@ ss ss_error_raise(ss_s_env *ss_env, ss error)
   if ( ! e ) e = ss_current_env;
   while ( e && ! e->error_catch ) e = e->parent;
   if ( ! e ) {
-    fprintf(*ss_stderr, "ss: no error catch: aborting\n");
+    fprintf(*ss_stderr, "ss: no error catch: aborting\n  ss: error: ");
+    ss_write(error, ss_stderr);
+    fprintf(*ss_stderr, "\n");
     abort();
   }
   return ss_throw(ss_env, e->error_catch, error);

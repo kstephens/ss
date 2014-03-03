@@ -87,9 +87,9 @@
 (define (char? x) (eq? (%type x) %<char>))
 (C:ss_make_constant 'char?)
 (define (char->integer c)
-  (C:ss_i (C:ss_C c)))
+  (C:ss_C c))
 (define (integer->char i)
-  (C:ss_c (C:ss_I i)))
+  (C:ss_c i))
 (define %eos (integer->char -1))
 (C:ss_make_constant '%eos)
 
@@ -107,7 +107,7 @@
 (C:ss_make_constant 'string-set!)
 
 (define (vector-length a)
-  (C:ss_i (C:ss_vector_L a)))
+  (C:ss_vector_L a))
 (C:ss_make_constant 'vector-length)
 (define vector-ref C:ss_vector_R)
 (C:ss_make_constant 'vector-ref)
@@ -225,8 +225,8 @@
 
 (define (%open-file func file mode)
   (let ((port (C:ss_m_port
-                (C:fopen (C:ss_string_V file) (C:ss_string_V mode))
-                (C:ss_string_V file) (C:ss_string_V mode))))
+                (C:fopen file mode)
+                file mode)))
     (if port port
       (error func "cannot open" file (C:ss_errstr #f)))))
 
@@ -236,7 +236,7 @@
   (C:ss_port_close port))
 
 (define (%write-port port str)
-  (C:fwrite (C:ss_string_V str) (C:ss_string_L str) (C:ss_unbox_integer 1) (C:ss_car port)))
+  (C:fwrite str (string-length str) 1 port))
 
 (define (read . port)
   (C:ss_read &env (if (null? port) ss_stdout (car port))))
@@ -265,6 +265,7 @@
 (load "lib/string.scm")
 (load "lib/sort.scm")
 
+;;(C:ss_set_eval_verbose 10)
 (define-macro (define-constant name . body)
   (if (pair? name)
     `(define-constant ,(car name) (lambda ,(cdr name) ,@body))
@@ -289,7 +290,7 @@
   (error 'read "invalid read macro char" c))
 
 (define (%gensym x)
-  (C:ss_box_symbol (C:ss_I 0)))
+  (C:ss_box_symbol #f))
 
 (define-macro (letrec bindings . body)
   `(let ,(map (lambda (b) `(,(car b) ',%unspec)) bindings)
@@ -343,13 +344,13 @@
     (else #f)))
 
 (define-constant (%catch body rescue ensure)
-  (C:ss_catch &env body rescue ensure))
+  (C:%ss_catch &env body rescue ensure))
 (define-constant (%make-throwable value)
-  (C:ss_m_throwable value))
+  (C:%ss_m_throwable value))
 (define-constant (%throw catch value)
-  (C:ss_throw &env catch (%make-throwable value)))
+  (C:%ss_throw_ &env catch (%make-throwable value)))
 (define-constant (%rethrow)
-  (C:ss_rethrow &env))
+  (C:%ss_rethrow &env))
 (define-macro (catch name body rescue . ensure)
   `(%catch
      (lambda (,name) ,body)

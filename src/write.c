@@ -38,7 +38,7 @@ ss ss_write_3(ss v, ss port, ss mode)
   }
     break;
   case ss_te_boolean: fprintf(out, "#%c",    v == ss_t ? 't' : 'f'); break;
-  case ss_te_prim:    fprintf(out, "#<p %s>", ss_UNB(prim, v)->name); break;
+  case ss_te_prim:    fprintf(out, "#<p %s %s >", ss_UNB(prim, v)->name, ss_UNB(prim, v)->docstring); break;
   case ss_te_symbol:
   case ss_te_keyword:
     if ( ss_UNB(symbol, v).name == ss_f ) {
@@ -105,7 +105,7 @@ ss ss_write_3(ss v, ss port, ss mode)
     fprintf(out, "#<type #@%p %s >", v, ((ss_s_type*) v)->name);
     break;
   default:
-    fprintf(out, "#<??? %s #@%p >", ss_type(v)->name, (void*) v);
+    fprintf(out, "#<??? %s #@%p >", ss_type_(v)->name, (void*) v);
     break;
   case ss_te_pair:
     fprintf(out, "(");

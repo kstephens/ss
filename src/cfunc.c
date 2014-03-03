@@ -50,42 +50,25 @@ ss ss_cfunc_list()
   return cfunc_list;
 }
 
-#ifdef ss_throw
-#undef ss_throw
-#endif
-static inline
-ss ss_throw (ss_s_env *ss_env, ss_s_catch *catch, ss_s_throwable *thrown)
+ss ss_define_cfunc(ss_s_env *ss_env, const char *name, void *func, int nargs, const char *fname, const char *docstr)
 {
+  ss sym = ss_cfunc_sym(name ? name : fname);
+  ss_s_prim *prim = ss_m_cfunc(func, fname, docstr);
+  ss_define(ss_env, sym, prim);
+  ss_UNB(symbol, sym).is_const = 1;
+  cfunc_list = ss_cons(ss_cons(sym, prim), cfunc_list);
+  return prim;
+}
+
+static inline
+ss ss_throw_(ss_s_env *ss_env, ss _1, ss _2)
+{
+  ss_s_catch *catch = _1;
+  ss_s_throwable *thrown = _2;
   assert(catch);
+  assert(thrown);
   thrown->data.env = ss_env;
   thrown->data.expr = ss_env->expr;
   return __ss_throw(ss_env, catch, thrown);
-}
-
-void ss_init_cfunc(ss_s_env *ss_env)
-{
-  static struct {
-    const char *rtn, *name, *args, *desc;
-    int nargs, sig_id;
-    void *ptr;
-  } inits[] = {
-#define ss_cfunc_def(TYPE,NAME,NARGS,ARGS,SIG_ID) { TYPE, #NAME, ARGS, TYPE " " #NAME ARGS, NARGS, SIG_ID, &NAME },
-#include "cfunc.def"
-    { 0 }
-  };
-  for ( int i = 0; inits[i].rtn; ++ i ) {
-    ss sym = ss_cfunc_sym(inits[i].name);
-    ss_s_prim *func = ss_m_cfunc(inits[i].ptr, inits[i].name, inits[i].desc);
-    if ( strcmp(inits[i].rtn, "double") == 0 &&
-         (
-          strcmp(inits[i].args, "(double)") == 0 ||
-          strcmp(inits[i].args, "(double,double)") == 0
-          ) ) {
-      func->func = _ss_pf_ss_call_cfunc_double;
-    }
-    ss_define(ss_env, sym, func);
-    ss_UNB(symbol, sym).is_const = 1;
-    cfunc_list = ss_cons(ss_cons(sym, func), cfunc_list);
-  }
 }
 
