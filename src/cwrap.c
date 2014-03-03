@@ -135,7 +135,7 @@ void ss_init_cdefine(ss_s_env *ss_env)
     { 0 },
   }, *d;
   for ( d = inits; d->n; ++ d ) {
-    if ( d->rv[0] == '"' ) {
+    if ( d->rv[0] == '"' && d->rv[1] && d->rv[strlen(d->rv) - 1] == '"' ) {
       ss_define(ss_env, ss_c_sym(d->n), ss_strnv(strlen(d->rv) - 2, d->rv + 1));
     } else {
       ss expr = ss_s(d->rv);
