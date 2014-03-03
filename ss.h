@@ -82,7 +82,7 @@ typedef enum ss_te {
 } ss_te;
 
 typedef struct ss_s_type {
-  ss_PROC_DECL((*func));
+  ss_PROC_DECL((*proc));
   const char *name;
   ss_word_t e; // ss_te
   size_t instance_size;
@@ -251,7 +251,7 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
 #include "ss/catch.h"
 
 typedef struct ss_s_prim {
-  ss_PROC_DECL((*func));
+  ss_PROC_DECL((*proc));
   const char *name;
   ss_fixnum_t min_args, max_args, no_side_effect;
   const char *docstring;
@@ -302,7 +302,7 @@ typedef struct ss_s_lambda {
 #define ss_UNB_lambda(X) (*(ss_s_lambda*)(X))
 
 typedef struct ss_s_closure {
-  ss_PROC_DECL((*_func));
+  ss_PROC_DECL((*proc));
   ss_s_lambda *lambda;
   ss_s_env *env;
 } ss_s_closure;

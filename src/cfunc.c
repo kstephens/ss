@@ -10,19 +10,10 @@ ss_prim(ss_call_cfunc,0,5,1,"call cfunc")
 }
 ss_end
 
-ss_prim(ss_call_cfunc_double,0,5,1,"call cfunc double")
-{
-#define T double
-#define A(X) ss_flonum_(X)
-#define R(X) ss_return(ss_box_flonum(X))
-#include "cfunc_call.h"
-}
-ss_end
-
 ss ss_m_cfunc(void *ptr, const char *name, const char *docstr)
 {
   ss_s_prim *self = ss_alloc(ss_t_prim, sizeof(*self));
-  self->func = _ss_pf_ss_call_cfunc;
+  self->proc = _ss_pf_ss_call_cfunc;
   self->min_args = 0; self->max_args = 5;
   self->no_side_effect = 0;
   self->name = name;
