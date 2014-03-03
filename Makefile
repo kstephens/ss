@@ -93,7 +93,7 @@ lispread/lispread.c:
 
 early-files : $(EARLY_FILES)
 
-ss : early-files $(CFILES) $(HFILES) $(OTHER_C_FILES)
+ss : $(EARLY_FILES) $(CFILES) $(HFILES) $(OTHER_C_FILES)
 	@echo "LINK $@"
 	$(SILENT)$(CC) $(CFLAGS) -Dss_cwrap_c=1 -o $@ ss.c $(LIBS)
 

@@ -1,10 +1,5 @@
 #include "cwrap.h"
 
-#if 0
-#define ss_cfunc_def(CT,MT,RT,NAME,NPARAM,PARAMS,SPARAMS,FILE,LINE) DECLARE_CF(CT,MT,RT,NAME,PARAMS);
-#include "cwrap.def"
-#endif
-
 #define ITYPE(T,N) extern ss_s_type *ss_t_C_##N, *ss_t_C_##N##P, *ss_t_C_##N##PP;
 #define FTYPE(T,N) ITYPE(T,N)
 ITYPE(void*,voidP)
@@ -115,6 +110,18 @@ WRAP_CT(ss*,ssP)
 #undef stpcpy
 #endif
 
+#define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,FILE,LINE)       \
+  ss ss_SR_C_##ST##_##SN##__##EN(ss x) {                          \
+    ST SN *ptr = x;                                               \
+    return BOX(MT,ptr->EN);                                       \
+  }                                                               \
+  ss ss_SS_C_##ST##_##SN##__##EN(ss x, ss v) {                    \
+    ST SN *ptr = x;                                               \
+    ptr->EN = UNBOX(MT,v);                                        \
+    return x;                                                     \
+  }
+#include "cwrap.def"
+
 #define ss_cfunc_def(CT,MT,RT,NAME,NPARAM,PARAMS,SPARAMS,FILE,LINE) DEFINE_CF(CT,MT,RT,NAME,PARAMS);
 #include "cwrap.def"
 
@@ -126,9 +133,11 @@ void ss_init_cwrap(ss_s_env *ss_env)
     const char *fname, *docstr;
   } inits[] = {
 #define ss_cfunc_def(CT,MT,RT,NAME,NPARAMS,PARAMS,SPARAMS,FILE,LINE) { &NAME, &ss_Cf_##NAME, NPARAMS, #NAME, #CT "(" SPARAMS ")"},
-#include "cwrap.def"
-#define ss_cstruct_def(ST,NAME,FILE,LINE)  { &ss_B0_C_##ST##_##NAME, 0, 0, "ss_B0_C_" #ST "_" #NAME, #ST " " #NAME },
-#define ss_cstruct_decl(ST,NAME,FILE,LINE) { &ss_B0_C_##ST##_##NAME##P, 0, 0, "ss_B0_C_" #ST "_" #NAME "P", #ST " " #NAME "*" },
+#define ss_cstruct_def(ST,NAME,FILE,LINE)  { &ss_B0_C_##ST##_##NAME, 0, 0, #ST "-" #NAME, #ST " " #NAME },
+#define ss_cstruct_decl(ST,NAME,FILE,LINE) { &ss_B0_C_##ST##_##NAME##P, 0, 0, #ST "-" #NAME "*", #ST " " #NAME "*" },
+#define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,FILE,LINE)             \
+    { &ss_SR_C_##ST##_##SN##__##EN, &ss_SR_C_##ST##_##SN##__##EN, 1, #ST "-" #SN "." #EN, #ST " " #SN "." #EN }, \
+    { &ss_SS_C_##ST##_##SN##__##EN, &ss_SS_C_##ST##_##SN##__##EN, 2, #ST "-" #SN "." #EN "=", #ST " " #SN "." #EN "=" },
 #include "cwrap.def"
     { 0, }
   };
