@@ -9,6 +9,7 @@
 #endif
 
 typedef struct ss_s_catch_data {
+  void *c_func; // C func
   void *prim; // ss_s_prim
   ss value;
   ss data[4];

@@ -13,12 +13,12 @@ ss_end
 ss ss_m_cfunc(void *ptr, const char *name, const char *docstr)
 {
   ss_s_prim *self = ss_alloc(ss_t_prim, sizeof(*self));
+  self->c_func = ptr;
   self->prim = _ss_pf_ss_call_cfunc;
   self->min_args = 0; self->max_args = 5;
   self->no_side_effect = 0;
   self->name = name;
   self->docstring = docstr ? docstr : name;
-  self->c_func = ptr;
   return self;
 }
 
