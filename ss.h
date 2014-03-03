@@ -15,6 +15,7 @@
 #endif
 #include <ctype.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <unistd.h> /* ssize_t? */
 #include <dlfcn.h> /* dlopen() */
 #include <assert.h>

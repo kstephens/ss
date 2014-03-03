@@ -82,6 +82,9 @@
   }                                                                     \
   TYPE ss_PASTE2(ss_U_C_,NAME) (ss self) {                              \
     return ((struct ss_PASTE2(ss_ts_,NAME) *) self)->value;             \
+  }                                                                     \
+  TYPE* ss_PASTE2(ss_UP_C_,NAME) (ss self) {                            \
+    return &((struct ss_PASTE2(ss_ts_,NAME) *) self)->value;            \
   }
 
 #define WRAP_CT(TYPE,NAME)                                              \

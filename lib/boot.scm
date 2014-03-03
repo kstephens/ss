@@ -359,6 +359,8 @@
 (define-constant throw %throw)
 (define-constant rethrow %rethrow)
 
+(define-constant C:%NULL (C:%ss_I 0))
+
 (display ";; ss - boot.scm loaded.")(newline)
 
 ;; (load "t/test.scm")
