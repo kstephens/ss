@@ -34,7 +34,7 @@ ss ss_m_cfunc(void *ptr, const char *name, const char *docstr)
   return self;
 }
 
-ss ss_cfunc_sym(const char *name)
+ss ss_c_sym(const char *name)
 {
   char buf[128] = { 0 };
   snprintf(buf, sizeof(buf) - 1, "C:%s", name);
@@ -55,7 +55,7 @@ ss ss_cfunc_list()
 
 ss ss_define_cfunc(ss_s_env *ss_env, const char *name, void *cfunc, int nargs, const char *cname, const char *docstr)
 {
-  ss sym = ss_cfunc_sym(name ? name : cname);
+  ss sym = ss_c_sym(name ? name : cname);
   ss_s_prim *prim = ss_m_cfunc(cfunc, cname, docstr);
   prim->min_args = prim->max_args = nargs;
   if ( nargs < 0 ) prim->prim = _ss_pf_ss_call_cfunc_no_arity_check;
