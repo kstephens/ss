@@ -1,7 +1,7 @@
 
 #undef T
 
-ss_prim(ss_call_cfunc,0,7,1,"call cfunc")
+ss_prim(ss_call_cfunc,-1,-1,1,"call cfunc")
 {
 #define MINARGS ss_prim->min_args
 #define MAXARGS ss_prim->max_args
