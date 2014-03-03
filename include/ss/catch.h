@@ -9,7 +9,7 @@
 #endif
 
 typedef struct ss_s_catch_data {
-  void *apply; // apply
+  void *prim; // ss_s_prim
   ss value;
   ss data[4];
   ss_s_env *env;

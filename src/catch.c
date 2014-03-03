@@ -16,7 +16,7 @@ ss ss_m_throwable(ss value)
 {
   ss_s_throwable *self = ss_alloc(ss_t_throwable, sizeof(*self));
   memset(self, 0, sizeof(*self));
-  self->data.apply = _ss_pf_ss_apply_throwable;
+  self->data.prim = _ss_pf_ss_apply_throwable;
   self->data.value = value;
   return self;
 }
@@ -36,7 +36,7 @@ ss ss_m_catch(ss value)
 {
   ss_s_catch *self = ss_alloc(ss_t_catch, sizeof(*self));
   memset(self, 0, sizeof(*self));
-  self->data.apply = _ss_pf_ss_apply_catch;
+  self->data.prim = _ss_pf_ss_apply_catch;
   self->body = self->rescue = self->ensure = ss_undef;
   self->data.value = value;
   return self;
