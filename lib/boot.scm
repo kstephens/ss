@@ -1,5 +1,5 @@
 (define (error code . other)
-  (C:ss_error &env (cons code other) 0))
+  (C:ss_error &env (symbol->string code) other C:%NULL))
 
 (define (apply func args) ;; FIXME
   (C:ss_apply &env func args))
@@ -76,6 +76,7 @@
 (C:ss_make_constant '%<string>)
 (define (string? x) (eq? (%type x) %<string>))
 (C:ss_make_constant 'string?)
+(define symbol->string C:%struct-ss_s_symbol.name)
 
 (define %<symbol> (%type 'symbol))
 (C:ss_make_constant '%<symbol>)
@@ -204,7 +205,7 @@
       (%map f (%map-1 cdr lists)))))
 (define (map f . lists) (%map f lists))
 (define (%for-each f lists)
-  (if (null? (car lists)) tl_v
+  (if (null? (car lists)) %unspec
     (begin
       (apply f (%map-1 car lists))
       (%for-each f (%map-1 cdr lists)))))
@@ -380,6 +381,8 @@
 (define-constant rethrow %rethrow)
 
 (define-constant C:%NULL (C:%ss_I 0))
+
+(load "lib/each.scm")
 
 (display ";; ss - boot.scm loaded.")(newline)
 
