@@ -1,4 +1,13 @@
 
+ss_fixnum_t ss_char_(ss x)
+{
+  switch ( ss_type_te(x) ) {
+  case ss_te_char:   return ss_C(x);
+  case ss_te_fixnum: return ss_I(x);
+  default: ss_typecheck_error(ss_t_char, x); return -1;
+  }
+}
+
 ss ss_strn(size_t l)
 {
   ss_s_string *self = ss_alloc(ss_t_string, sizeof(*self));

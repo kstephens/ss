@@ -20,8 +20,8 @@ ITYPE(void*,voidP)
 #define ss_B_C_void(V) ((V), ss_unspec)
 #define ss_U_C_void(V) (void) (V)
 
-#define ss_B_C_char(V) ss_i(V)
-#define ss_U_C_char(V) (char) ss_fixnum_(V)
+#define ss_B_C_char(V) ss_c(V)
+#define ss_U_C_char(V) (int) ss_char_(V)
 
 #define ss_B_C_charP(V) ss_s(V)
 #define ss_U_C_charP(V) ss_S(V)
@@ -61,6 +61,18 @@ ITYPE(void*,voidP)
 
 #define ss_B_C_long_double(V) ss_box_flonum(V)
 #define ss_U_C_long_double(V) ss_flonum_(V)
+
+#define ITYPE(TYPE,NAME)                                                \
+  ss ss_US_C_##NAME (ss x)       { return BOX(NAME, *(TYPE*) x); }      \
+  ss ss_RS_C_##NAME (ss x, ss v) { *(TYPE*) x = UNBOX(NAME, v); return x; } \
+  ss ss_PASTE2(ss_B1_C_,NAME) (ss value) {                              \
+    struct ss_PASTE2(ss_ts_,NAME) *self = ss_alloc(ss_PASTE2(ss_t_C_,NAME), sizeof(*self)); \
+    self->value = UNBOX(NAME, value);                                   \
+    return self;                                                        \
+  }
+#define FTYPE(T,N) ITYPE(T,N)
+ITYPE(void*,voidP)
+#include "cintrinsics.def"
 
 #define ss_cstruct_def(ST,NAME,FILE,LINE)  WRAP_CT(ST NAME,  ss_PASTE3(ST,_,NAME))
 #define ss_cstruct_decl(ST,NAME,FILE,LINE) WRAP_CT(ST NAME*, ss_PASTE4(ST,_,NAME,P))
@@ -162,12 +174,32 @@ void ss_init_cwrap(ss_s_env *ss_env)
   } inits[] = {
 #undef F
 #define F(NAME) &NAME, ss_STRINGTIZE(NAME)
+#define ss_cintrinsic_def(CT,TN)                                        \
+    { F(ss_B0_C_##TN),        0, 0, 0,     #TN     , 0,     #TN      }, \
+    { F(ss_B1_C_##TN),        0, 0, 0,     #TN ":" , 1,     #TN ":"  }, \
+    { F(ss_US_C_##TN),        0, 0, 0,     #TN "->", 1,     #TN "->" }, \
+    { F(ss_RS_C_##TN),        0, 0, 0,     #TN "=" , 2,     #TN "="  }, \
+    { F(ss_P_C_##TN),         0, 0, 0,     #TN "&" , 1,     #TN "&"  }, \
+    { F(ss_B0_C_##TN##P),     0, 0, 0,     #TN "*" , 0,     #TN "*"  }, \
+    { F(ss_B0_C_##TN##PP),    0, 0, 0,     #TN "**", 0,     #TN "**" }, \
+    { F(ss_D_C_##TN##P),      0, 0, 0, "*" #TN "*" , 1, "*" #TN "*"  }, \
+    { F(ss_D_C_##TN##PP),     0, 0, 0, "*" #TN "**", 1, "*" #TN "**" },
+#define ITYPE(CT,TN) ss_cintrinsic_def(CT,TN)
+#define FTYPE(CT,TN) ss_cintrinsic_def(CT,TN)
+    ITYPE(void*,voidP)
+#include "cintrinsics.def"
 #define ss_cfunc_def(CT,MT,RT,NAME,NPARAMS,PARAMS,SPARAMS,FILE,LINE)    \
     { F(NAME), #NAME, F(ss_Cf_##NAME), #NAME, NPARAMS, #CT "(*)(" SPARAMS ")"},
 #define ss_cstruct_def(ST,NAME,FILE,LINE)                               \
-    { F(ss_B0_C_##ST##_##NAME),       0, 0, 0, #ST "-" #NAME    , 0, #ST " " #NAME },
+    { F(ss_B0_C_##ST##_##NAME),        0, 0, 0,     #ST "-" #NAME     , 0,     #ST " " #NAME      }, \
+    { F(ss_P_C_##ST##_##NAME),         0, 0, 0,     #ST "-" #NAME "&" , 1,     #ST " " #NAME "&"  }, \
+    { F(ss_B0_C_##ST##_##NAME##P),     0, 0, 0,     #ST "-" #NAME "*" , 0,     #ST "-" #NAME "*"  }, \
+    { F(ss_B0_C_##ST##_##NAME##PP),    0, 0, 0,     #ST "-" #NAME "**", 0,     #ST "-" #NAME "**" }, \
+    { F(ss_D_C_##ST##_##NAME##P),      0, 0, 0, "*" #ST "-" #NAME "*" , 1, "*" #ST "-" #NAME "*"  }, \
+    { F(ss_D_C_##ST##_##NAME##PP),     0, 0, 0, "*" #ST "-" #NAME "**", 1, "*" #ST "-" #NAME "**" },
 #define ss_cstruct_decl(ST,NAME,FILE,LINE)                              \
-    { F(ss_B0_C_##ST##_##NAME##P),    0, 0, 0, #ST "-" #NAME "*", 0, #ST "-" #NAME "*" },
+    { F(ss_B0_C_##ST##_##NAME##P),    0, 0, 0, #ST "-" #NAME "*" , 0, #ST "-" #NAME "*"  }, \
+    { F(ss_B0_C_##ST##_##NAME##PP),   0, 0, 0, #ST "-" #NAME "**", 0, #ST "-" #NAME "**" },
 #define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)          \
     { F(ss_SR_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN    , 1, #ST " " #SN "." #EN     }, \
     { F(ss_SS_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN "=", 2, #ST " " #SN "." #EN "=" },
