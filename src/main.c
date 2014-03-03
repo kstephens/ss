@@ -6,7 +6,7 @@ void ss_init_global(ss_s_env *ss_env)
 {
 }
 void ss_init_prim(ss_s_env *ss_env);
-void ss_init_cfunc(ss_s_env *ss_env);
+void ss_init_cwrap(ss_s_env *ss_env);
 
 ss ss_main_repl(ss_s_env *ss_env)
 {
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
   ss_init_port(ss_env);
   ss_init_global(ss_env);
   ss_init_prim(ss_env);
-  ss_init_cfunc(ss_env);
+  ss_init_cwrap(ss_env);
   {
     ss args = ss_vecn(argc);
     for ( int i = 0; i < argc; ++ i ) {

@@ -11,7 +11,5 @@ ITYPE(unsigned long long,unsigned_long_long)
 FTYPE(float,float)
 FTYPE(double,double)
 FTYPE(long double,long_double)
-#undef TYPE
-#undef TYPE_
 #undef ITYPE
 #undef FTYPE

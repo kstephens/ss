@@ -166,7 +166,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
       }
       break;
     default:
-      return(ss_error(ss_env, "typecheck", rtn, "cannot apply type %s", ss_type(rtn)->name));
+      return(ss_error(ss_env, "typecheck", rtn, "cannot apply type %s", ss_type_(rtn)->name));
     }
   }
   default:

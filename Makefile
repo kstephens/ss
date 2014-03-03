@@ -7,11 +7,14 @@ CFLAGS += -I.
 CFLAGS += -Iinclude
 CFLAGS += -Igen
 CFLAGS += -Iboot
+CFLAGS += -Isrc
 CFLAGS += -I/opt/local/include
-CFLAGS += -Wall
+# CFLAGS += -Wall
 CFLAGS += -Wno-deprecated-declarations
 CFLAGS += -Wno-int-to-void-pointer-cast
 CFLAGS += -Wno-unused-label
+CFLAGS += -Wno-implicit-function-declaration
+CFLAGS += -Wno-incompatible-pointer-types-discards-qualifiers
 
 LIBS += -L/opt/local/lib
 ifneq "$(NO_GC)" ""
@@ -73,40 +76,42 @@ boot/ctype.def  : gen/ctype.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
 
-gen/t.def : Makefile gen/t.def.gen $(CFILES) $(OTHER_C_FILES)
+gen/t.def : Makefile gen/t.def.gen $(CFILES) $(OTHER_C_FILES) gen/ctype.def
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) | tee $@.i | $@.gen > $@
+	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 gen/sym.def : Makefile gen/sym.def.gen $(CFILES) $(OTHER_C_FILES) gen/prim.def gen/syntax.def gen/cfunc.def
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | tee $@.i | $@.gen > $@
+	$(SILENT)$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 gen/prim.def : Makefile gen/prim.def.gen $(CFILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@
+	$(SILENT)$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 gen/syntax.def : Makefile gen/syntax.def.gen $(CFILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@
+	$(SILENT)$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 gen/cfunc.def : Makefile gen/cfunc.def.gen $(CFILES) $(OTHER_C_FILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | tee $@.i | $@.gen > $@
-gen/ctype.def : Makefile gen/ctype.def.gen $(CFILES)
+	$(SILENT)$(CC) $(CFLAGS) -E -Dss_prim=ss_prim -D_ss_cfunc_def=_ss_cfunc_def $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
+gen/ctype.def : Makefile gen/ctype.def.gen $(CFILES) $(OTHER_C_FILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@
+	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 
 lispread/lispread.c:
 	git submodule init
 	git submodule update
 
-ss : $(EARLY_FILES) $(CFILES) $(HFILES) $(OTHER_C_FILES)
+early-files : $(EARLY_FILES)
+
+ss : early-files $(CFILES) $(HFILES) $(OTHER_C_FILES)
 	@echo "LINK $@"
 	$(SILENT)$(CC) $(CFLAGS) -Dss_cwrap_c=1 -o $@ ss.c $(LIBS)
 
-ss.s : $(EARLY_FILES) $(CFILES) $(HFILES)
+ss.s : early-files $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) -S -o $@.tmp $(CFILES) $(LIBS)
 	tool/asm-source $@.tmp > $@
 	rm $@.tmp
 
-ss.i : $(EARLY_FILES) $(CFILES) $(HFILES)
-	$(CC) $(CFLAGS) -E -o $@ $(CFILES) $(LIBS)
+ss.i : early-files $(CFILES) $(HFILES)
+	$(CC) $(CFLAGS) -E -Dss_cwrap_c=1 -o $@ $(CFILES) $(LIBS)
 
 system-defines :
 	$(CC) $(CFLAGS) -E -dM - < /dev/null | sort

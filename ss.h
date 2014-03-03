@@ -36,10 +36,14 @@
 
 #define ss_ALIGNED(DECL,X) DECL __attribute__ ((aligned (X)))
 
-#define _ss_PASTE2(A,B)A##B
-#define ss_PASTE2(A,B)_ss_PASTE2(A,B)
-#define _ss_STRINGTIZE(A)#A
-#define ss_STRINGTIZE(A)_ss_STRINGTIZE(A)
+#define ss_PASTE2(A,B)ss_PASTE2_(A,B)
+#define ss_PASTE2_(A,B)A##B
+#define ss_PASTE3(A,B,C)ss_PASTE3_(A,B,C)
+#define ss_PASTE3_(A,B,C)A##B##C
+#define ss_PASTE4(A,B,C,D)ss_PASTE4_(A,B,C,D)
+#define ss_PASTE4_(A,B,C,D)A##B##C##D
+#define ss_STRINGTIZE(A)ss_STRINGTIZE_(A)
+#define ss_STRINGTIZE_(A)#A
 
 #define ss_malloc(X) GC_malloc(X)
 
@@ -69,44 +73,11 @@ struct ss_s_prim;
 
 typedef enum ss_te {
   ss_te_UNDEF = 0,
-  ss_te_LITERAL_MIN,
-  ss_te_undef = ss_te_LITERAL_MIN,
-  ss_te_unspec,
-  ss_te_number,
-  ss_te_fixnum,
-  ss_te_flonum,
-  ss_te_ratnum,
-  ss_te_cpxnum,
-  ss_te_string,
-  ss_te_char,
-  ss_te_boolean,
-  ss_te_prim,
-  ss_te_lambda,
-  ss_te_closure,
-  ss_te_quote,
-  ss_te_eos,
-  ss_te_type,
-  ss_te_keyword,
-  ss_te_catch,
-  ss_te_throwable,
+#define ss_te_def(N) ss_te_##N,
+#include "te.def"
+  ss_te_LITERAL_MIN = ss_te_undef,
   ss_te_LITERAL_MAX = ss_te_throwable,
-
-  ss_te_pair,
-  ss_te_null,
-  ss_te_vector,
-  ss_te_symbol,
-  ss_te_var,
-  ss_te_var_set,
-  ss_te_global,
-  ss_te_if,
-  ss_te_begin,
-  ss_te_app,
-
-  ss_te_port,
-  
-  ss_te_env,
-
-  ss_te_LAST
+  ss_te_LAST,
 } ss_te;
 
 typedef struct ss_s_type {
@@ -136,17 +107,18 @@ ss          ss_c(ss_fixnum_t c) { return ss_BOX_char(c); }
 ss_fixnum_t ss_C(ss v)          { return ss_UNB_char(v); }
 
 static inline
-ss_s_type* ss_type(ss x)
+ss ss_type(ss x)
 {
-  return                 x == 0 ? ss_t_null :
-          ((ss_word_t) x) & 1   ? ss_t_fixnum :
+  return               x  ==  0 ? ss_t_null :
+          ((ss_word_t) x) &   1 ? ss_t_fixnum :
           ((ss_word_t) x) <= 32 ? ss_immediate_types[(ss_word_t) x] :
           x <= ss_BOX_char(255) ? ss_t_char :
                                   (((ss*) x)[-1]);
 }
+#define ss_type_(X) ((ss_s_type*) ss_type(X))
 static inline
 ss_te ss_type_te(ss x)
-{ return ss_type(x)->e; }
+{ return ss_type_(x)->e; }
 
 static inline
 int ss_literalQ(ss X)
