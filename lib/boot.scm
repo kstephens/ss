@@ -111,6 +111,8 @@
 (C:ss_make_constant 'vector-length)
 (define vector-ref C:ss_vector_R)
 (C:ss_make_constant 'vector-ref)
+(define vector-set! C:ss_vector_S)
+(C:ss_make_constant 'vector-set!)
 
 (define (%string-equal? a b)
   (let ((i (- (string-length a) 1)) (e? #f))
@@ -156,6 +158,19 @@
     (%list-reverse-2 (cdr l) (cons (car l) e))))
 (define (list->vector l)
   (C:ss_list_to_vector l))
+(define (vector . l) (list->vector l))
+(define (%vector-clear v i value)
+  (if (< i (vector-length v))
+    (begin
+      (vector-set! v i value)
+      (%vector-clear v (+ i 1) value))
+    v))
+(define (make-vector size . value)
+  (let ((v (C:ss_vecn size)))
+    (if (null? value)
+      v
+      (%vector-clear v 0 (car value)))))
+
 (define (vector->list v)
   (let ( (v->l! #f)
          (l (list #f)))
