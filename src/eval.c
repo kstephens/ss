@@ -105,11 +105,11 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     switch ( ss_type_te(rtn) ) {
     case ss_te_catch:
       {
-        return((ss_UNB(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv));
+        return((ss_UNB(prim, rtn)->proc)(ss_env, _ss_expr, rtn, ss_argc, ss_argv));
       }
     case ss_te_prim:
       {
-        expr = (ss_UNB(prim, rtn)->func)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
+        expr = (ss_UNB(prim, rtn)->proc)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
         if ( ss_eval_verbose ) {
           if ( const_argsQ ) fprintf(*ss_stderr, "    ;; const_argsQ %s\n", ss_UNB(prim, rtn)->no_side_effect ? "no-side-effect" : "");
         }
