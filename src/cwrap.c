@@ -125,9 +125,31 @@ WRAP_CT(ss*,ssP)
 #define ss_cfunc_def(CT,MT,RT,NAME,NPARAM,PARAMS,SPARAMS,FILE,LINE) DEFINE_CF(CT,MT,RT,NAME,PARAMS);
 #include "cwrap.def"
 
+void ss_init_cdefine(ss_s_env *ss_env)
+{
+  static struct {
+    const char *n, *v, *rv;
+  } inits[] = {
+#define ss_cdefine_def(N,V,RV,EXPR,FILE,LINE) { N, V, RV, },
+#include "cdefine.def"
+    { 0 },
+  }, *d;
+  for ( d = inits; d->n; ++ d ) {
+    if ( d->rv[0] == '"' ) {
+      ss_define(ss_env, ss_c_sym(d->n), ss_strnv(strlen(d->rv) - 2, d->rv + 1));
+    } else {
+      ss expr = ss_s(d->rv);
+      ss num = ss_string_TO_number(expr, 0);
+      if ( num != ss_f ) {
+        ss_define(ss_env, ss_c_sym(d->n), num);
+      }
+    }
+  }
+}
+
 void ss_init_cwrap(ss_s_env *ss_env)
 {
-  static struct init {
+  static struct {
     void *cfunc; const char *cfuncn, *cname; // raw cfunc
     void *wfunc; const char *wfuncn, *wname; // wrapped cfunc
     int nparams;
@@ -147,7 +169,8 @@ void ss_init_cwrap(ss_s_env *ss_env)
 #include "cwrap.def"
     { 0, }
   }, *d;
-  for ( int i = 0; (d = &inits[i])->cfunc; ++ i ) {
+  ss_init_cdefine(ss_env);
+  for ( d = inits; d->cfunc; ++ d ) {
     char cname[64];
     if ( ! d->wfunc )  d->wfunc  = d->cfunc;
     if ( ! d->wfuncn ) d->wfuncn = d->cfuncn;

@@ -3,13 +3,14 @@ CFLAGS += -g
 ifneq "$(NO_OPTIMIZE)" ""
 CFLAGS += -O3
 endif
-CFLAGS += -I.
-CFLAGS += -Iinclude
-CFLAGS += -Igen
-CFLAGS += -Iboot
-CFLAGS += -Isrc
-CFLAGS += -I/opt/local/include
+CPPFLAGS += -I.
+CPPFLAGS += -Iinclude
+CPPFLAGS += -Igen
+CPPFLAGS += -Iboot
+CPPFLAGS += -Isrc
+CPPFLAGS += -I/opt/local/include
 # CFLAGS += -Wall
+CFLAGS += $(CPPFLAGS)
 CFLAGS += -Wno-deprecated-declarations
 CFLAGS += -Wno-int-to-void-pointer-cast
 CFLAGS += -Wno-unused-label
@@ -25,6 +26,8 @@ endif
 LIBS += -L/opt/local/lib/x86_64 -ljit -ljitdynamic -ljitplus
 LIBS += -lm
 
+CPP = $(CC) $(CPPFLAGS) -E 
+
 CFILES = \
   ss.c
 
@@ -34,6 +37,7 @@ HFILES = \
   gen/sym.def \
   gen/prim.def \
   gen/syntax.def \
+  gen/cdefine.def \
   gen/cwrap.def \
   lispread/lispread.c \
   include/ss/*.h \
@@ -49,6 +53,7 @@ boot/t.def \
 boot/sym.def    \
 boot/prim.def   \
 boot/syntax.def \
+boot/cdefine.def \
 boot/cwrap.def
 
 SILENT=@
@@ -70,22 +75,27 @@ boot/syntax.def : gen/syntax.def.gen
 boot/cwrap.def  : gen/cwrap.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
+boot/cdefine.def  : gen/cdefine.def.gen
+	@echo "GEN $@"
+	$(SILENT)$< </dev/null >$@
 
 gen/t.def : Makefile gen/t.def.gen $(CFILES) $(OTHER_C_FILES) gen/cwrap.def
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
+	$(SILENT)$(CPP) $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 gen/sym.def : Makefile gen/sym.def.gen $(CFILES) $(OTHER_C_FILES) gen/prim.def gen/syntax.def
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -Dss_sym=ss_sym $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
+	$(SILENT)$(CPP) -Dss_sym=ss_sym $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 gen/prim.def : Makefile gen/prim.def.gen $(CFILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -D_ss_prim=_ss_prim $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
+	$(SILENT)$(CPP) -D_ss_prim=_ss_prim $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 gen/syntax.def : Makefile gen/syntax.def.gen $(CFILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E -Dss_syntax=ss_syntax $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
+	$(SILENT)$(CPP) -Dss_syntax=ss_syntax $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 gen/cwrap.def : Makefile gen/cwrap.def.gen $(CFILES) $(OTHER_C_FILES)
 	@echo "GEN $@"
-	$(SILENT)$(CC) $(CFLAGS) -E $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
+	$(SILENT)$(CPP) $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
+gen/cdefine.def : Makefile gen/cdefine.def.gen $(CFILES) $(OTHER_C_FILES)
+	$(SILENT)$(CPP) -dM $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
 
 lispread/lispread.c:
 	git submodule init

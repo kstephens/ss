@@ -1,0 +1,38 @@
+#!/usr/bin/env perl
+my ($file, $lineno) = ( "stdin", 0 );
+%defines = ();
+%defines_expr = ();
+sub real_value {
+  my ($n) = @_;
+  my ($x, $y);
+  $x = $n;
+  while ( $x ne $y ) {
+    $y = $x;
+    $x = $defines{$y} || $y
+  }
+  $x;
+}
+
+while ( <> ) {
+  chomp;
+  while ( s/^\s*(#\s*define\s+(\w+)\s+([^\(].*))// ) {
+    my ($def, $name, $val) = ($1, $2, $3);
+    $val =~ s/^\s+|\s+$//g;
+    $defines{$name} = $val;
+    $def =~ s/^\s+|\s+$//g;
+    $defines_expr{$name} = $def;
+  }
+}
+foreach my $name ( sort keys %defines ) {
+  my $val = $defines{$name};
+  my $r_val = real_value($val);
+  $val =~ s/([\\"])/\\$1/g;
+  $r_val =~ s/^\s+|\s+$//g;
+  $r_val =~ s/([\\"])/\\$1/g;
+  my $def = $defines_expr{$name};
+  $def =~ s/([\\"])/\\$1/g;
+  my $v = "\"$name\",\"$val\",\"$r_val\",\"$def\",\"$file\",$lineno";
+  print "ss_cdefine_def($v)\n";
+}
+print "#undef ss_cdefine_def\n";
+
