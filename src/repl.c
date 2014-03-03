@@ -24,7 +24,7 @@ ss ss_repl(ss_s_env *ss_env, ss input, ss output, ss prompt, ss trap_error)
       if ( 0 && prompt != ss_f ) {
         fprintf(*ss_stderr, "  ;; ss: rewrite => "); ss_write(expr, ss_stderr); fprintf(*ss_stderr, "\n");
       }
-      if ( value != ss_undef ) {
+      if ( value != ss_undef && value != ss_unspec ) {
         if ( output != ss_f ) {
           ss_write(value, ss_stdout); fprintf(*ss_stdout, "\n");
         }
