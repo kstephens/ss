@@ -33,6 +33,37 @@ ss ss_load_file(ss_s_env *ss_env, const char *filename)
   return rtn;
 }
 
+void ss_init_main(ss_s_env *ss_env, int argc, char **argv)
+{
+  char *r;
+  ss_prog_path = ss_prog_name = argv[0];
+  if ( (r = strrchr(ss_prog_name, '/')) ) {
+    ss_prog_dir = malloc(r - ss_prog_name + 1);
+    strncpy(ss_prog_dir, ss_prog_name, r - ss_prog_name);
+    ss_prog_dir[r - ss_prog_name] = 0;
+    ss_prog_name = r + 1;
+  } else {
+    ss_prog_dir = ".";
+  }
+  if ( ! (ss_lib_dir = getenv("ss_LIB_DIR")) ) {
+    static char lib_dir[] = "/lib"; // FIXME bin/../lib
+    ss_lib_dir = malloc(strlen(ss_prog_dir) + sizeof(lib_dir));
+    strcat(strcpy(ss_lib_dir, ss_prog_dir), lib_dir);
+  }
+
+  {
+    ss args = ss_vecn(argc);
+    for ( int i = 0; i < argc; ++ i ) {
+      ss_vector_V(args)[i] = ss_s(argv[i]);
+    }
+    ss_define(ss_env, ss_sym(ss_prog_args), args);
+  }
+  ss_define(ss_env, ss_sym(ss_prog_path), ss_s(ss_prog_path));
+  ss_define(ss_env, ss_sym(ss_prog_dir), ss_s(ss_prog_dir));
+  ss_define(ss_env, ss_sym(ss_prog_name), ss_s(ss_prog_name));
+  ss_define(ss_env, ss_sym(ss_lib_dir), ss_s(ss_lib_dir));
+}
+
 int main(int argc, char **argv)
 {
   ss_s_env *ss_env = 0;
@@ -46,18 +77,14 @@ int main(int argc, char **argv)
   ss_init_symbol(ss_env);
   ss_init_port(ss_env);
   ss_init_global(ss_env);
+  ss_init_main(ss_env, argc, argv);
   ss_init_prim(ss_env);
   ss_init_cwrap(ss_env);
-  {
-    ss args = ss_vecn(argc);
-    for ( int i = 0; i < argc; ++ i ) {
-      ss_vector_V(args)[i] = ss_s(argv[i]);
-    }
-    ss_define(ss_env, ss_sym(ss_main_args), args);
-  }
 
   if ( 1 ) {
-    FILE *fp = fopen("lib/boot.scm", "r");
+    char fn[1024];
+    snprintf(fn, 1023, "%s/%s", ss_lib_dir, "boot.scm");
+    FILE *fp = fopen(fn, "r");
     ss out = ss_f; // ss_stderr;
     ss_repl(ss_env, &fp, out, out, ss_f);
     fclose(fp);
