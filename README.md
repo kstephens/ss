@@ -49,11 +49,15 @@ Implements lazy, threaded expression rewriting with constant-folding.
 
 ## Eval-By-Reference
 
-The ss_eval() evaluator function evaluates expressions by reference --
+The ss_eval() function evaluates expressions by reference --
 the evaluator is given the address of a expression value location.
-The evaluator can choose to rewrite the expression value based on multiple
-rewrite mechanisms.  Rewriting is lazy -- expressions are rewritten only when they
+The evaluator can choose to rewrite the expression value using multiple
+rewrite mechanisms depending on the type of the expression and the current
+context.  Rewriting is lazy -- expressions are rewritten only when they
 are evaluated.
+Rewriting improves evaluation performance and reduces memory by compressing long pair chains
+into efficent semantic objects.  The tagged representations are enumerated in the evaluator in
+a C switch statement.
 
 ## Rewrite Mechanisms
 
@@ -61,9 +65,6 @@ are evaluated.
 
 Syntax s-expression lists are rewritten as internally tagged expressions, denoted
 below as #<TAG ...>.
-Rewriting improves evaluation performance and reduces memory by compressing long pair chains
-into efficent semantic objects.  The tagged representations are enumerated in the evaluator in
-a C switch statement.
 
 #### Conditionals
 
@@ -105,10 +106,11 @@ The body is rewritten as above to aid proper tail-recursion.
      (set! sym val)      =>  #<var! #<var sym up over> val>
 
 Initial variable reference expressions are symbols.
-Symbols are rewritten as internal variable expressions with "up-and-over" coordinates given the lexical environment.
+Symbols are rewritten as internal variable expressions with "up-and-over" coordinates given the lexical environment:
+"up" denotes how many parent closures the variable is bound, "over" denotes its position in the closure's argument vector.
 Variable expressions that are bound to top-level environments are rewritten as global variable expressions pointing to new cells containing the original variable value.
 Variables that are declared as constants are rewritten as quoted expressions of their value.
-Variable assignments are rewritten
+Variable assignments are rewritten as #<var!> forms with rewritten variables references.
 
 #### Constant Expression Folding
 
@@ -116,7 +118,7 @@ The evaluator tracks the constant-ness of each evaluated expression.  The source
 may be rewritten as a constant depending on the context, given these rules:
 
 * A self-evaluating value: number, boolean, string, character, is a constant expression.
-* A quoted form is a constant expressions.
+* A quoted form is a constant expression.
 * A constant variable reference is a constant expression and is rewritten as a quoted value. 
 * A side-effect-free function application on constants is a constant expression and is written as a quoted value.
 * A constant conditional expression can be rewritten as one of its branch expressions.
