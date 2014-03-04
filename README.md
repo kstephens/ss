@@ -59,7 +59,7 @@ are evaluated.
 
 ### Primitive Syntax
 
-Syntax s-expression lists are rewritten as internally tagged expression, denoted
+Syntax s-expression lists are rewritten as internally tagged expressions, denoted
 below as #<TAG ...>.
 Rewriting improves evaluation performance and reduces memory by compressing long pair chains
 into efficent semantic objects.  The tagged representations are enumerated in the evaluator in
@@ -70,7 +70,7 @@ a C switch statement.
     (if a b)        =>  #<if a b #<unspec>>
     (if a b c)      =>  #<if a b c>
 
-A conditional expression can be rewritten as either branch of the test expression is a constant.
+A conditional expression with constant test can be rewritten as either branch.
 
 #### Literals
 
@@ -87,14 +87,14 @@ The begin form transform prepares its body for proper tail recursion and space o
 
     (proc args ...)  =>  #<app proc args ...>
 
-The &app vector form has a length that can be computed in O(1) time for efficient arity checking.
+The application vector form has a length that can be computed in O(1) time for efficient arity checking.
 The vector form is time and space efficent when allocating new parameter bindings.
 
 #### Closures
 
     (lambda formals . body)  =>  #<lambda formals (begin . body)>
 
-The &lambda vector form is aware of its lexical enviroment, parameter positions and rest-args.
+The lambda vector form is aware of its lexical enviroment, parameter positions and rest-args.
 The body is rewritten as above to aid proper tail-recursion.
 
 #### Variable References
