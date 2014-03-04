@@ -65,11 +65,11 @@ ss_end
 #define PRIM_BOP(NAME,OP)                                               \
   ss ss_##NAME##W(ss a0, ss a1)                                         \
   {                                                                     \
-    return (ss) ( ((ss_word_t) a0) OP ((ss_word_t) a1) );               \
+    return (ss) (ss_word_t) ( ((ss_word_t) a0) OP ((ss_word_t) a1) );               \
   }                                                                     \
   ss ss_##NAME##I(ss a0, ss a1)                                         \
   {                                                                     \
-    return (ss) ( ((ss_fixnum_t) a0) OP ((ss_fixnum_t) a1) );           \
+    return (ss) (ss_word_t) ( ((ss_fixnum_t) a0) OP ((ss_fixnum_t) a1) );           \
   }                                                                     \
   ss_prim(ss_##NAME,2,2,1,#OP " z...")                                  \
   ss_return(ss_##NAME(ss_argv[0], ss_argv[1]));                         \
@@ -84,11 +84,11 @@ ss_end
 #define PRIM_UOP(NAME,OP)                                               \
   ss ss_##NAME##W(ss a0)                                                \
   {                                                                     \
-    return (ss) (OP (ss_word_t) a0);                                    \
+    return (ss) (ss_word_t) (OP (ss_word_t) a0);                                    \
   }                                                                     \
   ss ss_##NAME##I(ss a0)                                                \
   {                                                                     \
-    return (ss) (OP (ss_fixnum_t) a0);                                  \
+    return (ss) (ss_word_t) (OP (ss_fixnum_t) a0);                                  \
   }                                                                     \
   ss_prim(ss_##NAME##W,1,1,1,#OP " word")                               \
   ss_return(ss_##NAME##W(ss_argv[0]));                                  \

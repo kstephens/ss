@@ -1,6 +1,6 @@
 void ss_init_const(ss_s_env *ss_env)
 {
-  ss_immediate_types[(int) ss_eos] = ss_t_eos;
+  ss_immediate_types[(ss_word_t) ss_eos] = ss_t_eos;
 }
 void ss_init_global(ss_s_env *ss_env)
 {
