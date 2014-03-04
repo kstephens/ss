@@ -92,7 +92,7 @@ The vector form is time and space efficent when allocating new parameter binding
 
 #### Closures
 
-    (lambda formals . body)  =>  #<lambda #<environment> formals (begin . body)>
+    (lambda formals . body)  =>  #<lambda formals (begin . body)>
 
 The &lambda vector form is aware of its lexical enviroment, parameter positions and rest-args.
 The body is rewritten as above to aid proper tail-recursion.
