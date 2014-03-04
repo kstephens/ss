@@ -2,7 +2,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
 {
   ss rtn, expr;
   int const_argsQ;
-  size_t ss_argc;
+  size_t ss_argc = 0;
 #define return(X) do { rtn = (X); goto _return; } while(0)
   expr = ss_expr;
   ++ ss_env->depth;
