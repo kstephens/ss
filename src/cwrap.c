@@ -175,36 +175,37 @@ void ss_init_cwrap(ss_s_env *ss_env)
 #undef F
 #define F(NAME) &NAME, ss_STRINGTIZE(NAME)
 #define ss_cintrinsic_def(CT,TN)                                        \
-    { F(ss_B0_C_##TN),        0, 0, 0,     #TN     , 0,     #TN      }, \
-    { F(ss_B1_C_##TN),        0, 0, 0,     #TN ":" , 1,     #TN ":"  }, \
-    { F(ss_US_C_##TN),        0, 0, 0,     #TN "->", 1,     #TN "->" }, \
-    { F(ss_RS_C_##TN),        0, 0, 0,     #TN "=" , 2,     #TN "="  }, \
-    { F(ss_P_C_##TN),         0, 0, 0,     #TN "&" , 1,     #TN "&"  }, \
-    { F(ss_B0_C_##TN##P),     0, 0, 0,     #TN "*" , 0,     #TN "*"  }, \
-    { F(ss_B0_C_##TN##PP),    0, 0, 0,     #TN "**", 0,     #TN "**" }, \
-    { F(ss_D_C_##TN##P),      0, 0, 0, "*" #TN "*" , 1, "*" #TN "*"  }, \
-    { F(ss_D_C_##TN##PP),     0, 0, 0, "*" #TN "**", 1, "*" #TN "**" },
+    { F(ss_B0_C_##TN),                 0, 0, 0,     #TN     , 0,     #TN      }, \
+    { F(ss_B1_C_##TN),                 0, 0, 0,     #TN ":" , 1,     #TN ":"  }, \
+    { F(ss_US_C_##TN),                 0, 0, 0,     #TN "->", 1,     #TN "->" }, \
+    { F(ss_RS_C_##TN),                 0, 0, 0,     #TN "=" , 2,     #TN "="  }, \
+    { F(ss_P_C_##TN),                  0, 0, 0,     #TN "&" , 1,     #TN "&"  }, \
+    { F(ss_B0_C_##TN##P),              0, 0, 0,     #TN "*" , 0,     #TN "*"  }, \
+    { F(ss_B0_C_##TN##PP),             0, 0, 0,     #TN "**", 0,     #TN "**" }, \
+    { F(ss_D_C_##TN##P),               0, 0, 0, "*" #TN "*" , 1, "*" #TN "*"  }, \
+    { F(ss_D_C_##TN##PP),              0, 0, 0, "*" #TN "**", 1, "*" #TN "**" },
 #define ITYPE(CT,TN) ss_cintrinsic_def(CT,TN)
 #define FTYPE(CT,TN) ss_cintrinsic_def(CT,TN)
     ITYPE(void*,voidP)
 #include "cintrinsics.def"
+#define ss_cstruct_def(ST,SN,FILE,LINE)                               \
+    { F(ss_B0_C_##ST##_##SN),          0, 0, 0,     #ST "-" #SN     ,        0,     #ST " " #SN      }, \
+    { F(ss_P_C_##ST##_##SN),           0, 0, 0,     #ST "-" #SN "&" ,        1,     #ST " " #SN "&"  }, \
+    { F(ss_B0_C_##ST##_##SN##P),       0, 0, 0,     #ST "-" #SN "*" ,        0,     #ST "-" #SN "*"  }, \
+    { F(ss_B0_C_##ST##_##SN##PP),      0, 0, 0,     #ST "-" #SN "**",        0,     #ST "-" #SN "**" }, \
+    { F(ss_D_C_##ST##_##SN##P),        0, 0, 0, "*" #ST "-" #SN "*" ,        1, "*" #ST "-" #SN "*"  }, \
+    { F(ss_D_C_##ST##_##SN##PP),       0, 0, 0, "*" #ST "-" #SN "**",        1, "*" #ST "-" #SN "**" },
+#define ss_cstruct_decl(ST,SN,FILE,LINE)                              \
+    { F(ss_B0_C_##ST##_##SN##P),       0, 0, 0,     #ST "-" #SN "*" ,        0,     #ST "-" #SN "*"  }, \
+    { F(ss_B0_C_##ST##_##SN##PP),      0, 0, 0,     #ST "-" #SN "**",        0,     #ST "-" #SN "**" }, \
+    { F(ss_D_C_##ST##_##SN##PP),       0, 0, 0, "*" #ST "-" #SN "**",        1, "*" #ST "-" #SN "**" },
+#define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)          \
+    { F(ss_SR_C_##ST##_##SN##__##EN),  0, 0, 0,     #ST "-" #SN "." #EN    , 1,    #ST " " #SN "." #EN     }, \
+    { F(ss_SS_C_##ST##_##SN##__##EN),  0, 0, 0,     #ST "-" #SN "." #EN "=", 2,    #ST " " #SN "." #EN "=" },
+#define ss_cstruct_elemptr_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)          \
+    { F(ss_SP_C_##ST##_##SN##__##EN),  0, 0, 0,     #ST "-" #SN "." #EN "&", 1,    #ST " " #SN "." #EN "&" },
 #define ss_cfunc_def(CT,MT,RT,NAME,NPARAMS,PARAMS,SPARAMS,FILE,LINE)    \
     { F(NAME), #NAME, F(ss_Cf_##NAME), #NAME, NPARAMS, #CT "(*)(" SPARAMS ")"},
-#define ss_cstruct_def(ST,NAME,FILE,LINE)                               \
-    { F(ss_B0_C_##ST##_##NAME),        0, 0, 0,     #ST "-" #NAME     , 0,     #ST " " #NAME      }, \
-    { F(ss_P_C_##ST##_##NAME),         0, 0, 0,     #ST "-" #NAME "&" , 1,     #ST " " #NAME "&"  }, \
-    { F(ss_B0_C_##ST##_##NAME##P),     0, 0, 0,     #ST "-" #NAME "*" , 0,     #ST "-" #NAME "*"  }, \
-    { F(ss_B0_C_##ST##_##NAME##PP),    0, 0, 0,     #ST "-" #NAME "**", 0,     #ST "-" #NAME "**" }, \
-    { F(ss_D_C_##ST##_##NAME##P),      0, 0, 0, "*" #ST "-" #NAME "*" , 1, "*" #ST "-" #NAME "*"  }, \
-    { F(ss_D_C_##ST##_##NAME##PP),     0, 0, 0, "*" #ST "-" #NAME "**", 1, "*" #ST "-" #NAME "**" },
-#define ss_cstruct_decl(ST,NAME,FILE,LINE)                              \
-    { F(ss_B0_C_##ST##_##NAME##P),    0, 0, 0, #ST "-" #NAME "*" , 0, #ST "-" #NAME "*"  }, \
-    { F(ss_B0_C_##ST##_##NAME##PP),   0, 0, 0, #ST "-" #NAME "**", 0, #ST "-" #NAME "**" },
-#define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)          \
-    { F(ss_SR_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN    , 1, #ST " " #SN "." #EN     }, \
-    { F(ss_SS_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN "=", 2, #ST " " #SN "." #EN "=" },
-#define ss_cstruct_elemptr_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)          \
-    { F(ss_SP_C_##ST##_##SN##__##EN), 0, 0, 0, #ST "-" #SN "." #EN "&", 1, #ST " " #SN "." #EN "&" },
 #include "cwrap.def"
     { 0, }
   }, *d;
