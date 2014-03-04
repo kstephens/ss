@@ -2,7 +2,8 @@
 
 A Small Scheme
 
-Implements lazy, threaded expression rewriting with constant-folding.
+Evaluator uses lazy, eval-by-reference expression rewriting with constant-folding and
+other transformations.
 
 ## Core Syntax
 
