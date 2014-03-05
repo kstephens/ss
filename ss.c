@@ -63,7 +63,10 @@ void _ss_max_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_a
 
 #include "src/main.c"
 
-#include "src/read.c"
+static int ss_read_macro_terminating_charQ(int c);
+static int ss_read_eat_whitespace_peekchar(ss stream);
+
 #include "src/cfunc.c"
 #include "src/prim.c"
 #include "src/cwrap.c"
+#include "src/read.c"

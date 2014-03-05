@@ -219,4 +219,5 @@ void ss_init_cwrap(ss_s_env *ss_env)
     ss_define_cfunc(ss_env, d->wname, d->wfunc, d->nparams, d->wfuncn, d->docstr);
   }
 }
+#undef F
 #endif

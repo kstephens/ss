@@ -1,3 +1,5 @@
+#define macro_terminating_charQ ss_read_macro_terminating_charQ
+#define eat_whitespace_peekchar ss_read_eat_whitespace_peekchar
 #define VALUE ss
 #define READ_DECL ss ss_read(ss_s_env *ss_env, ss stream)
 #define READ_CALL() ss_read(ss_env, stream)
