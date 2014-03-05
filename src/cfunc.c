@@ -65,7 +65,6 @@ ss ss_define_cfunc(ss_s_env *ss_env, const char *name, void *cfunc, int nargs, c
   return prim;
 }
 
-static inline
 ss ss_throw_(ss_s_env *ss_env, ss _1, ss _2)
 {
   ss_s_catch *catch = _1;

@@ -2,7 +2,7 @@
 size_t ss_malloc_bytes, ss_malloc_objects;
 #if 0
 #undef ss_malloc
-static inline
+ss_INLINE
 void* ss_malloc(size_t s)
 {
   ss_malloc_bytes += s;
@@ -23,6 +23,7 @@ ss ss_memcmp(ss a, ss b, ss as, ss bs)
   return ss_i(cmp ? (cmp < 0 ? -1 : 1) : (ss_I(as) == ss_I(bs) ? 0 : (ss_I(as) < ss_I(bs) ? -1 : 1)));
 }
 
+ss_INLINE
 ss ss_alloc(ss type, size_t size)
 {
   ss *ptr = ss_malloc(sizeof(ss) + size);
@@ -30,6 +31,7 @@ ss ss_alloc(ss type, size_t size)
   return ptr;
 }
 
+ss_INLINE
 ss ss_alloc_copy(ss type, size_t size, void *ptr)
 {
   void *self = ss_alloc(type, size);
@@ -37,6 +39,7 @@ ss ss_alloc_copy(ss type, size_t size, void *ptr)
   return self;
 }
 
+ss_INLINE
 ss ss_set_type(ss type, ss obj)
 {
   ((ss*) obj)[-1] = type;

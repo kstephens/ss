@@ -139,14 +139,6 @@ WRAP_CT(ss*,ssP)
   }
 #include "cwrap.def"
 
-// FIXME why does this happen?
-// gen/cwrap.def:2529:1: error: too few arguments provided to function-like macro invocation
-// ss_cfunc_def(ss,ss,ss,ss_string_R,2,PARAMS_2(PARAM(ss,ss,ss,0,_0),PARAM(ss,ss,ss,1,_1)),"ss,ss","./ss.h",222)
-#undef ss_vector_R
-#undef ss_vector_S
-#undef ss_string_R
-#undef ss_string_S
-
 #define ss_cfunc_def(CT,MT,RT,NAME,NPARAM,PARAMS,SPARAMS,FILE,LINE) DEFINE_CF(CT,MT,RT,NAME,PARAMS);
 #include "cwrap.def"
 

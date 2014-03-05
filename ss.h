@@ -35,6 +35,8 @@
 #include "gc/gc.h"
 #endif
 
+#define ss_INLINE static __inline__ __attribute__((always_inline))
+
 #define ss_ALIGNED(DECL,X) DECL __attribute__ ((aligned (X)))
 
 #define ss_PASTE2(A,B)ss_PASTE2_(A,B)
@@ -96,7 +98,7 @@ typedef struct ss_s_type {
 extern ss_s_type* ss_te_to_t[];
 extern ss_s_type* ss_ALIGNED(ss_immediate_types[], 64);
 
-static inline
+ss_INLINE
 ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 
 #define ss_box(T,X)ss_PASTE2(ss_box_,T)(X)
@@ -104,14 +106,12 @@ ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 #define ss_unb(T,X)ss_PASTE2(ss_unb_,T)(X)
 #define ss_UNB(T,X)ss_PASTE2(ss_UNB_,T)(X)
 
-static inline
+ss_INLINE
 ss          ss_c(ss_fixnum_t c) { return ss_BOX_char(c); }
-#define ss_c(x) ss_BOX_char(x)
-static inline
+ss_INLINE
 ss_fixnum_t ss_C(ss v)          { return ss_UNB_char(v); }
-#define ss_C(x) ss_UNB_char(x)
 
-static inline
+ss_INLINE
 ss ss_type(ss x)
 {
   return               x  ==  0 ? ss_t_null :
@@ -121,11 +121,11 @@ ss ss_type(ss x)
                                   (((ss*) x)[-1]);
 }
 #define ss_type_(X) ((ss_s_type*) ss_type(X))
-static inline
+ss_INLINE
 ss_te ss_type_te(ss x)
 { return ss_type_(x)->e; }
 
-static inline
+ss_INLINE
 int ss_literalQ(ss X)
 {
   return ss_te_LITERAL_MIN <= ss_type_te(X) && ss_type_te(X) <= ss_te_LITERAL_MAX;
@@ -133,27 +133,25 @@ int ss_literalQ(ss X)
 
 ss ss_box_fixnum(ss_fixnum_t _v);
 ss_fixnum_t ss_unb_fixnum(ss v);
-static inline
+ss_INLINE
 ss ss_i(ss_fixnum_t x) { return ss_BOX_fixnum(x); }
-#define ss_i(x) ss_BOX_fixnum(x)
-static inline
+ss_INLINE
 ss_fixnum_t ss_I(ss x) { return ss_UNB_fixnum(x); }
-#define ss_I(x) ss_UNB_fixnum(x)
 
 typedef double ss_flonum_t;
 typedef struct ss_s_flonum {
   ss_flonum_t value;
 } ss_s_flonum;
 #define ss_UNB_flonum(X)((ss_s_flonum*)(X))->value
-static inline
+ss_INLINE
 ss ss_box_flonum(ss_flonum_t _v);
-static inline
+ss_INLINE
 ss_flonum_t ss_unb_flonum(ss v);
 
-static inline
+ss_INLINE
 ss ss_b(int x) { return ss_b(x); }
 #define ss_b(x) ((x) ? ss_t : ss_f) 
-static inline
+ss_INLINE
 int ss_B(ss x) { return ss_B(x); }
 #define ss_B(x) ((x) != ss_f)
 #define ss_box_boolean(X) ss_b((int) (X)) 
@@ -169,26 +167,22 @@ typedef struct ss_s_vector {
   ss *v;
   size_t l;
 } ss_s_vector;
-static inline
+ss_INLINE
 ss     *ss_vector_V(ss x)
 { return ((ss_s_vector*)(x))->v; }
-#define ss_vector_V(x) (((ss_s_vector*)(x))->v)
-static inline
+ss_INLINE
 size_t  ss_vector_L(ss x)
 { return ((ss_s_vector*)(x))->l; }
-#define ss_vector_L(x) (((ss_s_vector*)(x))->l)
-static inline
+ss_INLINE
 ss      ss_vector_R(ss x, ss i)
 { return ((ss_s_vector*)(x))->v[ss_I(i)]; }
-#define ss_vector_R(x,i) (((ss_s_vector*)(x))->v[ss_I(i)])
-static inline
+ss_INLINE
 ss      ss_vector_S(ss x, ss i, ss v)
 { return ((ss_s_vector*)(x))->v[ss_I(i)] = v; }
-#define ss_vector_S(x,i,v) (((ss_s_vector*)(x))->v[ss_I(i)] = (v))
 ss ss_vecn(size_t l);
 ss ss_vecnv(size_t l, const ss *v);
 ss ss_vec(int n, ...);
-static inline
+ss_INLINE
 ss ss_vec1(ss a0)
 {
   ss_s_vector *self = ss_vecn(1);
@@ -196,7 +190,7 @@ ss ss_vec1(ss a0)
   return self;
 }
 
-static inline
+ss_INLINE
 ss ss_vec2(ss a0, ss a1)
 {
   ss_s_vector *self = ss_vecn(2);
@@ -210,22 +204,18 @@ typedef struct ss_s_string {
   ss_string_t *v;
   size_t l;
 } ss_s_string;
-static inline
+ss_INLINE
 char   *ss_string_V(ss x)
 { return ((ss_s_string*)(x))->v; }
-#define ss_string_V(x) (((ss_s_string*)(x))->v)
-static inline
+ss_INLINE
 size_t  ss_string_L(ss x)
 { return ((ss_s_string*)(x))->l; }
-#define ss_string_L(x) (((ss_s_string*)(x))->l)
-static inline
+ss_INLINE
 ss      ss_string_R(ss x, ss i)
 { return ss_c(((ss_s_string*)(x))->v[ss_I(i)]); }
-#define ss_string_R(x,i) ss_c(((ss_s_string*)(x))->v[ss_I(i)])
-static inline
+ss_INLINE
 ss      ss_string_S(ss x, ss i, ss v)
 { ((ss_s_string*)(x))->v[ss_I(i)] = ss_C(v); return v; }
-#define ss_string_S(x,i,v) (((ss_s_string*)(x))->v[ss_I(i)] = ss_C(v))
 
 ss ss_strn(size_t l);
 ss ss_s(const char *p);
