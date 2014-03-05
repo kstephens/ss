@@ -69,47 +69,47 @@ below as #<TAG ...>.
 
 #### Conditionals
 
-    (if a b)        =>  #<if a b #<unspec>>
-    (if a b c)      =>  #<if a b c>
+    (if a b)        =>  #<if a b #<unspec> >
+    (if a b c)      =>  #<if a b c >
 
 A conditional expression with constant test can be rewritten as either branch.
 
 #### Literals
 
-    (quote x)        =>  #<quote x>
+    (quote x)        =>  `x
 
 #### Basic Blocks
 
     (begin a)        =>  a
-    (begin a b ...)  =>  #<begin #(a b ...)>
+    (begin a b ...)  =>  #<begin a b ...>
 
 The begin form transform prepares its body for proper tail recursion and space optimization.
 
 #### Application
 
-    (proc args ...)  =>  #<app proc args ...>
+    (proc args ...)  =>  #<(proc args ...)>
 
 The application vector form has a length that can be computed in O(1) time for efficient arity checking.
 The vector form is time and space efficent when allocating new parameter bindings.
 
 #### Closures
 
-    (lambda formals . body)  =>  #<lambda formals (begin . body)>
+    (lambda formals . body)  =>  #<l formals (begin . body)>
 
 The lambda vector form is aware of its lexical enviroment, parameter positions and rest-args.
-The body is rewritten as above to aid proper tail-recursion.
+The body is transformed to a basic block which is rewritten to aid proper tail-recursion.
 
 #### Variable References
 
-     sym                 =>  #<var sym up over>
-     #<var sym up over>  =>  (top-level? sym) #<global sym #<cell>>
-     #<var sym up over>  =>  (constant? sym)  #<quote val>
-     (set! sym val)      =>  #<var! #<var sym up over> val>
+     sym                 =>  #<v sym up over>
+     #<v sym up over>    =>  #<g sym #<cell>>   iff (top-level? sym)
+     #<v sym up over>    =>  #<quote val>       iff (constant? sym)
+     (set! sym val)      =>  #<v! #<v sym up over> val>
 
 Initial variable reference expressions are symbols.
 Symbols are rewritten as internal variable expressions with "up-and-over" coordinates given the lexical environment:
 "up" denotes how many parent closures the variable is bound, "over" denotes its position in the closure's argument vector.
-Variable expressions that are bound to top-level environments are rewritten as global variable expressions pointing to new cells containing the original variable value.
+Variable expressions that are bound to top-level environments are rewritten as "#<g ...>" global variable expressions pointing to new cells containing the original variable value.
 Variables that are declared as constants are rewritten as quoted expressions of their value.
 Variable assignments are rewritten as #<var!> forms with rewritten variables references.
 
@@ -120,7 +120,7 @@ may be rewritten as a constant depending on the context, given these rules:
 
 * A self-evaluating value: number, boolean, string, character, is a constant expression.
 * A quoted form is a constant expression.
-* A constant variable reference is a constant expression and is rewritten as a quoted value. 
+* A constant variable reference is a constant expression and is rewritten as a quoted value.
 * A side-effect-free function application on constants is a constant expression and is written as a quoted value.
 * A constant conditional expression can be rewritten as one of its branch expressions.
 
