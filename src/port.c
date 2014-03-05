@@ -43,6 +43,12 @@ void ss_init_port(ss_s_env *ss_env)
 #undef P
 }
 
+ss_prim(read,0,1,0,"port")
+{
+  ss_return(ss_read(ss_env, ss_argc > 0 ? ss_argv[0] : ss_stdin));
+}
+ss_end
+
 ss_prim(ss_getc,1,1,0,"port")
 {
   int c = getc(FP(ss_argv[0]));

@@ -196,16 +196,11 @@ ss ss_apply(ss_s_env *ss_env, ss func, ss args)
   return _ss_eval(ss_env, &func, args);
 }
 
-#define ss_apply_sym(SYM, NARGS, ARGS, ...)                     \
-  ({ ss __sym = ss_sym(SYM);                                    \
-    ss_apply(ss_env, ss_eval(__sym), ss_vec(NARGS, ARGS));      \
-  })
-
-ss_prim(apply,2,2,0,"apply func args") {
+ss_prim(apply,2,2,0,"func args") {
   ss_return(ss_apply(ss_env, ss_argv[0], ss_argv[1]));
 } ss_end
 
-ss_prim(eval,1,2,0,"eval expr env?") {
+ss_prim(eval,1,2,0,"expr env?") {
   ss_return(_ss_eval(ss_argc > 1 ? ss_argv[1] : ss_top_level_env, &ss_argv[0], 0));
 } ss_end
 

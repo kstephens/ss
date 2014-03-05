@@ -11,7 +11,6 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv);
 #define ss_expr (*_ss_expr)
 #define ss_eval(X) _ss_eval(ss_env, &(X), 0)
 #define ss_callv(P,ARGS) _ss_eval(ss_env, &(P), ARGS)
-ss ss_apply(ss_s_env *ss_env, ss func, ss args);
 
 ss_INLINE
 ss ss_cons(ss a, ss d);
