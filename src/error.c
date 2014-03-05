@@ -40,7 +40,7 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
   } }
 
   {
-    void *bt[16]; int bt_size = 16; char **bts;
+    void *bt[50]; int bt_size = 50; char **bts;
     bt_size = backtrace(bt, bt_size);
     bts = backtrace_symbols(bt, bt_size);
     fprintf(FP(ss_stderr), ";; ss: C backtrace:: \n");

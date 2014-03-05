@@ -74,3 +74,14 @@ ss ss_catch(ss_s_env *ss_env, ss body, ss rescue, ss ensure)
   return rtn;
 }
 
+ss ss_throw_ (ss_s_env *ss_env, ss _1, ss _2)
+{
+  ss_s_catch *catch = _1;
+  ss_s_throwable *thrown = _2;
+  assert(catch);
+  assert(thrown);
+  thrown->data.env = ss_env;
+  thrown->data.expr = ss_env->expr;
+  return __ss_throw(ss_env, catch, thrown);
+}
+
