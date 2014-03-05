@@ -92,8 +92,8 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     while ( up -- > 0 ) env = env->parent;
     over = ((ss_s_var*) var)->over;
   chk_var_global:
-    sym  = ((ss_s_var*) var)->name;
     ref = &env->argv[over];
+    sym  = ((ss_s_var*) var)->name;
     // assert(env);
     // if var is at top-level,
     if ( ! env->parent ) {
