@@ -2,7 +2,7 @@
 #define eat_whitespace_peekchar ss_read_eat_whitespace_peekchar
 #define VALUE ss
 #define READ_DECL ss ss_read(ss_s_env *ss_env, ss stream)
-#define READ_CALL() ss_read(ss_env, stream)
+#define READ_CALL() ss_ea1_read(ss_env, stream)
 #define GETC(stream) getc(FP(stream))
 #define UNGETC(stream,c) ungetc(c, FP(stream))
 #define EQ(X,Y) ((X) == (Y))

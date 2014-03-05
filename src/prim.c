@@ -30,7 +30,7 @@ void ss_init_prim(ss_s_env *ss_env)
     *inits[i].primp = prim;
     sym = ss_box_symbol(inits[i].name);
     ss_define(ss_env, sym, prim);
-    ((ss_s_symbol*) sym)->is_const = 1;
+    // ((ss_s_symbol*) sym)->is_const = 1;
     prim_list = ss_cons(ss_cons(sym, prim), prim_list);
   }
 
