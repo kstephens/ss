@@ -188,12 +188,13 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
   -- ss_env->depth;
   return rtn;
 }
+#undef ss_write
 
 ss ss_apply(ss_s_env *ss_env, ss func, ss args)
 {
   if ( ss_type_te(args) != ss_te_vector )
     args = ss_list_to_vector(args);
-  return _ss_eval(ss_env, &func, args);
+  return _ss_eval(ss_env, &ss_m_cell(func), args);
 }
 
 ss_prim(apply,2,2,0,"func args") {
