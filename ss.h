@@ -255,6 +255,14 @@ typedef struct ss_s_env {
 ss ss_error_raise(ss_s_env *ss_env, ss val);
 ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...);
 
+extern ss_s_env *ss_top_level_env, *ss_current_env;
+ss ss_apply(ss_s_env *ss_env, ss func, ss args);
+#define ss_apply_sym(SYM, NARGS, ARGS, ...)                             \
+  ({ ss __sym = ss_sym(SYM);                                            \
+    ss_s_env *ss_env = ss_top_level_env;                                \
+    ss_apply(ss_env, ss_eval(__sym), ss_vec(NARGS, ARGS));              \
+  })
+
 #include "ss/catch.h"
 
 typedef struct ss_s_prim {
@@ -274,6 +282,12 @@ typedef struct ss_s_prim {
 #ifndef _ss_prim
 #define _ss_prim(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)         \
   extern ss ss_sym(NAME);                                               \
+  ss ss_a1_##NAME(ss _1) {                                              \
+    return ss_apply_sym(NAME, 1, _1);                                   \
+  }                                                                     \
+  ss ss_a2_##NAME(ss _1, ss _2) {                                       \
+    return ss_apply_sym(NAME, 2, _1, _2);                               \
+  }                                                                     \
   ss ss_p_##NAME;                                                       \
   static ss_PRIM_DECL(ss_PASTE2(_ss_pf_,NAME));                         \
   ss_s_prim ss_PASTE2(_ss_p_,NAME) = { 0, ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, NO_SIDE_EFFECT, DOCSTRING } ; \

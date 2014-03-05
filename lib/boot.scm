@@ -254,8 +254,6 @@
 (define (%write-port port str)
   (C:fwrite str (string-length str) 1 port))
 
-(define (read . port)
-  (C:ss_read &env (if (null? port) ss_stdout (car port))))
 (define (write obj . port)
   (C:ss_write_3 obj (if (null? port) ss_stdout (car port)) 'write))
 (define (display obj . port)
