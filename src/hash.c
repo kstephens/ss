@@ -2,7 +2,8 @@
 static inline
 ss_word_t ss_jenkins_hash(ss_word_t hash, unsigned char *key, size_t len)
 {
-  for ( size_t i = 0; i < len; ++ i ) {
+  size_t i;
+  for ( i = 0; i < len; ++ i ) {
     hash += key[i];
     hash += (hash << 10);
     hash ^= (hash >> 6);

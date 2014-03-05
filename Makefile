@@ -1,4 +1,3 @@
-CFLAGS += -std=c99 
 CFLAGS += -g
 ifneq "$(NO_OPTIMIZE)" ""
 CFLAGS += -O3

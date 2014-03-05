@@ -11,7 +11,8 @@ ss ss_box_symbol(const char *name)
   ss_s_symbol *sym;
 
   if ( name ) {
-    for ( ss l = symbol_list; l != ss_nil; l = ss_cdr(l) ) {
+    ss l;
+    for ( l = symbol_list; l != ss_nil; l = ss_cdr(l) ) {
       sym = (ss_s_symbol*) ss_car(l);
       if ( strcmp(name, ss_string_V(sym->name)) == 0 )
         goto rtn;

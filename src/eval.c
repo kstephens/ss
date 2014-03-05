@@ -94,10 +94,10 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
 
     const_argsQ = 1;
     ss_argv = ss_malloc(sizeof(ss_argv[0]) * (ss_argc + 1)); // +1 restarg.
-    for ( size_t i = 0; i < ss_argc; i ++ ) {
+    { size_t i; for ( i = 0; i < ss_argc; i ++ ) {
       ss_argv[i] = ss_eval(ss_vector_V(expr)[i + 1]);
       const_argsQ &= ss_constantExprQ;
-    }
+    } }
 
     call:
     ss_constantExprQ = 0;

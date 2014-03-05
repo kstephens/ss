@@ -109,7 +109,7 @@ while ( $line = <> ) {
   $param_re = "($type_ptr_re\\s*$name_re?\s*$array_re|[.][.][.])";
   chomp;
   s/\b(extern|static|__inline(__)?|inline|__restrict(__)?|__format|restrict|const|register|__pure2|__dead2|__extension(__)?)\b//g;
-  s/\b__attribute(__)?\s*[(]\s*[(]([^)]*|[(]\d+[)])*[)]\s*[)]//g;
+  s/\b__attribute(__)?\s*[(]\s*[(]([^)]*|[(][^)]*[)])*[)]\s*[)]//g;
   s/\b__asm(__)?\s*[(][^)]*[)]//g;
   s/\[\s*\]/*/g;
   s/^([a-z0-9_]+)\s+(([*]\s*)+)/$1$2 /i;
@@ -224,7 +224,7 @@ while ( $line = <> ) {
     if ( ! $funcs{$func_name} ) {
       $funcs{$func_name} = 1;
       $key = "$rtn_type,$rtn_type_m,$rtn_type_r,$func_name,$args_n,PARAMS_$args_n($args_m),\"$args_s\",\"$file\",$lineno";
-      if ( $func_name !~ /^(alloca|getchar_unlocked|putc_unlocked|__vsprintf_chk|__vsnprintf_chk|zopen|unwhiteout|GC_win32_free_heap|add_profil|profil|putc)$/ ) {
+      if ( $func_name !~ /^(alloca|getchar_unlocked|putc_unlocked|__vsprintf_chk|__vsnprintf_chk|zopen|unwhiteout|GC_win32_free_heap|add_profil|profil|putc|__sputc)$/ ) {
         print "ss_cfunc_def($key)\n";
       }
     }
