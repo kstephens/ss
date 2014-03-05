@@ -9,7 +9,7 @@ ss ss_box_quote(ss v)
   }
 }
 
-#if 1
+#if 0
 int ss_rewrite_verbose = 0;
 int ss_eval_verbose = 0;
 ss ss_set_eval_verbose(ss x)
