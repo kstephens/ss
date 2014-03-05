@@ -108,9 +108,9 @@ while ( $line = <> ) {
   $type_ptr_re = "($type_re\[*\\s\]*)";
   $param_re = "($type_ptr_re\\s*$name_re?\s*$array_re|[.][.][.])";
   chomp;
-  s/\b(extern|static|__inline(__)?|inline|__restrict(__)?|restrict|const|register|__pure2|__dead2|__extension(__)?)\b//g;
+  s/\b(extern|static|__inline(__)?|inline|__restrict(__)?|__format|restrict|const|register|__pure2|__dead2|__extension(__)?)\b//g;
   s/\b__attribute(__)?\s*[(]\s*[(]([^)]*|[(]\d+[)])*[)]\s*[)]//g;
-  s/\b__asm[(][^)]*[)]//g;
+  s/\b__asm(__)?\s*[(][^)]*[)]//g;
   s/\[\s*\]/*/g;
   s/^([a-z0-9_]+)\s+(([*]\s*)+)/$1$2 /i;
   $pre_line = $_;
