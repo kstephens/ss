@@ -31,7 +31,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
   switch ( ss_type_te(expr) ) {
   case ss_te_quote:
     ss_constantExprQ = 1;
-    return(ss_UNB(quote, expr));
+    return(((ss_s_quote*) expr)->value);
   case ss_te_symbol:
     if ( expr == ss_sym(_env) ) return(ss_env);
   case ss_te_var:
@@ -44,7 +44,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
       return(ss_undef);
     }
   case ss_te_global:
-    return(ss_UNB(global, expr));
+    return(*((ss_s_global*) expr)->ref);
   case ss_te_if:
     {
       ss_s_if *self = ss_expr;
@@ -75,7 +75,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     }
   case ss_te_pair:
     rtn = ss_car(expr);
-    if ( ss_type_te(rtn) == ss_te_symbol && (rtn = ss_UNB(symbol, rtn).syntax) != ss_f ) {
+    if ( ss_type_te(rtn) == ss_te_symbol && (rtn = ((ss_s_symbol*) rtn)->syntax) != ss_f ) {
       expr = ss_apply(ss_env, rtn, ss_cdr(expr));
       ss_rewrite_expr(expr, "syntax rewrite");
       goto again;
@@ -105,15 +105,15 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     switch ( ss_type_te(rtn) ) {
     case ss_te_catch:
       {
-        return((ss_UNB(prim, rtn)->prim)(ss_env, _ss_expr, rtn, ss_argc, ss_argv));
+        return((((ss_s_prim*) rtn)->prim)(ss_env, _ss_expr, rtn, ss_argc, ss_argv));
       }
     case ss_te_prim:
       {
-        expr = (ss_UNB(prim, rtn)->prim)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
+        expr = (((ss_s_prim*) rtn)->prim)(ss_env, _ss_expr, rtn, ss_argc, ss_argv);
         if ( ss_eval_verbose ) {
-          if ( const_argsQ ) fprintf(*ss_stderr, "    ;; const_argsQ %s\n", ss_UNB(prim, rtn)->no_side_effect ? "no-side-effect" : "");
+          if ( const_argsQ ) fprintf(*ss_stderr, "    ;; const_argsQ %s\n", ((ss_s_prim*) rtn)->no_side_effect ? "no-side-effect" : "");
         }
-        if ( (ss_constantExprQ = const_argsQ && ss_UNB(prim, rtn)->no_side_effect) )
+        if ( (ss_constantExprQ = const_argsQ && ((ss_s_prim*) rtn)->no_side_effect) )
           ss_rewrite_expr(ss_box_quote(expr), "constant folding");
         return(expr);
       }
