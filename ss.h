@@ -221,7 +221,6 @@ typedef struct ss_s_symbol {
   ss syntax;
   ss_fixnum_t is_const;
 } ss_s_symbol;
-#define ss_UNB_symbol(X) (*((ss_s_symbol*)(X)))
 ss ss_box_symbol(const char *name);
 
 typedef struct ss_s_port {
@@ -229,7 +228,6 @@ typedef struct ss_s_port {
   ss name;
   ss mode;
 } ss_s_port;
-#define ss_UNB_port(X) (*(ss_s_port*)(X))
 
 struct ss_s_catch;
 typedef struct ss_s_env {
@@ -258,7 +256,6 @@ typedef struct ss_s_prim {
   ss_fixnum_t min_args, max_args, no_side_effect;
   const char *docstring;
 } ss_s_prim;
-#define ss_UNB_prim(X)((ss_s_prim*)(X))
 
 #define _ss_prim_arity_check(MINARGS,MAXARGS,DOCSTRING)                 \
   if ( MINARGS >= 0 && ss_argc < MINARGS )                              \
@@ -302,7 +299,6 @@ typedef struct ss_s_lambda {
   ss rest;
   ss_fixnum_t rest_i;
 } ss_s_lambda;
-#define ss_UNB_lambda(X) (*(ss_s_lambda*)(X))
 
 typedef struct ss_s_closure {
   void *c_func;
@@ -310,30 +306,25 @@ typedef struct ss_s_closure {
   ss_s_lambda *lambda;
   ss_s_env *env;
 } ss_s_closure;
-#define ss_UNB_closure(X) (*(ss_s_closure*)(X))
 
 typedef struct ss_s_quote {
   ss value;
 } ss_s_quote;
-#define ss_UNB_quote(X) ((ss_s_quote*)(X))->value
 
 typedef struct ss_s_var {
   ss name;
   ss_fixnum_t up, over;
 } ss_s_var;
-#define ss_UNB_var(X) (*(ss_s_var*)(X))
 
 typedef struct ss_s_var_set {
   ss var;
   ss expr;
 } ss_s_var_set;
-#define ss_UNB_var_set(X) (*(ss_s_var_set*)(X))
 
 typedef struct ss_s_global {
   ss *ref;
   ss name;
 } ss_s_global;
-#define ss_UNB_global(X) (*((ss_s_global*)(X))->ref)
 
 typedef struct ss_s_if {
   ss t, a, b;

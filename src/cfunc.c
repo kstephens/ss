@@ -60,7 +60,7 @@ ss ss_define_cfunc(ss_s_env *ss_env, const char *name, void *cfunc, int nargs, c
   prim->min_args = prim->max_args = nargs;
   if ( nargs < 0 ) prim->prim = _ss_pf_ss_call_cfunc_no_arity_check;
   ss_define(ss_env, sym, prim);
-  ss_UNB(symbol, sym).is_const = 1;
+  ((ss_s_symbol*) sym)->is_const = 1;
   cfunc_list = ss_cons(ss_cons(sym, prim), cfunc_list);
   return prim;
 }

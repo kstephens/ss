@@ -44,10 +44,10 @@ ss ss_write_3(ss v, ss port, ss mode)
   } break;
   case ss_te_symbol:
   case ss_te_keyword:
-    if ( ss_UNB(symbol, v).name == ss_f ) {
+    if ( ((ss_s_symbol*) v)->name == ss_f ) {
       fprintf(out, "#<symbol #@%p>", v);
     } else {
-      fprintf(out, "%s",   ss_string_V(ss_UNB(symbol, v).name));
+      fprintf(out, "%s",   ss_string_V(((ss_s_symbol*) v)->name));
     }
     break;
   case ss_te_if:
@@ -64,14 +64,14 @@ ss ss_write_3(ss v, ss port, ss mode)
     break;
   case ss_te_var:
     fprintf(out, "#<v ");
-    ss_write(ss_UNB(var, v).name, port);
-    fprintf(out, " %d %d>", (int) ss_UNB(var, v).up, (int) ss_UNB(var, v).over);
+    ss_write(((ss_s_var*) v)->name, port);
+    fprintf(out, " %d %d>", (int) ((ss_s_var*) v)->up, (int) ((ss_s_var*) v)->over);
     break;
   case ss_te_var_set:
     fprintf(out, "(set! ");
-    ss_write(ss_UNB(var_set, v).var, port);
+    ss_write(((ss_s_var_set*) v)->var, port);
     fprintf(out, " ");
-    ss_write(ss_UNB(var_set, v).expr, port);
+    ss_write(((ss_s_var_set*) v)->expr, port);
     fprintf(out, ")");
     break;
   case ss_te_global:
@@ -79,26 +79,26 @@ ss ss_write_3(ss v, ss port, ss mode)
     ss_write(((ss_s_global*) v)->name, port);
     fprintf(out, " >");
     break;
-  case ss_te_quote:   fprintf(out, "'"); ss_write(ss_UNB(quote, v), port); break;
+  case ss_te_quote:   fprintf(out, "'"); ss_write(((ss_s_quote*) v)->value, port); break;
   case ss_te_eos:     fprintf(out, "#<eos>"); break;
   case ss_te_null:    fprintf(out, "()"); break;
   case ss_te_lambda:
     fprintf(out, "(lambda ");
-    ss_write(ss_UNB(lambda, v).formals, port);
+    ss_write(((ss_s_lambda*) v)->formals, port);
     fprintf(out, " ");
-    ss_write(ss_UNB(lambda, v).body, port);
+    ss_write(((ss_s_lambda*) v)->body, port);
     fprintf(out, ")");
     break;
   case ss_te_closure:
-    // fprintf(out, "#<c #@%p E#@%p ", v, ss_UNB(closure, v).env);
-    ss_write(ss_UNB(closure, v).lambda, port);
+    // fprintf(out, "#<c #@%p E#@%p ", v, ((ss_s_closure, v).env);
+    ss_write(((ss_s_closure*) v)->lambda, port);
     // fprintf(out, ">");
     break;
   case ss_te_port:
     fprintf(out, "#<port ");
-    ss_write(ss_UNB(port, v).name, port);
+    ss_write(((ss_s_port*) v)->name, port);
     fprintf(out, " ");
-    ss_write(ss_UNB(port, v).mode, port);
+    ss_write(((ss_s_port*) v)->mode, port);
     fprintf(out, ">");
     break;
   case ss_te_env:

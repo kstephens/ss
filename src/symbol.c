@@ -33,7 +33,7 @@ ss ss_box_symbol(const char *name)
 ss ss_make_constant(ss sym)
 {
   ss_typecheck(ss_t_symbol, sym);
-  ss_UNB(symbol, sym).is_const = 1;
+  ((ss_s_symbol*) sym)->is_const = 1;
   return sym;
 }
 

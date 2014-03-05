@@ -1,7 +1,7 @@
 ss ss_make_syntax(ss sym, ss proc)
 {
   ss_typecheck(ss_t_symbol, sym);
-  ss_UNB(symbol, sym).syntax = proc;
+  ((ss_s_symbol*) sym)->syntax = proc;
   return sym;
 }
 
