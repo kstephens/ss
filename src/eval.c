@@ -124,10 +124,12 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
 
         if ( self->rest_i >= 0 ) {
           if ( ss_argc < self->rest_i )
-            return(ss_error(ss_env, "not-enough-args", self, "given %lu, expected at least %lu", (unsigned long) ss_argc, (unsigned long) self->rest_i));
+            return(_ss_min_args_error(ss_env, self, "", ss_argc, (int) self->rest_i));
         } else {
-          if ( ss_argc != ss_vector_L(self->params) )
-            return(ss_error(ss_env, "too-many-args", self, "given %lu, expected %lu", (unsigned long) ss_argc, (unsigned long) ss_vector_L(self->params)));
+          if ( ss_argc < ss_vector_L(self->params) )
+            return(_ss_min_args_error(ss_env, self, "", ss_argc, (int) ss_vector_L(self->params)));
+          if ( ss_argc > ss_vector_L(self->params) )
+            return(_ss_max_args_error(ss_env, self, "", ss_argc, (int) ss_vector_L(self->params)));
         }
 
         env = ss_m_env(((ss_s_closure*) rtn)->env);
