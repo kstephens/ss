@@ -13,15 +13,14 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv);
 #define ss_callv(P,ARGS) _ss_eval(ss_env, &(P), ARGS)
 ss ss_apply(ss_s_env *ss_env, ss func, ss args);
 
-static inline
+ss_INLINE
 ss ss_cons(ss a, ss d);
 
-static inline
 ss ss_typecheck_error(ss t, ss v)
 {
   return ss_error(ss_current_env, "typecheck", t, "given %s", ss_type_(v)->name);
 }
-static inline
+ss_INLINE
 ss ss_typecheck(ss t, ss v)
 {
   if ( ss_type(v) != t )
@@ -29,13 +28,11 @@ ss ss_typecheck(ss t, ss v)
   return v;
 }
 
-static inline
 void _ss_min_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_argc, int MINARGS)
 {
   ss_error(ss_env, "not-enough-args", op, "(%s) given %d expected at least %d", DOCSTRING, ss_argc, MINARGS);
 }
 
-static inline
 void _ss_max_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_argc, int MAXARGS)
 {
   ss_error(ss_env, "too-many-args", op, "(%s) given %d expected %d", DOCSTRING, ss_argc, MAXARGS);

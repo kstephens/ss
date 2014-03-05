@@ -1,4 +1,4 @@
-static inline
+ss_INLINE
 void ss_number_coerce_2(ss *a0, ss *a1)
 {
   switch ( ss_type_te(*a0) ) {

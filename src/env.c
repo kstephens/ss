@@ -1,4 +1,5 @@
 
+ss_INLINE
 ss ss_m_env(ss_s_env *parent)
 {
   ss_s_env *env = ss_alloc(ss_t_env, sizeof(*env));
@@ -15,20 +16,21 @@ ss ss_m_env(ss_s_env *parent)
   return env;
 }
 
-#if 1
+ss_INLINE
 ss ss_env_symv(ss _o)
 {
   ss_s_env *o = _o;
   return ss_vecnv(o->argc, o->symv);
 }
 
+ss_INLINE
 ss ss_closure_env(ss _o)
 {
   ss_s_closure *o = _o;
   return o->env;
 }
-#endif
 
+ss_INLINE
 ss ss_m_var(ss sym, int up, int over)
 {
   ss_s_var *self = ss_alloc(ss_t_var, sizeof(*self));
@@ -38,6 +40,7 @@ ss ss_m_var(ss sym, int up, int over)
   return self;
 }
 
+ss_INLINE
 ss ss_m_global(ss sym, ss ref)
 {
   ss_s_global *self = ss_alloc(ss_t_global, sizeof(*self));
@@ -133,12 +136,14 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
   return ref;
 }
 
+ss_INLINE
 ss ss_var_set(void *env, ss *_ss_expr, ss var, ss val)
 {
   *ss_bind(env, _ss_expr, var, 1) = val;
   return var;
 }
 
+ss_INLINE
 ss ss_var_get(void *env, ss *_ss_expr, ss var)
 {
   return *ss_bind(env, _ss_expr, var, 0);
