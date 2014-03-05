@@ -106,7 +106,10 @@ ss ss_eqQ(ss a, ss b) { return a == b ? ss_t : ss_f; }
 
 static inline
 ss          ss_c(ss_fixnum_t c) { return ss_BOX_char(c); }
+#define ss_c(x) ss_BOX_char(x)
+static inline
 ss_fixnum_t ss_C(ss v)          { return ss_UNB_char(v); }
+#define ss_C(x) ss_UNB_char(x)
 
 static inline
 ss ss_type(ss x)
@@ -132,8 +135,10 @@ ss ss_box_fixnum(ss_fixnum_t _v);
 ss_fixnum_t ss_unb_fixnum(ss v);
 static inline
 ss ss_i(ss_fixnum_t x) { return ss_BOX_fixnum(x); }
+#define ss_i(x) ss_BOX_fixnum(x)
 static inline
 ss_fixnum_t ss_I(ss x) { return ss_UNB_fixnum(x); }
+#define ss_I(x) ss_UNB_fixnum(x)
 
 typedef double ss_flonum_t;
 typedef struct ss_s_flonum {
@@ -146,9 +151,11 @@ static inline
 ss_flonum_t ss_unb_flonum(ss v);
 
 static inline
-ss ss_b(int x) { return x ? ss_t : ss_f; }
+ss ss_b(int x) { return ss_b(x); }
+#define ss_b(x) ((x) ? ss_t : ss_f) 
 static inline
-int ss_B(ss x) { return x != ss_f; }
+int ss_B(ss x) { return ss_B(x); }
+#define ss_B(x) ((x) != ss_f)
 #define ss_box_boolean(X) ss_b((int) (X)) 
 #define ss_unb_boolean(X) ss_B(X)
 
@@ -163,17 +170,21 @@ typedef struct ss_s_vector {
   size_t l;
 } ss_s_vector;
 static inline
-ss    *ss_vector_V(ss x)
+ss     *ss_vector_V(ss x)
 { return ((ss_s_vector*)(x))->v; }
+#define ss_vector_V(x) (((ss_s_vector*)(x))->v)
 static inline
-size_t ss_vector_L(ss x)
+size_t  ss_vector_L(ss x)
 { return ((ss_s_vector*)(x))->l; }
+#define ss_vector_L(x) (((ss_s_vector*)(x))->l)
 static inline
-ss     ss_vector_R(ss x, ss i)
+ss      ss_vector_R(ss x, ss i)
 { return ((ss_s_vector*)(x))->v[ss_I(i)]; }
+#define ss_vector_R(x,i) (((ss_s_vector*)(x))->v[ss_I(i)])
 static inline
-ss     ss_vector_S(ss x, ss i, ss v)
-{ ((ss_s_vector*)(x))->v[ss_I(i)] = v; return x; }
+ss      ss_vector_S(ss x, ss i, ss v)
+{ return ((ss_s_vector*)(x))->v[ss_I(i)] = v; }
+#define ss_vector_S(x,i,v) (((ss_s_vector*)(x))->v[ss_I(i)] = (v))
 ss ss_vecn(size_t l);
 ss ss_vecnv(size_t l, const ss *v);
 ss ss_vec(int n, ...);
@@ -200,17 +211,21 @@ typedef struct ss_s_string {
   size_t l;
 } ss_s_string;
 static inline
-char  *ss_string_V(ss x)
+char   *ss_string_V(ss x)
 { return ((ss_s_string*)(x))->v; }
+#define ss_string_V(x) (((ss_s_string*)(x))->v)
 static inline
-size_t ss_string_L(ss x)
+size_t  ss_string_L(ss x)
 { return ((ss_s_string*)(x))->l; }
+#define ss_string_L(x) (((ss_s_string*)(x))->l)
 static inline
-ss     ss_string_R(ss x, ss i)
+ss      ss_string_R(ss x, ss i)
 { return ss_c(((ss_s_string*)(x))->v[ss_I(i)]); }
+#define ss_string_R(x,i) ss_c(((ss_s_string*)(x))->v[ss_I(i)])
 static inline
-ss     ss_string_S(ss x, ss i, ss v)
-{ ((ss_s_string*)(x))->v[ss_I(i)] = ss_C(v); return x; }
+ss      ss_string_S(ss x, ss i, ss v)
+{ ((ss_s_string*)(x))->v[ss_I(i)] = ss_C(v); return v; }
+#define ss_string_S(x,i,v) (((ss_s_string*)(x))->v[ss_I(i)] = ss_C(v))
 
 ss ss_strn(size_t l);
 ss ss_s(const char *p);
