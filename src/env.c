@@ -107,10 +107,8 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
         ss_rewrite_expr(*ref, "variable is global");
         ref = ((ss_s_global*) *ref)->ref;
       } else {
-      // box value with a global reference to a new cell.
-        ss *cell = ss_malloc(sizeof(*cell));
-        // init cell with current var value.
-        *cell = *ref;
+        // Create new cell with current var value.
+        ss *cell = &ss_m_cell(*ref);
         // Replace var value with a global var.
         *ref = ss_m_global(sym, cell);
         // Replace expr with the global var.

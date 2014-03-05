@@ -11,6 +11,15 @@ void* ss_malloc(size_t s)
 }
 #endif
 
+ss_INLINE
+ss* _ss_m_cell(ss v)
+{
+  ss *c = ss_malloc(sizeof(*c));
+  *c = v;
+  return c;
+}
+#define ss_m_cell(v) *_ss_m_cell(v)
+
 ss ss_memmove(ss dst, ss src, ss size)
 {
   memmove(dst, src, ss_I(size));
