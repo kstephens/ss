@@ -21,10 +21,11 @@ void ss_init_prim(ss_s_env *ss_env)
 #include "prim.def"
     { 0 }
   };
+  int i;
   ss sym;
 
   prim_list = ss_nil;
-  for ( int i = 0; inits[i].name; ++ i ) {
+  for ( i = 0; inits[i].name; ++ i ) {
     ss prim = ss_alloc_copy(ss_t_prim, sizeof(ss_s_prim), inits[i].prim_struct);
     *inits[i].primp = prim;
     sym = ss_box_symbol(inits[i].name);

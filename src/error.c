@@ -20,6 +20,7 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
   char msg[128] = { 0 };
   size_t msg_len = sizeof(msg) - 1;
   va_list vap;
+
   if ( format ) {
     va_start(vap, format);
     msg_len -= vsnprintf(msg, msg_len, format, vap);
@@ -32,20 +33,20 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
   fprintf(FP(ss_stderr), ": %s\n", msg);
 
   fprintf(FP(ss_stderr), ";; ss: backtrace:: \n");
-  for ( ss_s_env *env = ss_env; env; env = env->parent ) {
+  { ss_s_env *env; for ( env = ss_env; env; env = env->parent ) {
     fprintf(FP(ss_stderr), "  ;; %-3d ", (int) env->depth);
     ss_write(env->expr, ss_stderr);
     fprintf(FP(ss_stderr), "\n");
-  }
+  } }
 
   {
     void *bt[16]; int bt_size = 16; char **bts;
     bt_size = backtrace(bt, bt_size);
     bts = backtrace_symbols(bt, bt_size);
     fprintf(FP(ss_stderr), ";; ss: C backtrace:: \n");
-    for ( int i = 0; i < bt_size; ++ i ) {
+    { int i; for ( i = 0; i < bt_size; ++ i ) {
       fprintf(FP(ss_stderr), "  ;; %s\n", bts[i]);
-    }
+    } }
     free(bts);
   }
 

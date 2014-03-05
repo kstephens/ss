@@ -53,7 +53,8 @@ void ss_init_main(ss_s_env *ss_env, int argc, char **argv)
 
   {
     ss args = ss_vecn(argc);
-    for ( int i = 0; i < argc; ++ i ) {
+    int i;
+    for ( i = 0; i < argc; ++ i ) {
       ss_vector_V(args)[i] = ss_s(argv[i]);
     }
     ss_define(ss_env, ss_sym(ss_prog_args), args);
@@ -90,10 +91,10 @@ int main(int argc, char **argv)
     fclose(fp);
   }
 
-  for ( int argi = 1; argi < argc; ++ argi ) {
+  { int argi; for ( argi = 1; argi < argc; ++ argi ) {
     char *arg = argv[argi];
     ss_load_file(ss_env, file = arg);
-  }
+  } }
 
   if ( ! file ) {
     ss_main_repl(ss_env);
