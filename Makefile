@@ -1,3 +1,4 @@
+UNAME_S:=$(shell uname -s 2>/dev/null)#
 CFLAGS += -g
 ifneq "$(NO_OPTIMIZE)" ""
 CFLAGS += -O3
@@ -16,7 +17,9 @@ CFLAGS += -Wno-unused-label
 CFLAGS += -Wno-implicit-function-declaration
 CFLAGS += -Wno-incompatible-pointer-types-discards-qualifiers
 
+ifeq "$(UNAME_S)" "Linux"
 CC=colorgcc
+endif
 
 LIBS += -L/opt/local/lib
 ifneq "$(NO_GC)" ""
