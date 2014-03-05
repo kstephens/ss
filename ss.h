@@ -1,6 +1,9 @@
 #ifndef _ss_h_
 #define _ss_h_
 
+#if 1
+#define __USE_SVID 1
+#endif
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>

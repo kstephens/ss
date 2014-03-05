@@ -17,6 +17,8 @@ CFLAGS += -Wno-unused-label
 CFLAGS += -Wno-implicit-function-declaration
 CFLAGS += -Wno-incompatible-pointer-types-discards-qualifiers
 
+CC=colorgcc
+
 LIBS += -L/opt/local/lib
 ifneq "$(NO_GC)" ""
 CFLAGS += -DNO_GC=$(NO_GC)
