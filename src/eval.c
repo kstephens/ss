@@ -1,3 +1,4 @@
+#define ss_write(A,B)ss_write_3(A,B,ss_sym(internal))
 ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
 {
   ss rtn, expr;

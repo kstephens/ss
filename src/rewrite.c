@@ -25,7 +25,7 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
 {
   if ( ss_rewrite_verbose || ss_eval_verbose ) {
     fprintf(*ss_stderr, ";; rewrite: ");
-    ss_write(ss_expr, ss_stderr);
+    ss_write_3(ss_expr, ss_stderr, ss_sym(internal));
     fprintf(*ss_stderr, "\n;;      at: #@%p", _ss_expr);
     fprintf(*ss_stderr, "\n;;      in: %s line:%d", func, line);
     fprintf(*ss_stderr, "\n;;  reason: %s\n", (REASON));
@@ -33,7 +33,7 @@ void _ss_rewrite_expr(ss *_ss_expr, ss X, const char *REASON, const char *func, 
   ss_expr = X;
   if ( ss_rewrite_verbose || ss_eval_verbose ) {
     fprintf(*ss_stderr, ";;      as: ");
-    ss_write(ss_expr, ss_stderr);
+    ss_write_3(ss_expr, ss_stderr, ss_sym(internal);
     fprintf(*ss_stderr, "\n\n");
   }
 }
