@@ -74,6 +74,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
   ss_s_env *env = ss_env;
   int up, over;
   ss sym, *ref;
+
   ss_constantExprQ = 0;
   switch ( ss_type_te(var) ) {
   case ss_te_symbol:
@@ -82,58 +83,59 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     while ( env ) {
       for ( over = 0; over < env->argc; ++ over ) {
         if ( var == env->symv[over] ) {
+          ref    = &env->argv[over];
           ss_rewrite_expr(var = ss_m_var(var, up, over), "var binding found");
-          goto chk_var_global;
+          goto global_check;
         }
       }
       ++ up;
       env = env->parent;
     }
     return(ss_error(ss_env, "unbound", var, 0));
+
   case ss_te_var:
     up   = ((ss_s_var*) var)->up;
     while ( up -- > 0 ) env = env->parent;
     over = ((ss_s_var*) var)->over;
-  chk_var_global:
-    ref = &env->argv[over];
+    ref  = &env->argv[over];
     sym  = ((ss_s_var*) var)->name;
-    // assert(env);
-    // if var is at top-level,
+  global_check:
+    // if var ref is at top-level,
     if ( ! env->parent ) {
+      if ( ss_type_te(*ref) == ss_te_global ) {
+        // Replace var value with a global var.
+        ss_rewrite_expr(*ref, "variable is global");
+        ref = ((ss_s_global*) *ref)->ref;
+      } else {
       // box value with a global reference to a new cell.
-      if ( ss_type_te(*ref) != ss_te_global ) {
         ss *cell = ss_malloc(sizeof(*cell));
+        // init cell with current var value.
         *cell = *ref;
+        // Replace var value with a global var.
         *ref = ss_m_global(sym, cell);
+        // Replace expr with the global var.
         ss_rewrite_expr(*ref, "var is global");
-        goto global;
+        // Point ref into cell.
+        ref = cell;
       }
     }
-    break;
+    goto const_var_check;
+
   case ss_te_global:
     sym = ((ss_s_global*) var)->name;
     ref = ((ss_s_global*) var)->ref;
-    goto chk_const;
-  default:
-    return(ss_error(ss_env, "unexpected", var, 0));
-    break;
-  }
-
-  if ( ss_type_te(*ref) == ss_te_global ) {
-  global:
-    sym = ((ss_s_global*) *ref)->name;
-    ss_rewrite_expr(*ref, "global binding is known");
-    ref = ((ss_s_global*) *ref)->ref;
-  }
- chk_const:
-  if ( ((ss_s_symbol*) sym)->is_const ) {
-    if ( set ) return(ss_error(ss_env, "constant-variable-assignment", sym, 0));
-    ss_constantExprQ = 1;
-    if ( ! env->parent ) {
+  const_var_check:
+    if ( ((ss_s_symbol*) sym)->is_const ) {
+      if ( set ) return(ss_error(ss_env, "constant-variable-assignment", sym, 0));
+      ss_constantExprQ = 1;
       ss_rewrite_expr(ss_box_quote(*ref), "top-level variable is constant");
     }
+    return ref;
+
+  default:
+    return(ss_error(ss_env, "bind", var, "expected var"));
+    break;
   }
-  return ref;
 }
 
 ss_INLINE
