@@ -92,7 +92,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     up   = ((ss_s_var*) var)->up;
     over = ((ss_s_var*) var)->over;
     while ( up -- > 0 ) env = env->parent;
-    assert(env);
+    // assert(env);
     // if var is at top-level,
     if ( ! env->parent ) {
       ref = &env->argv[over];
@@ -102,6 +102,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
         *cell = *ref;
         *ref = ss_m_global(sym, cell);
         ss_rewrite_expr(*ref, "var is global");
+        goto global;
       }
       goto ref;
     }
@@ -114,6 +115,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
   ref = &env->argv[over];
  ref:
   if ( ss_type_te(*ref) == ss_te_global ) {
+  global:
     sym = ((ss_s_global*) *ref)->name;
     ss_rewrite_expr(*ref, "global binding is known");
     ref = ((ss_s_global*) *ref)->ref;
