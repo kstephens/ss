@@ -1,10 +1,24 @@
+#if 0
+int ss_read_peekc(ss stream)
+{
+  return (int) ss_C(ss_apply_sym(peek_char, 1, stream));
+}
+#define PEEKC(stream) ss_read_peekc(stream)
+int ss_read_getc(ss stream)
+{
+  return (int) ss_C(ss_apply_sym(read_char, 1, stream));
+}
+#define GETC(stream) ss_read_getc(stream)
+#else
+#define GETC(stream) getc(FP(stream))
+#define UNGETC(stream,c) ungetc(c, FP(stream))
+#endif
+
 #define macro_terminating_charQ ss_read_macro_terminating_charQ
 #define eat_whitespace_peekchar ss_read_eat_whitespace_peekchar
 #define VALUE ss
 #define READ_DECL ss ss_read(ss_s_env *ss_env, ss stream)
 #define READ_CALL() ss_ea1_read(ss_env, stream)
-#define GETC(stream) getc(FP(stream))
-#define UNGETC(stream,c) ungetc(c, FP(stream))
 #define EQ(X,Y) ((X) == (Y))
 #define NIL ss_nil
 #define EOS ss_eos
