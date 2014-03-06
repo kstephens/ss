@@ -133,6 +133,27 @@ Transform expressions using symbol => expression-transformer mapping.
 Common numeric expressions are expanded into inline binary and unary polymorphic primitive subexpressions.
 These numeric subexpressions are then subject to constant expression folding.
 
+#### Rewrite Examples
+
+      #; ss> (define x '(a b c d e))
+    x
+      #; ss> (define (f) (cons (car (cdr (cdr x))) 5))
+    f
+      #; ss> (%type f)
+    #<type closure >
+    ;; The 3rd slot of a closure is its lambda.
+      #; ss> (%type (C:ss_get f 2))
+    #<type lambda >
+      #; ss> (C:ss_get f 2)
+    ;; Note: body is still in s-expression form.
+    #<l () (begin (cons (car (cdr (cdr x))) 5)) >
+      #; ss> (f)
+    (c . 5)
+    ;; After evaluation, body function applications and variable references are rewritten.
+      #; ss> (C:ss_get f 2)
+    #<l () #<(#<g cons > #<(#<g car > #<(#<g cdr > #<(#<g cdr > #<g x >)> )> )>  5)>  >
+
+
 ## Build
 
     $ make
