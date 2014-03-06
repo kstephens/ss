@@ -41,6 +41,7 @@
 (test-file "t/test-string.scm")
 (test-file "t/test-math.scm")
 (test-file "t/test-deep-closure.scm")
+(test-file "t/test-port.scm")
 (test-file "t/test-sort.scm")
 (test-file "t/test-hashtable.scm")
 (test-file "t/test-tail-recursion.scm")
