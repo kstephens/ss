@@ -256,10 +256,12 @@ ss ss_error_raise(ss_s_env *ss_env, ss val);
 ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...);
 
 extern ss_s_env *ss_top_level_env, *ss_current_env;
-ss ss_apply(ss_s_env *ss_env, ss func, ss args);
+ss ss_applyv(ss_s_env *ss_env, ss func, ss args);
+#define ss_apply(FUNC, NARGS, ARGS, ...)       \
+  ss_applyv(ss_env, FUNC, ss_vec(NARGS, ARGS))
 #define _ss_apply_sym(ENV, SYM, NARGS, ARGS, ...)                       \
   ({ ss_s_env *ss_env = ss_top_level_env; ss __sym = ss_sym(SYM);       \
-    ss_apply((ENV), ss_eval(__sym), ss_vec(NARGS, ARGS));               \
+    ss_applyv((ENV), ss_eval(__sym), ss_vec(NARGS, ARGS));               \
   })
 
 #define ss_apply_sym(SYM, NARGS, ARGS, ...)                             \

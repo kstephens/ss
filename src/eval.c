@@ -77,7 +77,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
   case ss_te_pair:
     rtn = ss_car(expr);
     if ( ss_type_te(rtn) == ss_te_symbol && (rtn = ((ss_s_symbol*) rtn)->syntax) != ss_f ) {
-      expr = ss_apply(ss_env, rtn, ss_cdr(expr));
+      expr = ss_applyv(ss_env, rtn, ss_cdr(expr));
       ss_rewrite_expr(expr, "syntax rewrite");
       goto again;
     }
@@ -191,7 +191,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
 }
 #undef ss_write
 
-ss ss_apply(ss_s_env *ss_env, ss func, ss args)
+ss ss_applyv(ss_s_env *ss_env, ss func, ss args)
 {
   if ( ss_type_te(args) != ss_te_vector )
     args = ss_list_to_vector(args);
@@ -199,7 +199,7 @@ ss ss_apply(ss_s_env *ss_env, ss func, ss args)
 }
 
 ss_prim(apply,2,2,0,"func args") {
-  ss_return(ss_apply(ss_env, ss_argv[0], ss_argv[1]));
+  ss_return(ss_applyv(ss_env, ss_argv[0], ss_argv[1]));
 } ss_end
 
 ss_prim(eval,1,2,0,"expr env?") {

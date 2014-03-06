@@ -2,7 +2,7 @@
   (C:ss_error &env (symbol->string code) other C:%NULL))
 
 (define (apply func args) ;; FIXME
-  (C:ss_apply &env func args))
+  (C:ss_applyv &env func args))
 
 ;; ss_ADD has arity checks, while C:ss_ADD does not.
 (define + ss_ADD)
