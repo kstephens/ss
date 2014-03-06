@@ -44,9 +44,15 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
     bt_size = backtrace(bt, bt_size);
     bts = backtrace_symbols(bt, bt_size);
     fprintf(FP(ss_stderr), ";; ss: C backtrace:: \n");
-    { int i; for ( i = 0; i < bt_size; ++ i ) {
-      fprintf(FP(ss_stderr), "  ;; %s\n", bts[i]);
-    } }
+    {
+      int i;
+      for ( i = 0; i < bt_size; ++ i ) {
+        fprintf(FP(ss_stderr), "  ;; %s\n", bts[i]);
+      }
+      if ( i >= bt_size ) {
+        fprintf(FP(ss_stderr), "  ;; ... more not shown.\n");
+      }
+    }
     free(bts);
   }
 
