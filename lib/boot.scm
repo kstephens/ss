@@ -262,7 +262,7 @@
 (define *load-verbose* #f)
 (define (load-file file)
   (let ((port (open-read-file file)))
-    (let ((result (C:ss_repl &env port (if *load-verbose* ss_stderr #f) #f #f)))
+    (let ((result (C:ss_repl_run (C:ss_m_repl &env port (if *load-verbose* ss_stderr #f)))))
       (close-port port)
       result)))
 (define load load-file)

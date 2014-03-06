@@ -23,6 +23,7 @@ ss_te_def(type)
 ss_te_def(keyword)
 ss_te_def(catch)
 ss_te_def(throwable)
+ss_te_def(repl)
 // NON-LITERALS
 ss_te_def(pair)
 ss_te_def(null)
