@@ -67,10 +67,10 @@ ss ss_define(ss_s_env *env, ss sym, ss val)
       return sym;
     }
   }
-  env->symv = memcpy(ss_malloc(sizeof(env->symv) * (env->argc + 1)), env->symv, sizeof(env->symv[0]) * env->argc);
-  env->symv[env->argc] = sym;
-  env->argv = memcpy(ss_malloc(sizeof(env->argv) * (env->argc + 1)), env->argv, sizeof(env->argv[0]) * env->argc);
-  env->argv[env->argc] = val;
+  env->symv = memcpy(ss_malloc(sizeof(env->symv) * (i + 1)), env->symv, sizeof(env->symv[0]) * i);
+  env->symv[i] = sym;
+  env->argv = memcpy(ss_malloc(sizeof(env->argv) * (i + 1)), env->argv, sizeof(env->argv[0]) * i);
+  env->argv[i] = val;
   ++ env->argc;
 
   // ss_write(sym, ss_stderr); fprintf(*ss_stderr, " = "); ss_write(val, ss_stderr); fprintf(*ss_stderr, " #@%d\n", (int) env->argc);
