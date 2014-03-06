@@ -1,4 +1,9 @@
 
+ss ss_const_var_assign(ss_s_env *ss_env, ss sym)
+{
+  return(ss_error(ss_env, "constant-variable-assignment", sym, 0));
+}
+
 ss_INLINE
 ss ss_m_env(ss_s_env *parent)
 {
@@ -52,6 +57,10 @@ ss ss_m_global(ss sym, ss ref)
 ss ss_define(ss_s_env *env, ss sym, ss val)
 {
   int i;
+
+  if ( ((ss_s_symbol*) sym)->is_const )
+    return ss_const_var_assign(env, sym);
+
   for ( i = 0; i < env->argc; ++ i ) {
     if ( sym == env->symv[i] ) {
       env->argv[i] = val;
@@ -124,7 +133,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     ref = ((ss_s_global*) var)->ref;
   const_var_check:
     if ( ((ss_s_symbol*) sym)->is_const ) {
-      if ( set ) return(ss_error(ss_env, "constant-variable-assignment", sym, 0));
+      if ( set ) return ss_const_var_assign(ss_env, sym);
       ss_constantExprQ = 1;
       ss_rewrite_expr(ss_box_quote(*ref), "top-level variable is constant");
     }
