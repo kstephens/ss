@@ -382,6 +382,6 @@
 
 (load "lib/each.scm")
 
-(display ";; ss - boot.scm loaded.")(newline)
+(display "  ;; ss: boot.scm loaded.")(newline)
 
 ;; (load "t/test.scm")

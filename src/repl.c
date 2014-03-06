@@ -74,7 +74,7 @@ ss ss_load_file(ss_s_env *ss_env, const char *filename)
   ss rtn;
   FILE *fh = 0;
   fh = fopen(filename, "r");
-  fprintf(stderr, "  load-file %s FILE* %p\n", filename, fh);
+  fprintf(stderr, "  ;; ss: load-file %s FILE* %p\n", filename, fh);
   if ( ! fh )
     return ss_error(ss_env, "load-file", ss_s(filename), "cannot open");
   rtn = ss_repl_run(ss_m_repl(ss_env, &fh, ss_f));
