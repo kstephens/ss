@@ -51,11 +51,11 @@ int main(int argc, char **argv)
   ss_top_level_env = ss_current_env = ss_env = ss_m_env(0);
   ss_init_const(ss_env);
   ss_init_symbol(ss_env);
-  ss_init_port(ss_env);
   ss_init_global(ss_env);
   ss_init_main(ss_env, argc, argv);
   ss_init_prim(ss_env);
   ss_init_cwrap(ss_env);
+  ss_init_port(ss_env);
 
   if ( 1 ) {
     char fn[1024];

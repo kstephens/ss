@@ -233,8 +233,11 @@ ss ss_box_symbol(const char *name);
 
 typedef struct ss_s_port {
   FILE *fp;
-  ss name;
-  ss mode;
+  ss name, mode, next_char;
+  ss read_char, peek_char, char_readyQ;
+  ss read_chars;
+  ss write_char, write_chars;
+  ss close;
 } ss_s_port;
 
 struct ss_s_catch;
