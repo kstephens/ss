@@ -1,8 +1,8 @@
-void ss_write_vec(size_t n, const ss *v, ss port)
+void ss_write_vec(size_t n, const ss *v, ss port, ss mode)
 {
   size_t i = 0;
   while ( i < n ) {
-    ss_write(v[i], port);
+    ss_write_3(v[i], port, mode);
     if ( ++ i < n )
       fprintf(FP(port), " ");
   }
@@ -63,9 +63,9 @@ ss ss_write_3(ss v, ss port, ss mode)
     }
     break;
   case ss_te_var:
-    fprintf(out, "#<v ");
+    if ( mode == ss_sym(internal) ) fprintf(out, "#<v ");
     ss_write(((ss_s_var*) v)->name, port);
-    fprintf(out, " %d %d>", (int) ((ss_s_var*) v)->up, (int) ((ss_s_var*) v)->over);
+    if ( mode == ss_sym(internal) ) fprintf(out, " %d %d>", (int) ((ss_s_var*) v)->up, (int) ((ss_s_var*) v)->over);
     break;
   case ss_te_var_set:
     fprintf(out, mode == ss_sym(internal) ? "#<v! " : "(set! ");
@@ -75,9 +75,9 @@ ss ss_write_3(ss v, ss port, ss mode)
     fprintf(out, mode == ss_sym(internal) ? " >" : ")");
     break;
   case ss_te_global:
-    fprintf(out, "#<g ");
+    if ( mode == ss_sym(internal) ) fprintf(out, "#<g ");
     ss_write(((ss_s_global*) v)->name, port);
-    fprintf(out, " >");
+    if ( mode == ss_sym(internal) ) fprintf(out, " >");
     break;
   case ss_te_quote:   fprintf(out, "'"); ss_write(((ss_s_quote*) v)->value, port); break;
   case ss_te_eos:     fprintf(out, "#<eos>"); break;
@@ -131,17 +131,17 @@ ss ss_write_3(ss v, ss port, ss mode)
     break;
   case ss_te_begin:
     fprintf(out, mode == ss_sym(internal) ? "#<b " : "(begin ");
-    ss_write_vec(ss_vector_L(v), ss_vector_V(v), port);
+    ss_write_vec(ss_vector_L(v), ss_vector_V(v), port, mode);
     fprintf(out, mode == ss_sym(internal) ? " >" : ")");
     break;
   case ss_te_app:
     fprintf(out, mode == ss_sym(internal) ? "#<(" : "(");
-    ss_write_vec(ss_vector_L(v), ss_vector_V(v), port);
+    ss_write_vec(ss_vector_L(v), ss_vector_V(v), port, mode);
     fprintf(out, mode == ss_sym(internal) ? ")> " : ")");
     break;
   case ss_te_vector:
     fprintf(out, "#(");
-    ss_write_vec(ss_vector_L(v), ss_vector_V(v), port);
+    ss_write_vec(ss_vector_L(v), ss_vector_V(v), port, mode);
     fprintf(out, ")");
     break;
   }

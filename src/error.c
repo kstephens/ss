@@ -35,7 +35,7 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
   fprintf(FP(ss_stderr), ";; ss: backtrace:: \n");
   { ss_s_env *env; for ( env = ss_env; env; env = env->parent ) {
     fprintf(FP(ss_stderr), "  ;; %-3d ", (int) env->depth);
-    ss_write(env->expr, ss_stderr);
+    ss_write_3(env->expr, ss_stderr, ss_sym(internal));
     fprintf(FP(ss_stderr), "\n");
   } }
 

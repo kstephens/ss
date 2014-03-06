@@ -147,7 +147,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
         if ( ss_eval_verbose ) {
           fprintf(*ss_stderr, "    ;; apply closure:\n");
           fprintf(*ss_stderr, "    ;;   args: (");
-          ss_write_vec(env->argc, env->argv, ss_stderr);
+          ss_write_vec(env->argc, env->argv, ss_stderr, ss_sym(internal));
           fprintf(*ss_stderr, ")\n    ;;     to: ");
           ss_write(self, ss_stderr);
           fprintf(*ss_stderr, "\n");

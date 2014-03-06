@@ -39,7 +39,7 @@ ss ss_repl_run(ss repl)
       }
       if ( value != ss_undef && value != ss_unspec ) {
         if ( self->output != ss_f ) {
-          ss_write(value, self->output); fprintf(FP(self->output), "\n");
+          ss_write_3(value, self->output, ss_sym(internal)); fprintf(FP(self->output), "\n");
         }
       }
     }
