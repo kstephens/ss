@@ -93,6 +93,8 @@
   (C:ss_c i))
 (define %eos (integer->char -1))
 (C:ss_make_constant '%eos)
+(define (eof-object? x) (eq? x %eos))
+(C:ss_make_constant 'eof-object?)
 
 (define %<vector> (%type '#(1 2)))
 (C:ss_make_constant '%<vector>)
