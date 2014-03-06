@@ -135,7 +135,7 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
     if ( ((ss_s_symbol*) sym)->is_const ) {
       if ( set ) return ss_const_var_assign(ss_env, sym);
       ss_constantExprQ = 1;
-      ss_rewrite_expr(ss_box_quote(*ref), "top-level variable is constant");
+      ss_rewrite_expr(ss_box_quote(*ref), "global variable is constant");
     }
     return ref;
 
