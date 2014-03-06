@@ -45,7 +45,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
       return(ss_undef);
     }
   case ss_te_global:
-    return(*((ss_s_global*) expr)->ref);
+    return(ss_var_get(ss_env, _ss_expr, expr));
   case ss_te_if:
     {
       ss_s_if *self = ss_expr;

@@ -141,18 +141,40 @@ These numeric subexpressions are then subject to constant expression folding.
     f
       #; ss> (%type f)
     #<type closure >
-    ;; The 3rd slot of a closure is its lambda.
+    
+        ;; The 3rd slot of a closure is its lambda.
       #; ss> (%type (C:ss_get f 2))
     #<type lambda >
+    
+        ;; Note: body is still in s-expression form.
       #; ss> (C:ss_get f 2)
-    ;; Note: body is still in s-expression form.
     #<l () (begin (cons (car (cdr (cdr x))) 5)) >
       #; ss> (f)
     (c . 5)
-    ;; After evaluation, body function applications and variable references are rewritten.
+    
+        ;; After evaluation, body function applications and variable references are rewritten.
       #; ss> (C:ss_get f 2)
     #<l () #<(#<g cons > #<(#<g car > #<(#<g cdr > #<(#<g cdr > #<g x >)> )> )>  5)>  >
 
+
+      #; ss> (define (f x) (+ x 2 3 5))
+    f
+      #; ss> (C:ss_get f 2)
+    #<l (x) (begin (+ x 2 3 5)) >
+    
+    ;; Note: (ss_ADD 2 (ss_ADD 3 (ss_ADD 5))) => 10
+      #; ss> (f 1)
+    11
+      #; ss> (C:ss_get f 2)
+    #<l (x) #<(#<g ss_ADD > #<v x 0 0> 10)>  >
+    
+        ;; Note: the constant global var is replaced with its constant value.
+      #; ss> (C:ss_make_constant 'ss_ADD)
+    ss_ADD
+      #; ss> (f 1)
+    11
+      #; ss> (C:ss_get f 2)
+    #<l (x) #<(#<p ss_ADD #@0x0 + z... :safe > #<v x 0 0> 10)>  >
 
 ## Build
 
