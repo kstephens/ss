@@ -241,7 +241,7 @@
 
 (define (%open-file func file mode)
   (let ((port (C:ss_m_port
-                (C:fopen file mode)
+                (C:%fopen (C:%ss_S file) (C:%ss_S mode))
                 file mode)))
     (if port port
       (error func "cannot open" file (C:ss_errstr #f)))))
@@ -382,6 +382,6 @@
 
 (load "lib/each.scm")
 
-(display "  ;; ss: boot.scm loaded.")(newline)
+(display "  ;; ss: boot.scm loaded." ss_stderr)(newline ss_stderr)
 
 ;; (load "t/test.scm")
