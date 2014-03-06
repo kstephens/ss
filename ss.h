@@ -362,6 +362,13 @@ typedef struct ss_s_if {
   ss t, a, b;
 } ss_s_if;
 
+struct ss_s_repl;
+typedef struct ss_s_repl {
+  ss_s_env *env;
+  ss input, output, prompt, trap_errors;
+  ss echo_read, echo_rewrite;
+} ss_s_repl;
+
 #ifndef ss_sym
 #define ss_sym(X)ss_PASTE2(_ss_sym_,X)
 #endif

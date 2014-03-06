@@ -8,31 +8,6 @@ void ss_init_global(ss_s_env *ss_env)
 void ss_init_prim(ss_s_env *ss_env);
 void ss_init_cwrap(ss_s_env *ss_env);
 
-ss ss_main_repl(ss_s_env *ss_env)
-{
-  ss input  = ss_stdin;
-  ss output = ss_stdout;
-  ss prompt = ss_stderr;
-  ss trap_errors = ss_t;
-  if ( ! isatty(0) ) {
-    prompt = trap_errors = ss_f;
-  }
-  return ss_repl(ss_env, input, output, prompt, trap_errors);
-}
-
-ss ss_load_file(ss_s_env *ss_env, const char *filename)
-{
-  ss rtn;
-  FILE *fh = 0;
-  fh = fopen(filename, "r");
-  fprintf(stderr, "  load-file %s FILE* %p\n", filename, fh);
-  if ( ! fh )
-    return ss_error(ss_env, "load-file", ss_s(filename), "cannot open");
-  rtn = ss_repl(ss_env, &fh, ss_stderr, ss_stderr, ss_f);
-  fclose(fh);
-  return rtn;
-}
-
 void ss_init_main(ss_s_env *ss_env, int argc, char **argv)
 {
   char *r;
@@ -85,10 +60,7 @@ int main(int argc, char **argv)
   if ( 1 ) {
     char fn[1024];
     snprintf(fn, 1023, "%s/%s", ss_lib_dir, "boot.scm");
-    FILE *fp = fopen(fn, "r");
-    ss out = ss_f; // ss_stderr;
-    ss_repl(ss_env, &fp, out, out, ss_f);
-    fclose(fp);
+    ss_load_file(ss_env, fn);
   }
 
   { int argi; for ( argi = 1; argi < argc; ++ argi ) {
@@ -97,7 +69,7 @@ int main(int argc, char **argv)
   } }
 
   if ( ! file ) {
-    ss_main_repl(ss_env);
+    ss_repl_run(ss_main_repl(ss_env));
   }
 
   return 0;
