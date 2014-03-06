@@ -72,13 +72,12 @@ ss ss_main_repl(ss_s_env *ss_env)
 ss ss_load_file(ss_s_env *ss_env, const char *filename)
 {
   ss rtn;
-  FILE *fh = 0;
-  fh = fopen(filename, "r");
-  fprintf(stderr, "  ;; ss: load-file %s FILE* %p\n", filename, fh);
-  if ( ! fh )
+  ss p = ss_m_port(fopen(filename, "r"), ss_s(filename), ss_s("r"));
+  fprintf(stderr, "  ;; ss: load-file %s #@%p\n", filename, p);
+  if ( p == ss_f )
     return ss_error(ss_env, "load-file", ss_s(filename), "cannot open");
-  rtn = ss_repl_run(ss_m_repl(ss_env, &fh, ss_f));
-  fclose(fh);
+  rtn = ss_repl_run(ss_m_repl(ss_env, p, ss_f));
+  ss_port_close(p);
   return rtn;
 }
 

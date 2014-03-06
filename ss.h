@@ -232,7 +232,7 @@ typedef struct ss_s_symbol {
 ss ss_box_symbol(const char *name);
 
 typedef struct ss_s_port {
-  FILE *fp;
+  ss opaque0, opaque1, opaque2, opaque3;
   ss name, mode, next_char;
   ss read_char, peek_char, char_readyQ;
   ss read_chars;
