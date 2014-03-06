@@ -30,7 +30,7 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
   // Move this to ss_write for ss_t_error.
   fprintf(FP(ss_stderr), "\n  ;; ss: error: %s ", code);
   ss_write(obj, ss_stderr);
-  fprintf(FP(ss_stderr), ": %s\n", msg);
+  fprintf(FP(ss_stderr), " : %s\n", msg);
 
   fprintf(FP(ss_stderr), ";; ss: backtrace:: \n");
   { ss_s_env *env; for ( env = ss_env; env; env = env->parent ) {
