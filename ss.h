@@ -230,6 +230,11 @@ typedef struct ss_s_symbol {
   ss_fixnum_t is_const;
 } ss_s_symbol;
 ss ss_box_symbol(const char *name);
+ss_INLINE
+const char *ss_sym_charP(ss x) {
+  ss_s_symbol *sym = x;
+  return sym->name == ss_f ? 0 : ss_string_V(sym->name);
+}
 
 typedef struct ss_s_port {
   ss opaque0, opaque1, opaque2, opaque3;
