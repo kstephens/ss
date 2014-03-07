@@ -82,7 +82,6 @@ typedef enum ss_te {
 #define ss_te_def(N) ss_te_##N,
 #include "te.def"
   ss_te_LITERAL_MIN = ss_te_undef,
-  ss_te_LITERAL_MAX = ss_te_throwable,
   ss_te_LAST,
 } ss_te;
 
@@ -132,7 +131,7 @@ ss_te ss_type_te(ss x)
 ss_INLINE
 int ss_literalQ(ss X)
 {
-  return ss_te_LITERAL_MIN <= ss_type_te(X) && ss_type_te(X) <= ss_te_LITERAL_MAX;
+  return ss_type_te(X) >= ss_te_LITERAL_MIN;
 }
 
 ss ss_box_fixnum(ss_fixnum_t _v);
