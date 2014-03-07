@@ -69,42 +69,54 @@ below as #<TAG ...>.
 
 #### Conditionals
 
-    (if a b)        =>  #<if a b #<unspec> >
-    (if a b c)      =>  #<if a b c >
+```scheme
+(if a b)        =>  #<if a b #<unspec> >
+(if a b c)      =>  #<if a b c >
+```
 
 A conditional expression with constant test can be rewritten as either branch.
 
 #### Literals
 
-    (quote x)        =>  `x
+```scheme
+(quote x)        =>  `x
+```
 
 #### Basic Blocks
 
-    (begin a)        =>  a
-    (begin a b ...)  =>  #<begin a b ...>
+```scheme
+(begin a)        =>  a
+(begin a b ...)  =>  #<begin a b ...>
+```
 
 The begin form transform prepares its body for proper tail recursion and space optimization.
 
 #### Application
 
-    (proc args ...)  =>  #<(proc args ...)>
+```scheme
+(proc args ...)  =>  #<(proc args ...)>
+```
 
 The application vector form has a length that can be computed in O(1) time for efficient arity checking.
 The vector form is time and space efficent when allocating new parameter bindings.
 
 #### Closures
 
-    (lambda formals . body)  =>  #<l formals (begin . body)>
+```scheme
+(lambda formals . body)  =>  #<l formals (begin . body)>
+```
 
 The lambda form is aware of its lexical enviroment, parameter positions and rest-args.
 The body is transformed to a basic block which is rewritten to aid proper tail-recursion.
 
 #### Variable References
 
-     sym                 =>  #<v sym up over>
-     #<v sym up over>    =>  #<g sym #<cell>>   iff (top-level? sym)
-     #<v sym up over>    =>  #<quote val>       iff (constant? sym)
-     (set! sym val)      =>  #<v! #<v sym up over> val>
+```scheme
+sym                 =>  #<v sym up over>
+#<v sym up over>    =>  #<g sym #<cell>>   iff (top-level? sym)
+#<v sym up over>    =>  #<quote val>       iff (constant? sym)
+(set! sym val)      =>  #<v! #<v sym up over> val>
+```
 
 Initial variable reference expressions are symbols.
 Symbols are rewritten as internal variable expressions with "up-and-over" coordinates given the lexical environment:
@@ -137,44 +149,48 @@ These numeric subexpressions are then subject to constant expression folding.
 
 #### Global Variable
 
-      #;> (define x '(a b c d e))
-      #;> (define (f) (cons (car (cdr (cdr x))) 5))
-      #;> (%type f)
-    #<type closure >
-    
-        ;; The 3rd slot of a closure is its lambda.
-      #;> (%type (C:ss_get f 2))
-    #<type lambda >
-    
-        ;; Note: lambda body is in consed s-expression form.
-      #;> (C:ss_get f 2)
-    #<l () (begin (cons (car (cdr (cdr x))) 5)) >
-    
-        ;; After evaluation, function applications and variable references in the lambda body are rewritten.
-      #;> (f)
-    (c . 5)
-      #;> (C:ss_get f 2)
-    #<l () #<(#<g cons > #<(#<g car > #<(#<g cdr > #<(#<g cdr > #<g x >)> )> )>  5)>  >
+```scheme
+  #;> (define x '(a b c d e))
+  #;> (define (f) (cons (car (cdr (cdr x))) 5))
+  #;> (%type f)
+#<type closure >
+
+    ;; The 3rd slot of a closure is its lambda.
+  #;> (%type (C:ss_get f 2))
+#<type lambda >
+
+    ;; Note: lambda body is in consed s-expression form.
+  #;> (C:ss_get f 2)
+#<l () (begin (cons (car (cdr (cdr x))) 5)) >
+
+    ;; After evaluation, function applications and variable references in the lambda body are rewritten.
+  #;> (f)
+(c . 5)
+  #;> (C:ss_get f 2)
+#<l () #<(#<g cons > #<(#<g car > #<(#<g cdr > #<(#<g cdr > #<g x >)> )> )>  5)>  >
+```
 
 #### Numeric Operator Expansion and Global Constant Substitution
 
-      #;> (define (f x) (+ x 2 3 5))
-      #;> (C:ss_get f 2)
-    #<l (x) (begin (+ x 2 3 5)) >
-    
-    ;; Note: (ss_ADD 2 (ss_ADD 3 (ss_ADD 5))) => 10
-      #;> (f 1)
-    11
-      #;> (C:ss_get f 2)
-    #<l (x) #<(#<g ss_ADD > #<v x 0 0> 10)>  >
-    
-        ;; Note: the constant global var is replaced with its constant value.
-      #;> (C:ss_make_constant 'ss_ADD)
-    ss_ADD
-      #;> (f 1)
-    11
-      #;> (C:ss_get f 2)
-    #<l (x) #<(#<p ss_ADD #@0x0 (+ z ...) :safe > #<v x 0 0> 10)>  >
+```scheme
+  #;> (define (f x) (+ x 2 3 5))
+  #;> (C:ss_get f 2)
+#<l (x) (begin (+ x 2 3 5)) >
+
+;; Note: (ss_ADD 2 (ss_ADD 3 (ss_ADD 5))) => 10
+  #;> (f 1)
+11
+  #;> (C:ss_get f 2)
+#<l (x) #<(#<g ss_ADD > #<v x 0 0> 10)>  >
+
+    ;; Note: the constant global var is replaced with its constant value.
+  #;> (C:ss_make_constant 'ss_ADD)
+ss_ADD
+  #;> (f 1)
+11
+  #;> (C:ss_get f 2)
+#<l (x) #<(#<p ss_ADD #@0x0 (+ z ...) :safe > #<v x 0 0> 10)>  >
+```
 
 ## C FFI
 
@@ -193,28 +209,30 @@ The cwrap.c creates wrapping primitives to box, unbox and manipulate C data type
 
 ### FFI Examples
 
-      ;; Create a float[10] array.
-      #;> (define fa (C:new-float*: 10 0.5))
-      #;> fa
-    #<C:float* #@0x10ea70aa8 >
-      ;; Get the fa[0].
-      #;> (C:float*-ref fa 0)
-    0.5
-      ;; Set fa[0].
-      #;> (C:float*-set! fa 0 1.23)
-    #<C:float* #@0x10ea70aa8 >
-      #;> (C:float*-ref fa 0)
-    1.2300000190734863
+```scheme
+  ;; Create a float[10] array.
+  #;> (define fa (C:new-float*: 10 0.5))
+  #;> fa
+#<C:float* #@0x10ea70aa8 >
+  ;; Get the fa[0].
+  #;> (C:float*-ref fa 0)
+0.5
+  ;; Set fa[0].
+  #;> (C:float*-set! fa 0 1.23)
+#<C:float* #@0x10ea70aa8 >
+  #;> (C:float*-ref fa 0)
+1.2300000190734863
 
-      ;; char* are boxed as strings.
-      #;> (C:getenv "PATH")
-    "/opt/local/bin:/opt/local/sbin:..."
+  ;; char* are boxed as strings.
+  #;> (C:getenv "PATH")
+"/opt/local/bin:/opt/local/sbin:..."
 
-      ;; %-prefix functions are unsafe.
-      ;; C:%ss_s creates strings from C char*,
-      ;; C:%ss_S creates C char* from strings.
-      #;> (C:%ss_s (C:%getenv (C:%ss_S "PATH")))
-    "/opt/local/bin:/opt/local/sbin:..."
+  ;; %-prefix functions are unsafe.
+  ;; C:%ss_s creates strings from C char*,
+  ;; C:%ss_S creates C char* from strings.
+  #;> (C:%ss_s (C:%getenv (C:%ss_S "PATH")))
+"/opt/local/bin:/opt/local/sbin:..."
+```
 
 ## Build
 
