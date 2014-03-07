@@ -216,16 +216,16 @@ void ss_init_cwrap(ss_s_env *ss_env)
 #undef F
 #define F(NAME) &NAME, ss_STRINGTIZE(NAME)
 #define CT_P(TN,CS)                                                     \
-    { F(ss_B0_C_##TN##P),              0, 0, 0, "new-" CS "*"        , 0, 0  }, \
-    { F(ss_BV_C_##TN##P),              0, 0, 0, "new-" CS "*:"       , 2, 0  }, \
-    { F(ss_D_C_##TN##P),               0, 0, 0,    "*" CS "*"        , 1, 0  }, \
-    { F(ss_R_C_##TN##P),               0, 0, 0,        CS "*-ref"    , 2, 0  }, \
-    { F(ss_S_C_##TN##P),               0, 0, 0,        CS "*-set!"   , 3, 0  },
+    { F(ss_B0_C_##TN##P),              0, 0, 0, "make-" CS "*"        , 0, 0  }, \
+    { F(ss_BV_C_##TN##P),              0, 0, 0, "make-" CS "*:"       , 2, 0  }, \
+    { F(ss_D_C_##TN##P),               0, 0, 0,     "*" CS "*"        , 1, 0  }, \
+    { F(ss_R_C_##TN##P),               0, 0, 0,         CS "*-ref"    , 2, 0  }, \
+    { F(ss_S_C_##TN##P),               0, 0, 0,         CS "*-set!"   , 3, 0  },
 #define ss_cintrinsic_def(CT,TN)                                        \
-    { F(ss_B0_C_##TN),                 0, 0, 0, "new-" #CT           , 0, 0  }, \
-    { F(ss_B1_C_##TN),                 0, 0, 0, "new-" #CT ":"       , 1, 0  }, \
-    { F(ss_US_C_##TN),                 0, 0, 0,        #CT "->"      , 1, 0  }, \
-    { F(ss_BS_C_##TN),                 0, 0, 0,        #CT "="       , 2, 0  }, \
+    { F(ss_B0_C_##TN),                 0, 0, 0, "make-" #CT           , 0, 0  }, \
+    { F(ss_B1_C_##TN),                 0, 0, 0, "make-" #CT ":"       , 1, 0  }, \
+    { F(ss_US_C_##TN),                 0, 0, 0,         #CT "->"      , 1, 0  }, \
+    { F(ss_BS_C_##TN),                 0, 0, 0,         #CT "="       , 2, 0  }, \
     CT_P(TN,    #CT)                                                    \
     CT_P(TN##P, #CT "*")
 #define ITYPE(CT,TN) ss_cintrinsic_def(CT,TN)
@@ -233,21 +233,21 @@ void ss_init_cwrap(ss_s_env *ss_env)
     ITYPE(void*,voidP)
 #include "cintrinsics.def"
 #define ss_cstruct_def(ST,SN,FILE,LINE)                                 \
-    { F(ss_B0_C_##ST##_##SN),          0, 0, 0, "new-" #ST "-" #SN     ,        0, 0 }, \
-    { F(ss_A_C_##ST##_##SN),           0, 0, 0,        #ST "-" #SN "&" ,        1, 0 }, \
+    { F(ss_B0_C_##ST##_##SN),          0, 0, 0, "make-" #ST "-" #SN     ,        0, 0 }, \
+    { F(ss_A_C_##ST##_##SN),           0, 0, 0,         #ST "-" #SN "&" ,        1, 0 }, \
     CT_P(ST##_##SN,    #ST " " #SN)                                     \
     CT_P(ST##_##SN##P, #ST " " #SN "*")
 #define ss_cstruct_decl(ST,SN,FILE,LINE)                                \
-    { F(ss_B0_C_##ST##_##SN##P),       0, 0, 0, "new-" #ST "-" #SN "*" ,        0, 0 }, \
-    { F(ss_B0_C_##ST##_##SN##PP),      0, 0, 0, "new-" #ST "-" #SN "**",        0, 0 }, \
-    { F(ss_D_C_##ST##_##SN##PP),       0, 0, 0,    "*" #ST "-" #SN "**",        1, 0 },
+    { F(ss_B0_C_##ST##_##SN##P),       0, 0, 0, "make-" #ST "-" #SN "*" ,        0, 0 }, \
+    { F(ss_B0_C_##ST##_##SN##PP),      0, 0, 0, "make-" #ST "-" #SN "**",        0, 0 }, \
+    { F(ss_D_C_##ST##_##SN##PP),       0, 0, 0,     "*" #ST "-" #SN "**",        1, 0 },
 #define ss_cstruct_element_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)          \
-    { F(ss_SR_C_##ST##_##SN##__##EN),  0, 0, 0,        #ST "-" #SN "." #EN    , 1, 0 }, \
-    { F(ss_SS_C_##ST##_##SN##__##EN),  0, 0, 0,        #ST "-" #SN "." #EN "=", 2, 0 },
+    { F(ss_SR_C_##ST##_##SN##__##EN),  0, 0, 0,         #ST "-" #SN "." #EN    , 1, 0 }, \
+    { F(ss_SS_C_##ST##_##SN##__##EN),  0, 0, 0,         #ST "-" #SN "." #EN "=", 2, 0 },
 #define ss_cstruct_elemptr_def(ST,SN,CT,RT,MT,EN,BF,FILE,LINE)          \
-    { F(ss_SP_C_##ST##_##SN##__##EN),  0, 0, 0,        #ST "-" #SN "." #EN "&", 1, 0 },
+    { F(ss_SP_C_##ST##_##SN##__##EN),  0, 0, 0,         #ST "-" #SN "." #EN "&", 1, 0 },
 #define ss_cfunc_def(CT,MT,RT,NAME,NPARAMS,PARAMS,SPARAMS,FILE,LINE)    \
-    { F(NAME), #NAME, F(ss_Cf_##NAME), #NAME, NPARAMS, #CT "(*)(" SPARAMS ")"},
+    { F(NAME), #NAME, F(ss_Cf_##NAME), #NAME, NPARAMS,  #CT "(*)(" SPARAMS ")"},
 #include "cwrap.def"
     { 0, }
   }, *d;

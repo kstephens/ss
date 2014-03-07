@@ -108,7 +108,7 @@ ss ss_write_3(ss v, ss port, ss mode)
     fprintf(out, "#<type %s >", ((ss_s_type*) v)->name);
     break;
   default:
-    fprintf(out, "#<%s #@%p >", ss_type_(v)->name, (void*) v);
+    fprintf(out, "#<%s >", ss_type_(v)->name);
     break;
   case ss_te_pair:
     fprintf(out, "(");

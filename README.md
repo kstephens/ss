@@ -64,8 +64,8 @@ a C switch statement.
 
 ### Primitive Syntax
 
-Syntax s-expression lists are rewritten as internally tagged expressions, denoted
-below as #<TAG ...>.
+S-expression syntax is lists rewritten as internally tagged expressions, denoted
+below with "#".
 
 #### Conditionals
 
@@ -79,7 +79,7 @@ A conditional expression with constant test can be rewritten as either branch.
 #### Literals
 
 ```scheme
-(quote x)        =>  `x
+(quote x)        =>  #<quote x>
 ```
 
 #### Basic Blocks
@@ -97,8 +97,7 @@ The begin form transform prepares its body for proper tail recursion and space o
 (proc args ...)  =>  #<(proc args ...)>
 ```
 
-The application vector form has a length that can be computed in O(1) time for efficient arity checking.
-The vector form is time and space efficent when allocating new parameter bindings.
+The application vector form is time and space efficient for mapping parameters to arguments and arity checking.
 
 #### Closures
 
@@ -106,7 +105,7 @@ The vector form is time and space efficent when allocating new parameter binding
 (lambda formals . body)  =>  #<l formals (begin . body)>
 ```
 
-The lambda form is aware of its lexical enviroment, parameter positions and rest-args.
+The lambda form contains parameter, rest-arg positions and its lexical enviroment.
 The body is transformed to a basic block which is rewritten to aid proper tail-recursion.
 
 #### Variable References
@@ -119,11 +118,11 @@ sym                 =>  #<v sym up over>
 ```
 
 Initial variable reference expressions are symbols.
-Symbols are rewritten as internal variable expressions with "up-and-over" coordinates given the lexical environment:
-"up" denotes how many parent closures the variable is bound, "over" denotes its position in the closure's argument vector.
-Variable expressions that are bound to top-level environments are rewritten as "#<g ...>" global variable expressions pointing to new cells containing the original variable value.
-Variables that are declared as constants are rewritten as quoted expressions of their value.
-Variable assignments are rewritten as #<var!> forms with rewritten variables references.
+A symbol is rewritten as a variable expressions with "up-and-over" coordinates:
+"up": how many parent closures links to follow, "over" index into its closure argument vector.
+A variable bound in the top-level environment is rewritten as a global variable pointing to a new cell containing the original variable value.
+A variable declared as a constants is rewritten as a quoted value.
+A variable assignment is rewritten as an assignement form containing a variable and a value expression.
 
 #### Constant Expression Folding
 
@@ -138,7 +137,7 @@ may be rewritten as a constant depending on the context, given these rules:
 
 #### Macros
 
-Transform expressions using symbol => expression-transformer mapping.
+A macro is an expression transformer bound to a symbol.  An application form with a macro symbol in the car position is macro application.  A macro transformer is applied to macro application arguments and the process is repeated.
 
 #### Variable-arity Numeric Functions
 
@@ -147,17 +146,31 @@ These numeric subexpressions are then subject to constant expression folding.
 
 ### Rewrite Examples
 
+#### Conditional Folding
+
+```scheme
+  #> (define (f) (if #t 1 0))
+  #> (%type f)
+#<type closure >
+
+      ;; The 3rd slot of a closure is its lambda.
+  #> (%type (C:ss_get f 2))
+#<type lambda >
+
+  #> (C:%ss_get f 2)
+#<l () (begin (if #t 1 0)) >
+
+  #> (f)
+1
+  #> (C:%ss_get f 2)
+#<l () 1 >
+```
+
 #### Global Variable
 
 ```scheme
   #> (define x '(a b c d e))
   #> (define (f) (cons (car (cdr (cdr x))) 5))
-  #> (%type f)
-#<type closure >
-
-    ;; The 3rd slot of a closure is its lambda.
-  #> (%type (C:ss_get f 2))
-#<type lambda >
 
     ;; Note: lambda body is in consed s-expression form.
   #> (C:ss_get f 2)
@@ -205,21 +218,22 @@ The Makefile creates *.def files under gen/ which are generated from C preproces
 * C functions parsed from ss.i.
 * C #defines parsed from ss.i for string and numeric constants.
 
-The cwrap.c creates wrapping primitives to box, unbox and manipulate C data types.
+The cwrap.c creates wrapping primitives around C data types and functions.
+The C primitives are prefixed with "C:".
 
 ### FFI Examples
 
 ```scheme
   ;; Create a float[10] array.
-  #> (define fa (C:new-float*: 10 0.5))
+  #> (define fa (C:make-float*: 10 0.5))
   #> fa
-#<C:float* #@0x10ea70aa8 >
-  ;; Get the fa[0].
+#<C:float* >
+  ;; Get fa[0].
   #> (C:float*-ref fa 0)
 0.5
   ;; Set fa[0].
   #> (C:float*-set! fa 0 1.23)
-#<C:float* #@0x10ea70aa8 >
+#<C:float* >
   #> (C:float*-ref fa 0)
 1.2300000190734863
 
@@ -227,25 +241,45 @@ The cwrap.c creates wrapping primitives to box, unbox and manipulate C data type
   #> (C:getenv "PATH")
 "/opt/local/bin:/opt/local/sbin:..."
 
-  ;; %-prefix functions are unsafe.
+  ;; %-prefix functions are unsafe,
+  ;;   no boxing/unboxing of arguments or return values.
   ;; C:%ss_s creates strings from C char*,
   ;; C:%ss_S creates C char* from strings.
   #> (C:%ss_s (C:%getenv (C:%ss_S "PATH")))
 "/opt/local/bin:/opt/local/sbin:..."
 ```
-
-### FFI Caveats
+### Low-level Access
 
 ```scheme
-  #> (C:%ss_i (C:%strtol (C:%ss_S "1234") C:%NULL (C:%ss_I 10)))
-1234
   #> (C:strtol "1234" C:%NULL 10)
 1234
-  #> (C:%ss_box_fixnum (C:%strtod (C:%ss_S "1234.56") C:%NULL (C:%ss_I 10)))
-648627832824015092 ;; ???
+  #> (C:%ss_i (C:%strtol (C:%ss_S "1234") C:%NULL (C:%ss_I 10)))
+1234
   #> (C:strtod "1234.56" C:%NULL)
 1234.56
+  #> (C:%ss_box_flonum (C:%strtod (C:%ss_S "1234.56") C:%NULL (C:%ss_I 10)))
+1234.56 ;; ???
 ```
+
+### Interesting Hackery
+
+```scheme
+    ;; The offset of struct ss_s_type instance_size element.
+    ;; In C: (size_t) &((struct ss_s_type*) 0)->instance_size)
+  #> (C:%ss_i (C:%ss_get (C:%struct-ss_s_type.instance_size& C:%NULL) 0))
+32
+    ;; The first element is C_ssP is the ss* to instance_size.
+  #> (C:%struct-ss_s_type.instance_size& C:%NULL)
+#<C_ssP #@0x105408828 >
+
+```
+
+## Surprises
+
+Most of the primitives, especially the C primitives are not typesafe, only a handful of primitives
+check type or arity.  Incorrect values or types can cause an ungraceful fatal error.
+The goal was to simplify C callouts and minimize the bootstrapping and build the
+typechecking after boot.scm and in the JIT or compiler.
 
 ## Build
 
