@@ -150,45 +150,45 @@ These numeric subexpressions are then subject to constant expression folding.
 #### Global Variable
 
 ```scheme
-  #;> (define x '(a b c d e))
-  #;> (define (f) (cons (car (cdr (cdr x))) 5))
-  #;> (%type f)
+  #> (define x '(a b c d e))
+  #> (define (f) (cons (car (cdr (cdr x))) 5))
+  #> (%type f)
 #<type closure >
 
     ;; The 3rd slot of a closure is its lambda.
-  #;> (%type (C:ss_get f 2))
+  #> (%type (C:ss_get f 2))
 #<type lambda >
 
     ;; Note: lambda body is in consed s-expression form.
-  #;> (C:ss_get f 2)
+  #> (C:ss_get f 2)
 #<l () (begin (cons (car (cdr (cdr x))) 5)) >
 
     ;; After evaluation, function applications and variable references in the lambda body are rewritten.
-  #;> (f)
+  #> (f)
 (c . 5)
-  #;> (C:ss_get f 2)
+  #> (C:ss_get f 2)
 #<l () #<(#<g cons > #<(#<g car > #<(#<g cdr > #<(#<g cdr > #<g x >)> )> )>  5)>  >
 ```
 
 #### Numeric Operator Expansion and Global Constant Substitution
 
 ```scheme
-  #;> (define (f x) (+ x 2 3 5))
-  #;> (C:ss_get f 2)
+  #> (define (f x) (+ x 2 3 5))
+  #> (C:ss_get f 2)
 #<l (x) (begin (+ x 2 3 5)) >
 
 ;; Note: (ss_ADD 2 (ss_ADD 3 (ss_ADD 5))) => 10
-  #;> (f 1)
+  #> (f 1)
 11
-  #;> (C:ss_get f 2)
+  #> (C:ss_get f 2)
 #<l (x) #<(#<g ss_ADD > #<v x 0 0> 10)>  >
 
     ;; Note: the constant global var is replaced with its constant value.
-  #;> (C:ss_make_constant 'ss_ADD)
+  #> (C:ss_make_constant 'ss_ADD)
 ss_ADD
-  #;> (f 1)
+  #> (f 1)
 11
-  #;> (C:ss_get f 2)
+  #> (C:ss_get f 2)
 #<l (x) #<(#<p ss_ADD #@0x0 (+ z ...) :safe > #<v x 0 0> 10)>  >
 ```
 
@@ -215,22 +215,22 @@ The cwrap.c creates wrapping primitives to box, unbox and manipulate C data type
   #> fa
 #<C:float* #@0x10ea70aa8 >
   ;; Get the fa[0].
-  #;> (C:float*-ref fa 0)
+  #> (C:float*-ref fa 0)
 0.5
   ;; Set fa[0].
-  #;> (C:float*-set! fa 0 1.23)
+  #> (C:float*-set! fa 0 1.23)
 #<C:float* #@0x10ea70aa8 >
-  #;> (C:float*-ref fa 0)
+  #> (C:float*-ref fa 0)
 1.2300000190734863
 
   ;; char* are boxed as strings.
-  #;> (C:getenv "PATH")
+  #> (C:getenv "PATH")
 "/opt/local/bin:/opt/local/sbin:..."
 
   ;; %-prefix functions are unsafe.
   ;; C:%ss_s creates strings from C char*,
   ;; C:%ss_S creates C char* from strings.
-  #;> (C:%ss_s (C:%getenv (C:%ss_S "PATH")))
+  #> (C:%ss_s (C:%getenv (C:%ss_S "PATH")))
 "/opt/local/bin:/opt/local/sbin:..."
 ```
 
