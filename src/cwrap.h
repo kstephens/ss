@@ -127,13 +127,15 @@
     return BOX(NAME,* (TYPE *) self);                                   \
   }
 
-// Addressable with boxing primitive.
+// Addressable with boxing primitives.
 #define WRAP_CT_ADDRESSABLE(TYPE,NAME)                                  \
   ss   ss_PASTE2(ss_BP_C_,NAME) (TYPE *value);                          \
   ss   ss_PASTE2(ss_B_C_,NAME) (TYPE value) {                           \
     return ss_PASTE2(ss_BP_C_,NAME)(&value);                            \
   }                                                                     \
   TYPE ss_PASTE2(ss_U_C_,NAME) (ss self) {                              \
+    static TYPE _zero;                                                  \
+    if ( ! self ) return _zero;                                         \
     return *(TYPE*) self;                                               \
   }                                                                     \
   WRAP_CT_ADDRESSABLE_0(TYPE,NAME)
