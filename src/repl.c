@@ -15,7 +15,7 @@ ss ss_repl_prompt(ss repl)
 {
   ss_s_repl *self = repl;
   if ( ! feof(FP(self->input)) && self->prompt != ss_f )
-    fprintf(FP(self->prompt), "  #; ss> ");
+    fprintf(FP(self->prompt), "  #;> ");
   return ss_ea1_read(self->env, self->input);
 }
 

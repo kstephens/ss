@@ -214,6 +214,7 @@ void ss_init_cwrap(ss_s_env *ss_env)
     char cname[64];
     if ( ! d->wfunc )  d->wfunc  = d->cfunc;
     if ( ! d->wfuncn ) d->wfuncn = d->cfuncn;
+    if ( ! d->docstr ) d->docstr = d->wname;
     snprintf(cname, 63, "%%%s", d->cname ? d->cname : d->wname);
     ss_define_cfunc(ss_env, cname   , d->cfunc, -1        , d->cfuncn, d->docstr);
     ss_define_cfunc(ss_env, d->wname, d->wfunc, d->nparams, d->wfuncn, d->docstr);
