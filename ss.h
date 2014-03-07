@@ -91,9 +91,8 @@ typedef struct ss_s_type {
   ss_PRIM_DECL((*prim));
   const char *name;
   ss_word_t e; // ss_te
-  size_t instance_size;
-  ss supers;
-  ss methods;
+  ss instance_size;
+  ss supers, methods;
   ss c_sizeof, c_ptr_type, c_elem_type;
 } ss_s_type;
 
@@ -114,7 +113,8 @@ ss_INLINE
 ss          ss_c(ss_fixnum_t c) { return ss_BOX_char(c); }
 ss_INLINE
 ss_fixnum_t ss_C(ss v)          { return ss_UNB_char(v); }
-
+ss_INLINE
+int ss_fixnumQ(ss x) { return (int) (((ss_word_t) x) & 1); }
 ss_INLINE
 ss ss_type(ss x)
 {
