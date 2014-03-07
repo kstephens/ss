@@ -15,7 +15,7 @@ ss ss_box_symbol(const char *name)
     for ( l = symbol_list; l != ss_nil; l = ss_cdr(l) ) {
       sym = (ss_s_symbol*) ss_car(l);
       if ( strcmp(name, ss_string_V(sym->name)) == 0 )
-        goto rtn;
+        return sym;
     }
   }
 
@@ -26,8 +26,6 @@ ss ss_box_symbol(const char *name)
   sym->is_const = 0;
   if ( name )
     symbol_list = ss_cons(sym, symbol_list);
-
- rtn:
   return sym;
 }
 

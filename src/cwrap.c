@@ -1,5 +1,11 @@
 #include "cwrap.h"
 
+ss _ss_cdefine_list;
+ss ss_cdefine_list() { return _ss_cdefine_list; }
+
+ss _ss_ctype_list;
+ss ss_ctype_list() { return _ss_ctype_list; }
+
 #define ITYPE(T,N) extern ss_s_type *ss_t_C_##N, *ss_t_C_##N##P, *ss_t_C_##N##PP;
 #define FTYPE(T,N) ITYPE(T,N)
 ITYPE(void*,voidP)
@@ -136,14 +142,18 @@ void ss_init_cdefine(ss_s_env *ss_env)
     { 0 },
   }, *d;
   for ( d = inits; d->n; ++ d ) {
+    ss val = 0;
     if ( d->rv[0] == '"' && d->rv[1] && d->rv[strlen(d->rv) - 1] == '"' ) {
-      ss_define(ss_env, ss_c_sym(d->n), ss_strnv(strlen(d->rv) - 2, d->rv + 1));
+      val = ss_strnv(strlen(d->rv) - 2, d->rv + 1);
     } else {
       ss expr = ss_s(d->rv);
       ss num = ss_string_TO_number(expr, 0);
-      if ( num != ss_f ) {
-        ss_define(ss_env, ss_c_sym(d->n), num);
-      }
+      if ( num != ss_f ) val = num;
+    }
+    if ( val ) {
+      ss name = ss_c_sym(d->n);
+      ss_define(ss_env, name, val);
+      _ss_cdefine_list = ss_cons(ss_cons(name, val), _ss_cdefine_list);
     }
   }
 }
