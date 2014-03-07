@@ -211,8 +211,8 @@ The cwrap.c creates wrapping primitives to box, unbox and manipulate C data type
 
 ```scheme
   ;; Create a float[10] array.
-  #;> (define fa (C:new-float*: 10 0.5))
-  #;> fa
+  #> (define fa (C:new-float*: 10 0.5))
+  #> fa
 #<C:float* #@0x10ea70aa8 >
   ;; Get the fa[0].
   #;> (C:float*-ref fa 0)
