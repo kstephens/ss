@@ -160,30 +160,38 @@ char *c_name(const char *cname)
 void ss_init_ctypes(ss_s_env *ss_env)
 {
   static struct {
-    void *var; const char *name;
+    void *type_var; const char *name; size_t size; void *ptr_type_var;
   } inits[] = {
-#define ss_cintrinsic_def(CT,TN)                  \
-    { &ss_t_C_##TN,              #CT      },      \
-    { &ss_t_C_##TN##P,           #CT "*"  },      \
-    { &ss_t_C_##TN##PP,          #CT "**" },
+#define ss_cintrinsic_def(CT,TN)                                  \
+    { &ss_t_C_##TN,              #CT      , sizeof(CT), &ss_t_C_##TN##P   }, \
+    { &ss_t_C_##TN##P,           #CT "*"  , sizeof(void*), &ss_t_C_##TN##PP  },  \
+    { &ss_t_C_##TN##PP,          #CT "**" , sizeof(void*), 0 },
 #define ITYPE(CT,TN) ss_cintrinsic_def(CT,TN)
 #define FTYPE(CT,TN) ss_cintrinsic_def(CT,TN)
 ss_cintrinsic_def(void*,voidP)
 #include "cintrinsics.def"
 #define ss_cstruct_decl(ST,SN,FILE,LINE)                                \
-    { &ss_t_C_##ST##_##SN##P,   #ST "-" #SN "*"  },                     \
-    { &ss_t_C_##ST##_##SN##PP,  #ST "-" #SN "**" },
+    { &ss_t_C_##ST##_##SN##P,   #ST "-" #SN "*"  , sizeof(void*), &ss_t_C_##ST##_##SN##PP }, \
+    { &ss_t_C_##ST##_##SN##PP,  #ST "-" #SN "**" , sizeof(void*), 0                       },
 #define ss_cstruct_def(ST,SN,FILE,LINE)                                 \
   ss_cstruct_decl(ST,SN,FILE,LINE)                                      \
-    { &ss_t_C_##ST##_##SN,      #ST "-" #SN      },
+    { &ss_t_C_##ST##_##SN,      #ST "-" #SN      , sizeof(ST SN), &ss_t_C_##ST##_##SN##P  },
 
 #include "cwrap.def"
     { 0 }
   }, *d;
-  for ( d = inits; d->var; ++ d ) {
-    ss_s_type *t = * (ss*) d->var;
-    ss_define(ss_env, ss_c_sym(c_name(d->name)), t);
+  for ( d = inits; d->type_var; ++ d ) {
+    ss_s_type *t = * (ss*) d->type_var;
+    ss sym = ss_c_sym(c_name(d->name));
+    ss_define(ss_env, sym, t);
     t->name = ss_sym_charP(ss_c_sym(d->name));
+    t->c_sizeof = ss_i(d->size);
+    _ss_ctype_list = ss_cons(ss_cons(sym, t), _ss_ctype_list);
+    if ( d->ptr_type_var ) {
+      ss_s_type *ptr_t = * (ss*) d->ptr_type_var;
+      ptr_t->c_elem_type = t;
+      t->c_ptr_type = ptr_t;
+    }
   }
 }
 
