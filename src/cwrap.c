@@ -170,13 +170,13 @@ void ss_init_ctypes(ss_s_env *ss_env)
 #define FTYPE(CT,TN) ss_cintrinsic_def(CT,TN)
 ss_cintrinsic_def(void*,voidP)
 #include "cintrinsics.def"
-#define ss_cstruct_def(ST,SN,FILE,LINE)                                 \
-    { &ss_t_C_##ST##_##SN,      #ST "-" #SN      },                     \
-    { &ss_t_C_##ST##_##SN##P,   #ST "-" #SN "*"  },                     \
-    { &ss_t_C_##ST##_##SN##PP,  #ST "-" #SN "**" },
 #define ss_cstruct_decl(ST,SN,FILE,LINE)                                \
     { &ss_t_C_##ST##_##SN##P,   #ST "-" #SN "*"  },                     \
     { &ss_t_C_##ST##_##SN##PP,  #ST "-" #SN "**" },
+#define ss_cstruct_def(ST,SN,FILE,LINE)                                 \
+  ss_cstruct_decl(ST,SN,FILE,LINE)                                      \
+    { &ss_t_C_##ST##_##SN,      #ST "-" #SN      },
+
 #include "cwrap.def"
     { 0 }
   }, *d;
@@ -197,22 +197,19 @@ void ss_init_cwrap(ss_s_env *ss_env)
   } inits[] = {
 #undef F
 #define F(NAME) &NAME, ss_STRINGTIZE(NAME)
+#define CT_P(TN,CS)                                                     \
+    { F(ss_B0_C_##TN##P),              0, 0, 0, "new-" CS "*"        , 0, 0  }, \
+    { F(ss_BV_C_##TN##P),              0, 0, 0, "new-" CS "*:"       , 2, 0  }, \
+    { F(ss_D_C_##TN##P),               0, 0, 0,    "*" CS "*"        , 1, 0  }, \
+    { F(ss_R_C_##TN##P),               0, 0, 0,        CS "*-ref"    , 2, 0  }, \
+    { F(ss_S_C_##TN##P),               0, 0, 0,        CS "*-set!"   , 3, 0  },
 #define ss_cintrinsic_def(CT,TN)                                        \
     { F(ss_B0_C_##TN),                 0, 0, 0, "new-" #CT           , 0, 0  }, \
     { F(ss_B1_C_##TN),                 0, 0, 0, "new-" #CT ":"       , 1, 0  }, \
     { F(ss_US_C_##TN),                 0, 0, 0,        #CT "->"      , 1, 0  }, \
     { F(ss_BS_C_##TN),                 0, 0, 0,        #CT "="       , 2, 0  }, \
-    { F(ss_A_C_##TN),                  0, 0, 0,        #CT "&"       , 1, 0  }, \
-    { F(ss_B0_C_##TN##P),              0, 0, 0, "new-" #CT "*"       , 0, 0  }, \
-    { F(ss_BV_C_##TN##P),              0, 0, 0, "new-" #CT "*:"      , 2, 0  }, \
-    { F(ss_R_C_##TN##P),               0, 0, 0,        #CT "*-ref"   , 2, 0  }, \
-    { F(ss_S_C_##TN##P),               0, 0, 0,        #CT "*-set!"  , 3, 0  }, \
-    { F(ss_D_C_##TN##P),               0, 0, 0,    "*" #CT "*"       , 1, 0  }, \
-    { F(ss_B0_C_##TN##PP),             0, 0, 0, "new-" #CT "**"      , 0, 0  }, \
-    { F(ss_BV_C_##TN##PP),             0, 0, 0, "new-" #CT "**:"     , 2, 0  }, \
-    { F(ss_R_C_##TN##PP),              0, 0, 0,        #CT "**-ref"  , 2, 0  }, \
-    { F(ss_S_C_##TN##PP),              0, 0, 0,        #CT "**-set!" , 3, 0  }, \
-    { F(ss_D_C_##TN##PP),              0, 0, 0,    "*" #CT "**"      , 1, 0  },
+    CT_P(TN,    #CT)                                                    \
+    CT_P(TN##P, #CT "*")
 #define ITYPE(CT,TN) ss_cintrinsic_def(CT,TN)
 #define FTYPE(CT,TN) ss_cintrinsic_def(CT,TN)
     ITYPE(void*,voidP)
@@ -220,10 +217,8 @@ void ss_init_cwrap(ss_s_env *ss_env)
 #define ss_cstruct_def(ST,SN,FILE,LINE)                                 \
     { F(ss_B0_C_##ST##_##SN),          0, 0, 0, "new-" #ST "-" #SN     ,        0, 0 }, \
     { F(ss_A_C_##ST##_##SN),           0, 0, 0,        #ST "-" #SN "&" ,        1, 0 }, \
-    { F(ss_B0_C_##ST##_##SN##P),       0, 0, 0, "new-" #ST "-" #SN "*" ,        0, 0 }, \
-    { F(ss_D_C_##ST##_##SN##P),        0, 0, 0,    "*" #ST "-" #SN "*" ,        1, 0 }, \
-    { F(ss_B0_C_##ST##_##SN##PP),      0, 0, 0, "new-" #ST "-" #SN "**",        0, 0 }, \
-    { F(ss_D_C_##ST##_##SN##PP),       0, 0, 0,    "*" #ST "-" #SN "**",        1, 0 },
+    CT_P(ST##_##SN,    #ST " " #SN)                                     \
+    CT_P(ST##_##SN##P, #ST " " #SN "*")
 #define ss_cstruct_decl(ST,SN,FILE,LINE)                                \
     { F(ss_B0_C_##ST##_##SN##P),       0, 0, 0, "new-" #ST "-" #SN "*" ,        0, 0 }, \
     { F(ss_B0_C_##ST##_##SN##PP),      0, 0, 0, "new-" #ST "-" #SN "**",        0, 0 }, \
