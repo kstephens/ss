@@ -181,7 +181,9 @@ ss_cintrinsic_def(void*,voidP)
     { 0 }
   }, *d;
   for ( d = inits; d->var; ++ d ) {
-    ss_define(ss_env, ss_c_sym(c_name(d->name)), * (ss*) d->var);
+    ss_s_type *t = * (ss*) d->var;
+    ss_define(ss_env, ss_c_sym(c_name(d->name)), t);
+    t->name = ss_sym_charP(ss_c_sym(d->name));
   }
 }
 

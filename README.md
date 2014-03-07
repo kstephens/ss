@@ -156,7 +156,7 @@ These numeric subexpressions are then subject to constant expression folding.
       #;> (C:ss_get f 2)
     #<l () #<(#<g cons > #<(#<g car > #<(#<g cdr > #<(#<g cdr > #<g x >)> )> )>  5)>  >
 
-#### Numeric Operation Expansion and Global Constant Substitution
+#### Numeric Operator Expansion and Global Constant Substitution
 
       #;> (define (f x) (+ x 2 3 5))
       #;> (C:ss_get f 2)
@@ -176,6 +176,46 @@ These numeric subexpressions are then subject to constant expression folding.
       #;> (C:ss_get f 2)
     #<l (x) #<(#<p ss_ADD #@0x0 (+ z ...) :safe > #<v x 0 0> 10)>  >
 
+## C FFI
+
+The Makefile creates *.def files under gen/ which are generated from C preprocessor output of ss.c, ss.i.  This information is used to create introspective data about ss.c:
+
+* Types from ss_t_*.
+* Symbols from ss_sym(*).
+* Primitives from ss_prim(...)
+* Syntax from ss_syntax(..)
+* C types parsed from ss.i.
+* C structs parsed from ss.i.
+* C functions parsed from ss.i.
+* C #defines parsed from ss.i for string and numeric constants.
+
+The cwrap.c creates wrapping primitives to box, unbox and manipulate C data types.
+
+### FFI Examples
+
+      ;; Create a float[10] array.
+      #;> (define fa (C:new-float*: 10 0.5))
+      #;> fa
+    #<C:float* #@0x10ea70aa8 >
+      ;; Get the fa[0].
+      #;> (C:float*-ref fa 0)
+    0.5
+      ;; Set fa[0].
+      #;> (C:float*-set! fa 0 1.23)
+    #<C:float* #@0x10ea70aa8 >
+      #;> (C:float*-ref fa 0)
+    1.2300000190734863
+
+      ;; char* are boxed as strings.
+      #;> (C:getenv "PATH")
+    "/opt/local/bin:/opt/local/sbin:..."
+
+      ;; %-prefix functions are unsafe.
+      ;; C:%ss_s creates strings from C char*,
+      ;; C:%ss_S creates C char* from strings.
+      #;> (C:%ss_s (C:%getenv (C:%ss_S "PATH")))
+    "/opt/local/bin:/opt/local/sbin:..."
+
 ## Build
 
     $ make
@@ -187,8 +227,8 @@ These numeric subexpressions are then subject to constant expression folding.
 
 ## Portability
 
-* 64-bit Linux
 * 64-bit OS X
+* 64-bit Linux (currently broken)
 
 ## Dependencies
 
