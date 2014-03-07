@@ -303,7 +303,7 @@ typedef struct ss_s_prim {
   }                                                                     \
   ss ss_p_##NAME;                                                       \
   static ss_PRIM_DECL(ss_PASTE2(_ss_pf_,NAME));                         \
-  ss_s_prim ss_PASTE2(_ss_p_,NAME) = { 0, ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, NO_SIDE_EFFECT, DOCSTRING } ; \
+  ss_s_prim ss_PASTE2(_ss_p_,NAME) = { 0, ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, NO_SIDE_EFFECT, "(" DOCSTRING ")" } ; \
   static ss_PRIM_DECL(ss_PASTE2(_ss_pf_,NAME)) {                        \
   ss ss_rtn = ss_undef;                                                 \
   _ss_prim_arity_check(MINARGS,MAXARGS,DOCSTRING);                      \
