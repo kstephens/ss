@@ -94,6 +94,7 @@ typedef struct ss_s_type {
   size_t instance_size;
   ss supers;
   ss methods;
+  ss c_sizeof, c_ptr_type, c_elem_type;
 } ss_s_type;
 
 #define ss_t_def(N) extern ss_s_type *ss_t_##N;
