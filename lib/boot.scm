@@ -28,6 +28,8 @@
 
 (define (%type x) (C:ss_type x))
 (C:ss_make_constant '%type)
+(define %<type> (%type (%type #t)))
+(C:ss_make_constant '%<type>)
 
 (define %<null> (%type '()))
 (C:ss_make_constant '%<null>)
