@@ -89,7 +89,7 @@ A conditional expression with constant test can be rewritten as either branch.
 (begin a b ...)  =>  #<begin a b ...>
 ```
 
-The begin form transform prepares its body for proper tail recursion and space optimization.
+The begin form transform handles proper tail recursion.
 
 #### Application
 
@@ -105,7 +105,7 @@ The application vector form is time and space efficient for mapping parameters t
 (lambda formals . body)  =>  #<l formals (begin . body)>
 ```
 
-The lambda form contains parameter, rest-arg positions and its lexical enviroment.
+The lambda form contains formal parameter and rest-arg positions and its lexical enviroment.
 The body is transformed to a basic block which is rewritten to aid proper tail-recursion.
 
 #### Variable References
@@ -131,18 +131,18 @@ may be rewritten as a constant depending on the context, given these rules:
 
 * A self-evaluating value: number, boolean, string, character, is a constant expression.
 * A quoted form is a constant expression.
-* A constant variable reference is a constant expression and is rewritten as a quoted value.
-* A side-effect-free function application on constants is a constant expression and is written as a quoted value.
+* A constant variable reference is a constant expression.
+* A side-effect-free function application on constants is a constant expression.
 * A constant conditional expression can be rewritten as one of its branch expressions.
 
 #### Macros
 
-A macro is an expression transformer bound to a symbol.  An application form with a macro symbol in the car position is macro application.  A macro transformer is applied to macro application arguments and the process is repeated.
+A macro is an expression transformer bound to a symbol.  An application form with a macro symbol in the car position is macro application.  A macro transformer is applied to the macro arguments and the process is repeated.
 
 #### Variable-arity Numeric Functions
 
-Common numeric expressions are expanded into inline binary and unary polymorphic primitive subexpressions.
-These numeric subexpressions are then subject to constant expression folding.
+Common numeric expressions are expanded into binary and unary polymorphic primitive subexpressions,
+subject to constant expression folding.
 
 ### Rewrite Examples
 
