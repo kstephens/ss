@@ -90,9 +90,9 @@ ss ss_write_3(ss v, ss port, ss mode)
     fprintf(out, mode == ss_sym(internal) ? " >" : ")");
     break;
   case ss_te_closure:
-    // fprintf(out, "#<c #@%p E#@%p ", v, ((ss_s_closure, v).env);
+    fprintf(out, mode == ss_sym(internal) ? "#<c " : "");
     ss_write(((ss_s_closure*) v)->lambda, port);
-    // fprintf(out, ">");
+    fprintf(out, mode == ss_sym(internal) ? " >" : "");
     break;
   case ss_te_port:
     fprintf(out, "#<port ");
