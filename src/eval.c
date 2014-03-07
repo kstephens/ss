@@ -48,11 +48,11 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     return(ss_var_get(ss_env, _ss_expr, expr));
   case ss_te_if:
     {
-      ss_s_if *self = ss_expr;
+      ss_s_if *self = expr;
       ss *subexpr;
       rtn = ss_eval(self->t);
       subexpr = rtn != ss_f ? &self->a : &self->b;
-      if ( 0 && ss_constantExprQ )
+      if ( ss_constantExprQ )
         ss_rewrite_expr(*subexpr, rtn != ss_f ? "constant test is true" : "constant test is false");
       else
         _ss_expr = subexpr;
