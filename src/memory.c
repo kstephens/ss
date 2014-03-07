@@ -37,6 +37,8 @@ ss ss_alloc(ss type, size_t size)
 {
   ss *ptr = ss_malloc(sizeof(ss) + size);
   *(ptr ++) = type;
+  if ( type && ! ss_fixnumQ(((ss_s_type*) type)->instance_size) )
+    ((ss_s_type*) type)->instance_size = ss_i(size);
   return ptr;
 }
 
