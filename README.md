@@ -234,6 +234,19 @@ The cwrap.c creates wrapping primitives to box, unbox and manipulate C data type
 "/opt/local/bin:/opt/local/sbin:..."
 ```
 
+### FFI Caveats
+
+```scheme
+  #> (C:%ss_i (C:%strtol (C:%ss_S "1234") C:%NULL (C:%ss_I 10)))
+1234
+  #> (C:strtol "1234" C:%NULL 10)
+1234
+  #> (C:%ss_box_fixnum (C:%strtod (C:%ss_S "1234.56") C:%NULL (C:%ss_I 10)))
+648627832824015092 ;; ???
+  #> (C:strtod "1234.56" C:%NULL)
+1234.56
+```
+
 ## Build
 
     $ make
