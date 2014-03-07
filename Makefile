@@ -9,6 +9,7 @@ CPPFLAGS += -Igen
 CPPFLAGS += -Iboot
 CPPFLAGS += -Isrc
 CPPFLAGS += -I/opt/local/include
+CPPFLAGS += -fmacro-backtrace-limit=0
 # CFLAGS += -Wall
 CFLAGS += $(CPPFLAGS)
 CFLAGS += -Wno-deprecated-declarations

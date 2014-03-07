@@ -96,7 +96,7 @@ The vector form is time and space efficent when allocating new parameter binding
 
     (lambda formals . body)  =>  #<l formals (begin . body)>
 
-The lambda vector form is aware of its lexical enviroment, parameter positions and rest-args.
+The lambda form is aware of its lexical enviroment, parameter positions and rest-args.
 The body is transformed to a basic block which is rewritten to aid proper tail-recursion.
 
 #### Variable References
@@ -133,48 +133,48 @@ Transform expressions using symbol => expression-transformer mapping.
 Common numeric expressions are expanded into inline binary and unary polymorphic primitive subexpressions.
 These numeric subexpressions are then subject to constant expression folding.
 
-#### Rewrite Examples
+### Rewrite Examples
 
-      #; ss> (define x '(a b c d e))
-    x
-      #; ss> (define (f) (cons (car (cdr (cdr x))) 5))
-    f
-      #; ss> (%type f)
+#### Global Variable
+
+      #;> (define x '(a b c d e))
+      #;> (define (f) (cons (car (cdr (cdr x))) 5))
+      #;> (%type f)
     #<type closure >
     
         ;; The 3rd slot of a closure is its lambda.
-      #; ss> (%type (C:ss_get f 2))
+      #;> (%type (C:ss_get f 2))
     #<type lambda >
     
-        ;; Note: body is still in s-expression form.
-      #; ss> (C:ss_get f 2)
+        ;; Note: lambda body is in consed s-expression form.
+      #;> (C:ss_get f 2)
     #<l () (begin (cons (car (cdr (cdr x))) 5)) >
-      #; ss> (f)
-    (c . 5)
     
-        ;; After evaluation, body function applications and variable references are rewritten.
-      #; ss> (C:ss_get f 2)
+        ;; After evaluation, function applications and variable references in the lambda body are rewritten.
+      #;> (f)
+    (c . 5)
+      #;> (C:ss_get f 2)
     #<l () #<(#<g cons > #<(#<g car > #<(#<g cdr > #<(#<g cdr > #<g x >)> )> )>  5)>  >
 
+#### Numeric Operation Expansion and Global Constant Substitution
 
-      #; ss> (define (f x) (+ x 2 3 5))
-    f
-      #; ss> (C:ss_get f 2)
+      #;> (define (f x) (+ x 2 3 5))
+      #;> (C:ss_get f 2)
     #<l (x) (begin (+ x 2 3 5)) >
     
     ;; Note: (ss_ADD 2 (ss_ADD 3 (ss_ADD 5))) => 10
-      #; ss> (f 1)
+      #;> (f 1)
     11
-      #; ss> (C:ss_get f 2)
+      #;> (C:ss_get f 2)
     #<l (x) #<(#<g ss_ADD > #<v x 0 0> 10)>  >
     
         ;; Note: the constant global var is replaced with its constant value.
-      #; ss> (C:ss_make_constant 'ss_ADD)
+      #;> (C:ss_make_constant 'ss_ADD)
     ss_ADD
-      #; ss> (f 1)
+      #;> (f 1)
     11
-      #; ss> (C:ss_get f 2)
-    #<l (x) #<(#<p ss_ADD #@0x0 + z... :safe > #<v x 0 0> 10)>  >
+      #;> (C:ss_get f 2)
+    #<l (x) #<(#<p ss_ADD #@0x0 (+ z ...) :safe > #<v x 0 0> 10)>  >
 
 ## Build
 
@@ -195,6 +195,7 @@ These numeric subexpressions are then subject to constant expression folding.
 * perl
 * rlwrap
 * BDW GC
+* colorgcc (on Linux)
 
 ## Run
 

@@ -1,8 +1,9 @@
 #ifndef _SS_WRAP_H
 #define _SS_WRAP_H
 
-#define BOX(T,V)   ss_PASTE2(ss_B_C_,T)(V)
-#define UNBOX(T,V) ss_PASTE2(ss_U_C_,T)(V)
+#define ss_PASTE2_ARGS(_1,_2,ARGS) ss_PASTE2(_1,_2)ARGS
+#define BOX(T,V)   ss_PASTE2_ARGS(ss_B_C_,T,(V))
+#define UNBOX(T,V) ss_PASTE2_ARGS(ss_U_C_,T,(V))
 
 #define PARAM_ctype(P) ctype_##P
 #define ctype_PARAM(T,M,R,I,N) T
@@ -63,69 +64,128 @@
     return __return;                                    \
   }
 
-#define WRAP_CT1(TYPE,NAME)                                             \
+// BOX/UNBOX primitives.
+//
+// Basic types:
+// ss    BP(TYPE*) : box C value from pointer.
+// ss    B (TYPE)  : box C value.
+// ss    B0()      : box "zero" C value.
+// ss    B1(ss)    : create boxed C from ss value.
+// ss    BF(ss)    : forcefully box a C value from ss value.
+// ss    BB(ss)    : forcefully box a C value from an ss value as if it was a dereferenced TYPE*.
+// TYPE  U(ss)     : unbox boxed C value to C value.
+// TYPE* UP(ss)    : C pointer to boxed C value.
+// ss    US(ss)    : coerce boxed C value to ss value.
+// ss    BS(ss)    : set boxed C value from ss value.
+// ss    BV(ss count, ss value) : create vector of C value of length count with value.
+//
+// Pointer types:
+// ss    R (ss ptr, ss i) : vector reference.
+// ss    S (ss ptr, ss i, ss v) : set vector reference.
+// ss    A (ss)     : boxed C pointer address of boxed C value.
+// ss    D (ss ptr) : dereference pointer; same as R(ptr,0).
+
+// Wrap undefined C type.
+#define WRAP_CT_UNDEFINED_1(TYPE,NAME)                                  \
+  TYPE* ss_PASTE2(ss_UP_C_,NAME) (ss self) {                            \
+    return (TYPE*) self;                                                \
+  }
+
+#define WRAP_CT_STRUCT(TYPE,NAME)                                       \
   struct ss_PASTE2(ss_ts_,NAME) {                                       \
     TYPE value;                                                         \
     ss size;                                                            \
-  };                                                                    \
-  ss   ss_PASTE2(ss_B_C_,NAME) (TYPE value) {                           \
-    struct ss_PASTE2(ss_ts_,NAME) *self = ss_alloc(ss_PASTE2(ss_t_C_,NAME), sizeof(*self)); \
-    self->value = value;                                                \
-    return self;                                                        \
-  }                                                                     \
+  };
+
+// Wrap known C type.  Will not work with undefined struct/union.
+#define WRAP_CT_ADDRESSABLE_0(TYPE,NAME)                                \
+  WRAP_CT_UNDEFINED_1(TYPE,NAME);                                       \
+  WRAP_CT_STRUCT(TYPE,NAME);                                            \
   ss   ss_PASTE2(ss_BP_C_,NAME) (TYPE *value) {                         \
-    struct ss_PASTE2(ss_ts_,NAME) *self = ss_alloc(ss_PASTE2(ss_t_C_,NAME), sizeof(*self)); \
+    struct ss_PASTE2(ss_ts_,NAME) *self =                               \
+      ss_alloc(ss_PASTE2(ss_t_C_,NAME), sizeof(*self));                 \
     self->value = *value;                                               \
+    self->size = ss_i(1);                                               \
     return self;                                                        \
   }                                                                     \
   ss   ss_PASTE2(ss_B0_C_,NAME) () {                                    \
     static TYPE _zero;                                                  \
-    return ss_PASTE2(ss_B_C_,NAME)(_zero);                              \
+    return ss_PASTE2(ss_BP_C_,NAME)(&_zero);                            \
+  }                                                                     \
+  ss   ss_PASTE2(ss_B1_C_,NAME) (ss self) {                             \
+    TYPE __value = UNBOX(NAME,self);                                    \
+    return ss_PASTE2(ss_BP_C_,NAME)(&__value);                          \
   }                                                                     \
   ss   ss_PASTE2(ss_BF_C_,NAME) (ss self) {                             \
-    return ss_PASTE2(ss_B_C_,NAME) (*(TYPE*) &self);                    \
+    return ss_PASTE2(ss_BP_C_,NAME)((void*) &self);                     \
   }                                                                     \
-  TYPE ss_PASTE2(ss_U_C_,NAME) (ss self) {                              \
-    return ((struct ss_PASTE2(ss_ts_,NAME) *) self)->value;             \
+  ss   ss_PASTE2(ss_BS_C_,NAME) (ss self, ss value) {                   \
+    *(TYPE*) self = UNBOX(NAME,value);                                  \
+    return self;                                                        \
   }                                                                     \
-  TYPE* ss_PASTE2(ss_UP_C_,NAME) (ss self) {                            \
-    return &((struct ss_PASTE2(ss_ts_,NAME) *) self)->value;            \
-  }
-#define WRAP_CT1_PTR(TYPE,NAME)                                         \
-  ss ss_PASTE3(ss_B_C_,NAME,P) (TYPE* value);                           \
-  ss ss_PASTE3(ss_D_C_,NAME,P) (ss ptrobj) {                            \
-    return BOX(NAME, **(TYPE**) ptrobj);                                \
-  }                                                                     \
-  ss ss_PASTE2(ss_P_C_,NAME) (ss self) {                                \
-    return BOX(ss_PASTE2(NAME,P), &((struct ss_PASTE2(ss_ts_,NAME) *) self)->value); \
+  ss ss_PASTE2(ss_BB_C_,NAME) (ss self) {                               \
+    return BOX(NAME,* (TYPE *) self);                                   \
   }
 
-#define WRAP_CT(TYPE,NAME)                                              \
-  WRAP_CT1(TYPE,NAME)                                                   \
-  WRAP_CT1_PTR(TYPE,NAME)                                               \
-  WRAP_CT1(TYPE*,ss_PASTE2(NAME,P))                                     \
-  WRAP_CT1_PTR(TYPE*,ss_PASTE2(NAME,P))                                 \
-  WRAP_CT1(TYPE**,ss_PASTE2(NAME,PP))                                   \
-  ss ss_PASTE3(ss_B_C_,NAME,Pv) (ss count, ss value) {                  \
+// Addressable with boxing primitive.
+#define WRAP_CT_ADDRESSABLE(TYPE,NAME)                                  \
+  ss   ss_PASTE2(ss_BP_C_,NAME) (TYPE *value);                          \
+  ss   ss_PASTE2(ss_B_C_,NAME) (TYPE value) {                           \
+    return ss_PASTE2(ss_BP_C_,NAME)(&value);                            \
+  }                                                                     \
+  TYPE ss_PASTE2(ss_U_C_,NAME) (ss self) {                              \
+    return *(TYPE*) self;                                               \
+  }                                                                     \
+  WRAP_CT_ADDRESSABLE_0(TYPE,NAME)
+
+// Pointer: may be to undefined type.
+#define WRAP_CT_PTR_UNDEFINED(TYPE,NAME)                                \
+  WRAP_CT_ADDRESSABLE(TYPE*,ss_PASTE2(NAME,P))                          \
+  ss ss_PASTE2(ss_A_C_,NAME) (ss self) {                                \
+    return BOX(ss_PASTE2(NAME,P),(TYPE*) self);                         \
+  }
+
+// Pointer to defined type.
+#define WRAP_CT_PTR(TYPE,NAME)                                          \
+  WRAP_CT_PTR_UNDEFINED(TYPE,NAME)                                      \
+  WRAP_CT_PTR_0(TYPE,NAME)
+
+#define WRAP_CT_PTR_0(TYPE,NAME)                                        \
+  ss ss_PASTE3(ss_D_C_,NAME,P) (ss ptrobj) {                            \
+    return BOX(NAME,** (TYPE**) ptrobj);                                \
+  }                                                                     \
+  ss ss_PASTE3(ss_R_C_,NAME,P) (ss self, ss i) {                        \
+    return BOX(NAME, (*(TYPE**) self)[ss_I(i)]);                        \
+  }                                                                     \
+  ss ss_PASTE3(ss_S_C_,NAME,P) (ss self, ss i, ss value) {              \
+    (*(TYPE**) self)[ss_I(i)] = UNBOX(NAME,value);                      \
+    return self;                                                        \
+  }                                                                     \
+  ss ss_PASTE3(ss_BV_C_,NAME,P) (ss count, ss value) {                  \
     size_t i;                                                           \
     struct ss_PASTE3(ss_ts_,NAME,P) *self =                             \
       ss_alloc(ss_PASTE3(ss_t_C_,NAME,P), sizeof(*self));               \
+    TYPE __value = UNBOX(NAME,value);                                   \
     self->value = ss_malloc(sizeof(self->value[0]) * ss_I(count));      \
     self->size = count;                                                 \
     for ( i = 0; i < ss_I(count); ++ i )                                \
-      self->value[i] = UNBOX(NAME,value);                               \
+      self->value[i] = __value;                                         \
     return self;                                                        \
-  }                                                                     \
-  ss ss_PASTE3(ss_R_C_,NAME,P) (ss self, ss i) {                        \
-    return BOX(NAME, ((struct ss_PASTE3(ss_ts_,NAME,P) *) self)->value[ss_I(i)]); \
-  }                                                                     \
-  ss ss_PASTE3(ss_S_C_,NAME,P) (ss self, ss i, ss value) {              \
-    ((struct ss_PASTE3(ss_ts_,NAME,P) *) self)->value[ss_I(i)] =        \
-      UNBOX(NAME,value);                                                \
-    return self;                                                        \
-  }                                                                     \
-  ss ss_PASTE2(ss_A_C_,NAME) (ss self) {                                \
-    return BOX(ss_PASTE2(NAME,P), (&((struct ss_PASTE2(ss_ts_,NAME) *) self)->value)); \
-  }                                                                     \
+  }
+
+#define WRAP_CT(TYPE,NAME)                                              \
+  WRAP_CT_ADDRESSABLE(TYPE,NAME)                                        \
+  WRAP_CT_PTR(TYPE,NAME)                                                \
+  WRAP_CT_PTR(TYPE*,ss_PASTE2(NAME,P))                                 
+
+#define WRAP_CT_UNDEFINED(TYPE,NAME)                                    \
+  WRAP_CT_UNDEFINED_1(TYPE,NAME);                                       \
+  WRAP_CT_PTR_UNDEFINED(TYPE,NAME)                                      \
+  WRAP_CT_PTR(TYPE*,ss_PASTE2(NAME,P))                                  \
+
+#define WRAP_CT_INTRINSIC(TYPE,NAME)                                    \
+  WRAP_CT_ADDRESSABLE_0(TYPE,NAME)                                      \
+  WRAP_CT_PTR(TYPE,NAME)                                                \
+  WRAP_CT_PTR(TYPE*,ss_PASTE2(NAME,P))
 
 #endif

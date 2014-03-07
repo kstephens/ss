@@ -15,7 +15,7 @@ ss_syntax(define,1,-1,0,"define name value") {
 } ss_end
 
 ss_prim(_define,2,2,0,"define name value") {
-  ss_return(ss_define(ss_env->top_level, ss_argv[0], ss_argv[1]));
+  ss_define(ss_env->top_level, ss_argv[0], ss_argv[1]);
 } ss_end
 
 ss_syntax(setE,2,2,0,"set! name value") {
