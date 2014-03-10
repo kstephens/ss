@@ -125,8 +125,9 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
         // Point ref into cell.
         ref = cell;
       }
+      goto const_var_check;
     }
-    goto const_var_check;
+    return ref;
 
   case ss_te_global:
     sym = ((ss_s_global*) var)->name;
