@@ -44,8 +44,9 @@ ss ss_repl_run(ss repl)
       }
     }
     ss_CATCH_RESCUE {
+      value = ss_catch_value(catch);
       fprintf(*ss_stderr, "  ;; ss: recovered from error: ");
-      ss_write(catch->thrown->data.value, ss_stderr);
+      ss_write(value, ss_stderr);
       fprintf(*ss_stderr, "\n");
     }
     ss_CATCH_ENSURE {
