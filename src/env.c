@@ -54,30 +54,6 @@ ss ss_m_global(ss sym, ss ref)
   return self;
 }
 
-ss ss_define(ss_s_env *env, ss sym, ss val)
-{
-  int i;
-
-  if ( ((ss_s_symbol*) sym)->is_const )
-    return ss_const_var_assign(env, sym);
-
-  for ( i = 0; i < env->argc; ++ i ) {
-    if ( sym == env->symv[i] ) {
-      env->argv[i] = val;
-      return sym;
-    }
-  }
-  env->symv = memcpy(ss_malloc(sizeof(env->symv) * (i + 1)), env->symv, sizeof(env->symv[0]) * i);
-  env->symv[i] = sym;
-  env->argv = memcpy(ss_malloc(sizeof(env->argv) * (i + 1)), env->argv, sizeof(env->argv[0]) * i);
-  env->argv[i] = val;
-  ++ env->argc;
-
-  // ss_write(sym, ss_stderr); fprintf(*ss_stderr, " = "); ss_write(val, ss_stderr); fprintf(*ss_stderr, " #@%d\n", (int) env->argc);
- 
-  return sym;
-}
-
 ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
 {
   ss_s_env *env = ss_env;
@@ -125,8 +101,9 @@ ss* ss_bind(ss_s_env *ss_env, ss *_ss_expr, ss var, int set)
         // Point ref into cell.
         ref = cell;
       }
+      goto const_var_check;
     }
-    goto const_var_check;
+    return ref;
 
   case ss_te_global:
     sym = ((ss_s_global*) var)->name;
@@ -157,4 +134,35 @@ ss ss_var_get(void *env, ss *_ss_expr, ss var)
 {
   return *ss_bind(env, _ss_expr, var, 0);
 }
+
+
+ss ss_define(ss_s_env *env, ss sym, ss val)
+{
+  int i;
+
+  if ( ((ss_s_symbol*) sym)->is_const )
+    return ss_const_var_assign(env, sym);
+
+  for ( i = 0; i < env->argc; ++ i ) {
+    if ( sym == env->symv[i] ) {
+      if ( ! env->parent ) {
+        ss_var_set(env, &sym, sym, val);
+      } else {
+        env->argv[i] = val;
+      }
+      return sym;
+    }
+  }
+
+  env->symv = memcpy(ss_malloc(sizeof(env->symv) * (i + 1)), env->symv, sizeof(env->symv[0]) * i);
+  env->symv[i] = sym;
+  env->argv = memcpy(ss_malloc(sizeof(env->argv) * (i + 1)), env->argv, sizeof(env->argv[0]) * i);
+  env->argv[i] = val;
+  ++ env->argc;
+
+  // ss_write(sym, ss_stderr); fprintf(*ss_stderr, " = "); ss_write(val, ss_stderr); fprintf(*ss_stderr, " #@%d\n", (int) env->argc);
+ 
+  return sym;
+}
+
 

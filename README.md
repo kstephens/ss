@@ -166,6 +166,28 @@ subject to constant expression folding.
 #<l () 1 >
 ```
 
+```scheme
+  #> (define (f) (if x (if #t 1 0) (if #f 1 0)))
+  #> (define x #t)
+  #> (C:%ss_get f 2)
+#<l () (begin (if x (if #t 1 0) (if #f 1 0))) >
+  #> (f)
+1
+  #> (C:%ss_get f 2)
+#<l () #<if #<g x > 1 (if #f 1 0)> >
+  #> (set! x #f)
+  #> (f)
+0
+  #> (C:%ss_get f 2)
+#<l () #<if #<g x > 1 0> >
+  #> (C:ss_make_constant 'x)
+x
+  #> (f)
+0
+  #> (C:%ss_get f 2)
+#<l () 0 >
+```
+
 #### Global Variable
 
 ```scheme
