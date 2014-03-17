@@ -198,11 +198,20 @@ ss ss_applyv(ss_s_env *ss_env, ss func, ss args)
   return _ss_eval(ss_env, &ss_m_cell(func), args);
 }
 
+ss ss_eval_top_level(ss_s_env *ss_env, ss *_ss_expr)
+{
+  *_ss_expr = _ss_apply_sym(ss_env, expand_top_level, 1, *_ss_expr);
+  return _ss_eval(ss_env, _ss_expr, 0);
+}
+
 ss_prim(apply,2,2,0,"func args") {
   ss_return(ss_applyv(ss_env, ss_argv[0], ss_argv[1]));
 } ss_end
 
 ss_prim(eval,1,2,0,"expr env?") {
-  ss_return(_ss_eval(ss_argc > 1 ? ss_argv[1] : ss_top_level_env, &ss_argv[0], 0));
+  ss_return(ss_eval_top_level(ss_argc > 1 ? ss_argv[1] : ss_top_level_env, &ss_argv[0]));
 } ss_end
 
+ss_prim(expand_top_level,1,1,0,"expr") {
+  ss_return(ss_argv[0]);
+} ss_end
