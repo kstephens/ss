@@ -11,7 +11,7 @@ ss ss_error_raise(ss_s_env *ss_env, ss error)
     fprintf(*ss_stderr, "\n");
     abort();
   }
-  return ss_throw(ss_env, e->error_catch, error);
+  return ss_throw(ss_env, e->error_catch, ss_m_throwable(error));
 }
 
 #define FP(port) (*(FILE**) (port))
@@ -49,7 +49,7 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
       for ( i = 0; i < bt_size; ++ i ) {
         fprintf(FP(ss_stderr), "  ;; %s\n", bts[i]);
       }
-      if ( i >= bt_size ) {
+      if ( i >= 50 ) {
         fprintf(FP(ss_stderr), "  ;; ... more not shown.\n");
       }
     }
