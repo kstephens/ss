@@ -33,7 +33,7 @@ ss ss_repl_run(ss repl)
         fprintf(*ss_stderr, "  ;; ss: read    => "); ss_write_3(expr, ss_stderr, ss_sym(internal)); fprintf(*ss_stderr, "\n");
       }
       value = ss_undef;
-      value = ss_eval(expr);
+      value = ss_eval_top_level(self->env, &expr);
       if ( self->echo_rewrite != ss_f ) {
         fprintf(*ss_stderr, "  ;; ss: rewrite => "); ss_write_3(expr, ss_stderr, ss_sym(internal)); fprintf(*ss_stderr, "\n");
       }
