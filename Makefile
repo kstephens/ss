@@ -70,23 +70,14 @@ boot/%.def : gen/%.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
 
-gen/t.def : Makefile gen/t.def.gen $(CFILES) $(OTHER_C_FILES) gen/cwrap.def
+gen/%.def : gen/%.def.gen
 	@echo "GEN $@"
-	$(SILENT)$(CPP) $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
-gen/sym.def : Makefile gen/sym.def.gen $(CFILES) $(OTHER_C_FILES) gen/prim.def gen/syntax.def
-	@echo "GEN $@"
-	$(SILENT)$(CPP) -Dss_sym=ss_sym $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
-gen/prim.def : Makefile gen/prim.def.gen $(CFILES)
-	@echo "GEN $@"
-	$(SILENT)$(CPP) -D_ss_prim=_ss_prim $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
-gen/syntax.def : Makefile gen/syntax.def.gen $(CFILES)
-	@echo "GEN $@"
-	$(SILENT)$(CPP) -Dss_syntax=ss_syntax $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
-gen/cwrap.def : Makefile gen/cwrap.def.gen $(CFILES) $(OTHER_C_FILES)
-	@echo "GEN $@"
-	$(SILENT)$(CPP) $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
-gen/cdefine.def : Makefile gen/cdefine.def.gen $(CFILES) $(OTHER_C_FILES)
-	$(SILENT)$(CPP) -dM $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
+	$(SILENT) d=_ss_$(notdir $(basename $@)); $(CPP) -D$$d=$$d $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
+
+gen/*.def : Makefile $(CFILES) $(OTHER_C_FILES)
+
+gen/t.def   : gen/cwrap.def
+gen/sym.def : gen/prim.def gen/syntax.def
 
 lispread/lispread.c:
 	git submodule init

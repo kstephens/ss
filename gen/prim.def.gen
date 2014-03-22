@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 %syms = ();
 while ( <> ) {
-  while ( s/\b_ss_prim\(([^)]+)\)// ) {
+  while ( s/\b__ss_prim\(([^)]+)\)// ) {
     $syms{$1} = 1;
   }
 }

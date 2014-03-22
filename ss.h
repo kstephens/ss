@@ -297,8 +297,10 @@ typedef struct ss_s_prim {
   if ( MAXARGS >= 0 && ss_argc > MAXARGS )                              \
     _ss_max_args_error(ss_env, ss_prim, DOCSTRING, ss_argc, MAXARGS)
 
-#ifndef _ss_prim
-#define _ss_prim(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)         \
+#ifdef _ss_prim
+#define __ss_prim __ss_prim
+#else
+#define __ss_prim(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)        \
   extern ss ss_sym(NAME);                                               \
   ss ss_a1_##NAME(ss _1) {                                              \
     return ss_apply_sym(NAME, 1, _1);                                   \
@@ -321,21 +323,20 @@ typedef struct ss_s_prim {
 {
 #endif
 
+#define ss_prim(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
+  __ss_prim(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
 #define ss_return(X) do { ss_rtn = (X); goto _ss_rtn; } while(0)
-
-#ifndef ss_prim
 #define ss_end                                                       \
   }                                                                  \
 _ss_rtn:                                                             \
  return(ss_rtn);                                                     \
  }
-#define ss_prim(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
-  _ss_prim(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
-#endif
 
-#ifndef ss_syntax
+#ifdef _ss_syntax
+#define ss_syntax ss_syntax
+#else
 #define ss_syntax(NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) \
-  _ss_prim(ss_syn_##NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
+  __ss_prim(ss_syn_##NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING)
 #endif
 
 typedef struct ss_s_lambda {
@@ -383,18 +384,13 @@ typedef struct ss_s_repl {
   ss echo_read, echo_rewrite;
 } ss_s_repl;
 
-#ifndef ss_sym
+#ifdef _ss_sym
+#define ss_sym ss_sym
+#else
 #define ss_sym(X)ss_PASTE2(_ss_sym_,X)
 #endif
 
-#ifndef _ss_prim
-#define _ss_prim(TYPE,NAME,MINARGS,MAXARGS,EVALQ,DOCSTRING) ss_sym(NAME)
-#include "prim.def"
-#endif
-
-extern ss _ss_syms
-#define ss_sym_def(X),ss_PASTE2(_ss_sym_,X)
+#define ss_sym_def(X)extern ss ss_PASTE2(_ss_sym_,X);
 #include "sym.def"
-;
 
 #endif
