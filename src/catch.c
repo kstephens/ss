@@ -37,12 +37,12 @@ ss ss_m_catch(ss value)
   ss_s_catch *self = ss_alloc(ss_t_catch, sizeof(*self));
   memset(self, 0, sizeof(*self));
   self->data.prim = _ss_pf_ss_apply_catch;
-  self->body = self->rescue = self->ensure = ss_undef;
+  self->body = self->rescue = self->ensure = ss_f;
   self->data.value = value;
   return self;
 }
 
-ss ss_m_catch_value(ss_s_catch *catch)
+ss ss_catch_value(ss_s_catch *catch)
 {
   if ( catch->thrown )
     return ss_throwable_value(catch->thrown);
@@ -57,20 +57,31 @@ ss ss_catch(ss_s_env *ss_env, ss body, ss rescue, ss ensure)
   c->rescue = rescue;
   c->ensure = ensure;
   ss_CATCH(c) {
-    rtn = ss_apply(ss_env, c->body, ss_vec1(c));
+    rtn = ss_applyv(ss_env, c->body, ss_vec1(c));
   }
   ss_CATCH_RESCUE {
     if ( c->rescue != ss_f && c->thrown ) {
-      rtn = ss_apply(ss_env, c->rescue, ss_vec2(c, c->thrown->data.value));
+      rtn = ss_applyv(ss_env, c->rescue, ss_vec2(c, ss_throwable_value(c->thrown)));
     } else {
       ss_rethrow(ss_env);
     }
   }
   ss_CATCH_ENSURE {
     if ( c->ensure != ss_f )
-      ss_apply(ss_env, c->ensure, ss_vec1(c));
+      ss_applyv(ss_env, c->ensure, ss_vec1(c));
   }
   ss_CATCH_END;
   return rtn;
+}
+
+ss ss_throw_ (ss_s_env *ss_env, ss _1, ss _2)
+{
+  ss_s_catch *catch = _1;
+  ss_s_throwable *thrown = _2;
+  assert(catch);
+  assert(thrown);
+  thrown->data.env = ss_env;
+  thrown->data.expr = ss_env->expr;
+  return __ss_throw(ss_env, catch, thrown);
 }
 

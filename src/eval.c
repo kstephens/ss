@@ -1,3 +1,4 @@
+#define ss_write(A,B)ss_write_3(A,B,ss_sym(internal))
 ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
 {
   ss rtn, expr;
@@ -44,14 +45,14 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
       return(ss_undef);
     }
   case ss_te_global:
-    return(*((ss_s_global*) expr)->ref);
+    return(ss_var_get(ss_env, _ss_expr, expr));
   case ss_te_if:
     {
-      ss_s_if *self = ss_expr;
+      ss_s_if *self = expr;
       ss *subexpr;
       rtn = ss_eval(self->t);
       subexpr = rtn != ss_f ? &self->a : &self->b;
-      if ( 0 && ss_constantExprQ )
+      if ( ss_literalQ(self->t) )
         ss_rewrite_expr(*subexpr, rtn != ss_f ? "constant test is true" : "constant test is false");
       else
         _ss_expr = subexpr;
@@ -76,7 +77,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
   case ss_te_pair:
     rtn = ss_car(expr);
     if ( ss_type_te(rtn) == ss_te_symbol && (rtn = ((ss_s_symbol*) rtn)->syntax) != ss_f ) {
-      expr = ss_apply(ss_env, rtn, ss_cdr(expr));
+      expr = ss_applyv(ss_env, rtn, ss_cdr(expr));
       ss_rewrite_expr(expr, "syntax rewrite");
       goto again;
     }
@@ -124,10 +125,12 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
 
         if ( self->rest_i >= 0 ) {
           if ( ss_argc < self->rest_i )
-            return(ss_error(ss_env, "not-enough-args", self, "given %lu, expected at least %lu", (unsigned long) ss_argc, (unsigned long) self->rest_i));
+            return(_ss_min_args_error(ss_env, self, "", ss_argc, (int) self->rest_i));
         } else {
-          if ( ss_argc != ss_vector_L(self->params) )
-            return(ss_error(ss_env, "too-many-args", self, "given %lu, expected %lu", (unsigned long) ss_argc, (unsigned long) ss_vector_L(self->params)));
+          if ( ss_argc < ss_vector_L(self->params) )
+            return(_ss_min_args_error(ss_env, self, "", ss_argc, (int) ss_vector_L(self->params)));
+          if ( ss_argc > ss_vector_L(self->params) )
+            return(_ss_max_args_error(ss_env, self, "", ss_argc, (int) ss_vector_L(self->params)));
         }
 
         env = ss_m_env(((ss_s_closure*) rtn)->env);
@@ -144,7 +147,7 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
         if ( ss_eval_verbose ) {
           fprintf(*ss_stderr, "    ;; apply closure:\n");
           fprintf(*ss_stderr, "    ;;   args: (");
-          ss_write_vec(env->argc, env->argv, ss_stderr);
+          ss_write_vec(env->argc, env->argv, ss_stderr, ss_sym(internal));
           fprintf(*ss_stderr, ")\n    ;;     to: ");
           ss_write(self, ss_stderr);
           fprintf(*ss_stderr, "\n");
@@ -186,24 +189,29 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
   -- ss_env->depth;
   return rtn;
 }
+#undef ss_write
 
-ss ss_apply(ss_s_env *ss_env, ss func, ss args)
+ss ss_applyv(ss_s_env *ss_env, ss func, ss args)
 {
   if ( ss_type_te(args) != ss_te_vector )
     args = ss_list_to_vector(args);
-  return _ss_eval(ss_env, &func, args);
+  return _ss_eval(ss_env, &ss_m_cell(func), args);
 }
 
-#define ss_apply_sym(SYM, NARGS, ARGS, ...)                     \
-  ({ ss __sym = ss_sym(SYM);                                    \
-    ss_apply(ss_env, ss_eval(__sym), ss_vec(NARGS, ARGS));      \
-  })
+ss ss_eval_top_level(ss_s_env *ss_env, ss *_ss_expr)
+{
+  *_ss_expr = _ss_apply_sym(ss_env, expand_top_level, 1, *_ss_expr);
+  return _ss_eval(ss_env, _ss_expr, 0);
+}
 
-ss_prim(apply,2,2,0,"apply func args") {
-  ss_return(ss_apply(ss_env, ss_argv[0], ss_argv[1]));
+ss_prim(apply,2,2,0,"func args") {
+  ss_return(ss_applyv(ss_env, ss_argv[0], ss_argv[1]));
 } ss_end
 
-ss_prim(eval,1,2,0,"eval expr env?") {
-  ss_return(_ss_eval(ss_argc > 1 ? ss_argv[1] : ss_top_level_env, &ss_argv[0], 0));
+ss_prim(eval,1,2,0,"expr env?") {
+  ss_return(ss_eval_top_level(ss_argc > 1 ? ss_argv[1] : ss_top_level_env, &ss_argv[0]));
 } ss_end
 
+ss_prim(expand_top_level,1,1,0,"expr") {
+  ss_return(ss_argv[0]);
+} ss_end

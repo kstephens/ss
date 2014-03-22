@@ -25,7 +25,7 @@ void ss_number_coerce_2(ss *a0, ss *a1)
   }
 }
 
-ss_syntax(ADD,0,-1,1,"+ z...")
+ss_syntax(ADD,0,-1,1,"+ z ...")
   switch ( ss_argc ) {
   case 0:  ss_return(ss_box(fixnum,0));
   case 1:  ss_return(ss_argv[0]);
@@ -35,7 +35,7 @@ ss_syntax(ADD,0,-1,1,"+ z...")
   }
 ss_end
 
-ss_syntax(SUB,1,-1,1,"- z...")
+ss_syntax(SUB,1,-1,1,"- z ...")
   switch ( ss_argc ) {
   case 1:  ss_return(ss_vec(2, ss_sym(ss_NEG), ss_argv[0]));
   case 2:  ss_return(ss_vec(3, ss_sym(ss_SUB), ss_argv[0], ss_argv[1]));
@@ -44,7 +44,7 @@ ss_syntax(SUB,1,-1,1,"- z...")
   }
 ss_end
 
-ss_syntax(MUL,0,-1,1,"* z...")
+ss_syntax(MUL,0,-1,1,"* z ...")
   switch ( ss_argc ) {
   case 0:  ss_return(ss_box(fixnum,1));
   case 1:  ss_return(ss_argv[0]);
@@ -54,7 +54,7 @@ ss_syntax(MUL,0,-1,1,"* z...")
   }
 ss_end
 
-ss_syntax(DIV,1,-1,1,"/ z...")
+ss_syntax(DIV,1,-1,1,"/ z ...")
   switch ( ss_argc ) {
   case 1:  ss_return(ss_vec(3, ss_sym(ss_DIV), ss_box(flonum, 1.0), ss_argv[0]));
   case 2:  ss_return(ss_vec(3, ss_sym(ss_DIV), ss_argv[0], ss_argv[1]));
@@ -71,10 +71,10 @@ ss_end
   {                                                                     \
     return (ss) (ss_word_t) ( ((ss_fixnum_t) a0) OP ((ss_fixnum_t) a1) );           \
   }                                                                     \
-  ss_prim(ss_##NAME,2,2,1,#OP " z...")                                  \
+  ss_prim(ss_##NAME,2,2,1,#OP " z ...")                                 \
   ss_return(ss_##NAME(ss_argv[0], ss_argv[1]));                         \
   ss_end                                                                \
-  ss_prim(ss_##NAME##I,2,2,1,#OP " int1 int2")                        \
+  ss_prim(ss_##NAME##I,2,2,1,#OP " int1 int2")                          \
     ss_return(ss_##NAME##I(ss_argv[0], ss_argv[1]));                    \
   ss_end                                                                \
   ss_prim(ss_##NAME##W,2,2,1,#OP " word1 word2")                        \

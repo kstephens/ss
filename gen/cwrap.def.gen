@@ -81,6 +81,7 @@ sub struct {
 $file = "stdin";
 $lineno = 0;
 $in_struct = 0;
+my $in_expr = 0;
 $name_re = "([_a-zA-Z][_a-zA-Z0-9]*)";
 $array_x_re = "((\\[\\d\\s]*\\])+)";
 $array_re = "((\\[\\d\\s]*\\])*)";
@@ -115,7 +116,13 @@ while ( $line = <> ) {
   s/^([a-z0-9_]+)\s+(([*]\s*)+)/$1$2 /i;
   $pre_line = $_;
   # if ( /^\s*$type_re/ ) { print STDERR "  type |$1|\n"; }
-  if ( s/^\s*(typedef)\s+// ) {
+  if ( s/^\s*[(]\s*[{]// ) {
+    $in_expr ++;
+  } elsif ( $in_expr && s/^\s*[}]\s*[)]// ) {
+    $in_expr --;
+  } elsif ( $in_expr ) {
+    s/^.//;
+  } elsif ( s/^\s*(typedef)\s+// ) {
     # print STDERR "  typedef $_...\n";
     $in_typedef = 'typedef';
   } elsif ( s/^\s*(struct|union)\s+$name_re\s*[;]// ) {

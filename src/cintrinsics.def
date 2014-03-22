@@ -1,4 +1,7 @@
-ITYPE(char,char)
+#ifndef CTYPE
+#define CTYPE(T,N) ITYPE(T,N)
+#endif
+CTYPE(char,char)
 ITYPE(unsigned char,unsigned_char)
 ITYPE(short,short)
 ITYPE(unsigned short,unsigned_short)
@@ -11,5 +14,9 @@ ITYPE(unsigned long long,unsigned_long_long)
 FTYPE(float,float)
 FTYPE(double,double)
 FTYPE(long double,long_double)
+#undef CTYPE
 #undef ITYPE
 #undef FTYPE
+#ifdef ss_cintrinsic_def
+#undef ss_cintrinsic_def
+#endif

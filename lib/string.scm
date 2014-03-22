@@ -1,3 +1,15 @@
+;; depends:
+;;   (string-set! str i c)
+;;   (string-ref str i)
+;;   (string-length str)
+;;   (make-string len)
+;;   (integer->char i)
+;;   (char->integer c)
+;;   (char<=? c1 c2)
+;;   (truncate-remainder
+;;   (%string-truncate str len)
+;;   (%string-to-number str radix)
+;;
 (define (%string-escape-1 s i t j)
   (define (ac c)
     (string-set! t j c)
@@ -78,7 +90,8 @@
 (define (string-fill string fill . opts)
   (let ((start 0) (end (string-length string)))
     (if (not (null? opts))
-      (set! start (car opts)))
-    (if (not (null? (cdr opts)))
-      (set! end (cadr opts)))
+      (begin
+        (set! start (car opts))
+        (if (not (null? (cdr opts)))
+          (set! end (cadr opts)))))
     (%string-fill! string fill start end)))
