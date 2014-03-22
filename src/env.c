@@ -22,20 +22,6 @@ ss ss_m_env(ss_s_env *parent)
 }
 
 ss_INLINE
-ss ss_env_symv(ss _o)
-{
-  ss_s_env *o = _o;
-  return ss_vecnv(o->argc, o->symv);
-}
-
-ss_INLINE
-ss ss_closure_env(ss _o)
-{
-  ss_s_closure *o = _o;
-  return o->env;
-}
-
-ss_INLINE
 ss ss_m_var(ss sym, int up, int over)
 {
   ss_s_var *self = ss_alloc(ss_t_var, sizeof(*self));
