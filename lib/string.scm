@@ -78,7 +78,8 @@
 (define (string-fill string fill . opts)
   (let ((start 0) (end (string-length string)))
     (if (not (null? opts))
-      (set! start (car opts)))
-    (if (not (null? (cdr opts)))
-      (set! end (cadr opts)))
+      (begin
+        (set! start (car opts))
+        (if (not (null? (cdr opts)))
+          (set! end (cadr opts)))))
     (%string-fill! string fill start end)))
