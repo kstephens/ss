@@ -25,7 +25,10 @@ ss ss_write_3(ss v, ss port, ss mode)
     if ( mode == ss_sym(display) ) {
       fwrite(ss_string_V(v), ss_string_L(v), 1, out);
     } else {
-      fprintf(out, "\"%s\"", ss_string_V(v));
+      // TODO: v = ss_string_escape(c)
+      fprintf(out, "\"");
+      fwrite(ss_string_V(v), ss_string_L(v), 1, out);
+      fprintf(out, "\"");
     }
     break;
   case ss_te_char: {
