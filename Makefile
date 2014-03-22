@@ -54,6 +54,7 @@ OTHER_C_FILES = \
   src/*.def
 
 EARLY_FILES = \
+lispread/lispread.c \
 boot/t.def \
 boot/sym.def    \
 boot/prim.def   \
