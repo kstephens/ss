@@ -66,22 +66,7 @@ SILENT=@
 
 all : ss
 
-boot/t.def      : gen/t.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-boot/sym.def    : gen/sym.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-boot/prim.def   : gen/prim.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-boot/syntax.def : gen/syntax.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-boot/cwrap.def  : gen/cwrap.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-boot/cdefine.def  : gen/cdefine.def.gen
+boot/%.def : gen/%.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
 
