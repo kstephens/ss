@@ -1,3 +1,15 @@
+;; depends:
+;;   (string-set! str i c)
+;;   (string-ref str i)
+;;   (string-length str)
+;;   (make-string len)
+;;   (integer->char i)
+;;   (char->integer c)
+;;   (char<=? c1 c2)
+;;   (truncate-remainder
+;;   (%string-truncate str len)
+;;   (%string-to-number str radix)
+;;
 (define (%string-escape-1 s i t j)
   (define (ac c)
     (string-set! t j c)
