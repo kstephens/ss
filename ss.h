@@ -88,7 +88,6 @@ typedef enum ss_te {
 #define ss_te_def(N) ss_te_##N,
 #include "te.def"
   ss_te_LITERAL_MIN = ss_te_undef,
-  ss_te_LITERAL_MAX = ss_te_throwable,
   ss_te_LAST,
 } ss_te;
 
@@ -97,9 +96,9 @@ typedef struct ss_s_type {
   ss_PRIM_DECL((*prim));
   const char *name;
   ss_word_t e; // ss_te
-  size_t instance_size;
-  ss supers;
-  ss methods;
+  ss instance_size;
+  ss supers, methods;
+  ss c_sizeof, c_ptr_type, c_elem_type;
 } ss_s_type;
 
 #define ss_t_def(N) extern ss_s_type *ss_t_##N;
@@ -119,7 +118,8 @@ ss_INLINE
 ss          ss_c(ss_fixnum_t c) { return ss_BOX_char(c); }
 ss_INLINE
 ss_fixnum_t ss_C(ss v)          { return ss_UNB_char(v); }
-
+ss_INLINE
+int ss_fixnumQ(ss x) { return (int) (((ss_word_t) x) & 1); }
 ss_INLINE
 ss ss_type(ss x)
 {
@@ -137,7 +137,7 @@ ss_te ss_type_te(ss x)
 ss_INLINE
 int ss_literalQ(ss X)
 {
-  return ss_te_LITERAL_MIN <= ss_type_te(X) && ss_type_te(X) <= ss_te_LITERAL_MAX;
+  return ss_type_te(X) >= ss_te_LITERAL_MIN;
 }
 
 ss ss_box_fixnum(ss_fixnum_t _v);
@@ -236,11 +236,19 @@ typedef struct ss_s_symbol {
   ss_fixnum_t is_const;
 } ss_s_symbol;
 ss ss_box_symbol(const char *name);
+ss_INLINE
+const char *ss_sym_charP(ss x) {
+  ss_s_symbol *sym = x;
+  return sym->name == ss_f ? 0 : ss_string_V(sym->name);
+}
 
 typedef struct ss_s_port {
-  FILE *fp;
-  ss name;
-  ss mode;
+  ss opaque0, opaque1, opaque2, opaque3;
+  ss name, mode, next_char;
+  ss read_char, peek_char, char_readyQ;
+  ss read_chars;
+  ss write_char, write_chars;
+  ss close;
 } ss_s_port;
 
 struct ss_s_catch;
@@ -261,6 +269,18 @@ typedef struct ss_s_env {
 ss ss_error_raise(ss_s_env *ss_env, ss val);
 ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...);
 
+extern ss_s_env *ss_top_level_env, *ss_current_env;
+ss ss_applyv(ss_s_env *ss_env, ss func, ss args);
+#define ss_apply(FUNC, NARGS, ARGS ...)         \
+  ss_applyv(ss_env, FUNC, ss_vec(NARGS, ARGS))
+#define _ss_apply_sym(ENV, SYM, NARGS, ARGS ...)                        \
+  ({ ss_s_env *ss_env = ss_top_level_env; ss __sym = ss_sym(SYM);       \
+    ss_applyv((ENV), ss_eval(__sym), ss_vec(NARGS, ARGS));              \
+  })
+
+#define ss_apply_sym(SYM, NARGS, ARGS ...)              \
+  _ss_apply_sym(ss_top_level_env, SYM, NARGS, ARGS)
+
 #include "ss/catch.h"
 
 typedef struct ss_s_prim {
@@ -280,9 +300,21 @@ typedef struct ss_s_prim {
 #ifndef _ss_prim
 #define _ss_prim(NAME,MINARGS,MAXARGS,NO_SIDE_EFFECT,DOCSTRING)         \
   extern ss ss_sym(NAME);                                               \
+  ss ss_a1_##NAME(ss _1) {                                              \
+    return ss_apply_sym(NAME, 1, _1);                                   \
+  }                                                                     \
+  ss ss_ea1_##NAME(ss_s_env *ss_env, ss _1) {                           \
+    return _ss_apply_sym(ss_env, NAME, 1, _1);                          \
+  }                                                                     \
+  ss ss_a2_##NAME(ss _1, ss _2) {                                       \
+    return ss_apply_sym(NAME, 2, _1, _2);                               \
+  }                                                                     \
+  ss ss_ea2_##NAME(ss_s_env *ss_env, ss _1, ss _2) {                    \
+    return _ss_apply_sym(ss_env, NAME, 2, _1, _2);                      \
+  }                                                                     \
   ss ss_p_##NAME;                                                       \
   static ss_PRIM_DECL(ss_PASTE2(_ss_pf_,NAME));                         \
-  ss_s_prim ss_PASTE2(_ss_p_,NAME) = { 0, ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, NO_SIDE_EFFECT, DOCSTRING } ; \
+  ss_s_prim ss_PASTE2(_ss_p_,NAME) = { 0, ss_PASTE2(_ss_pf_,NAME), #NAME, MINARGS, MAXARGS, NO_SIDE_EFFECT, "(" DOCSTRING ")" } ; \
   static ss_PRIM_DECL(ss_PASTE2(_ss_pf_,NAME)) {                        \
   ss ss_rtn = ss_undef;                                                 \
   _ss_prim_arity_check(MINARGS,MAXARGS,DOCSTRING);                      \
@@ -343,6 +375,13 @@ typedef struct ss_s_global {
 typedef struct ss_s_if {
   ss t, a, b;
 } ss_s_if;
+
+struct ss_s_repl;
+typedef struct ss_s_repl {
+  ss_s_env *env;
+  ss input, output, prompt, trap_errors;
+  ss echo_read, echo_rewrite;
+} ss_s_repl;
 
 #ifndef ss_sym
 #define ss_sym(X)ss_PASTE2(_ss_sym_,X)

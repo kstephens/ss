@@ -15,7 +15,7 @@ ss_syntax(define,1,-1,0,"define name value") {
 } ss_end
 
 ss_prim(_define,2,2,0,"define name value") {
-  ss_return(ss_define(ss_env->top_level, ss_argv[0], ss_argv[1]));
+  ss_define(ss_env->top_level, ss_argv[0], ss_argv[1]);
 } ss_end
 
 ss_syntax(setE,2,2,0,"set! name value") {
@@ -29,7 +29,7 @@ ss_syntax(quote,1,1,0,"quote value")
   ss_return(ss_box_quote(ss_argv[0]));
 ss_end
 
-ss_syntax(if,2,3,0,"if pred true ?false?") {
+ss_syntax(if,2,3,0,"if pred true false ?") {
   ss_s_if *self = ss_alloc(ss_t_if, sizeof(*self));
   self->t = ss_argv[0];
   self->a = ss_argv[1];
@@ -37,7 +37,7 @@ ss_syntax(if,2,3,0,"if pred true ?false?") {
   ss_return(self);
 } ss_end
 
-ss_syntax(lambda,1,-1,0,"lambda formals body...") {
+ss_syntax(lambda,1,-1,0,"lambda formals body ...") {
   ss rest; int rest_i;
   ss_s_lambda *self = ss_alloc(ss_t_lambda, sizeof(*self));
   self->formals = ss_argv[0];
@@ -56,7 +56,7 @@ ss_syntax(lambda,1,-1,0,"lambda formals body...") {
   ss_return(self);
 } ss_end
 
-ss_syntax(let,1,-1,0,"let bindings body...") {
+ss_syntax(let,1,-1,0,"let bindings body ...") {
   ss params = ss_nil, *pp = &params;
   ss args = ss_nil, *ap = &args;
   ss body = ss_listnv(ss_argc - 1, ss_argv + 1);
@@ -72,7 +72,7 @@ ss_syntax(let,1,-1,0,"let bindings body...") {
   ss_return(ss_cons(ss_cons(ss_sym(lambda), ss_cons(params, body)), args));
 } ss_end
 
-ss_syntax(begin,0,-1,0,"begin body...") {
+ss_syntax(begin,0,-1,0,"begin body ...") {
   switch ( ss_argc ) {
   case 0:
     ss_return(ss_undef);

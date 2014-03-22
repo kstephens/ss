@@ -8,7 +8,7 @@ int ss_sort_cmp(const void *a, const void *b, void *thunk)
   ss func   = ((ss*)thunk)[1];
   ss ab[] = { *(ss*)a, *(ss*)b };
   ss args[] = { (ss) ss_t_vector, ab, (ss) 2 };
-  return ss_apply(ss_env, func, args + 1) == ss_f ? 1 : -1;
+  return ss_applyv(ss_env, func, args + 1) == ss_f ? 1 : -1;
 }
 
 ss ss_sort(ss_s_env *ss_env, ss v, ss cmp)

@@ -10,8 +10,6 @@ ss ss_write_3(ss v, ss port, ss mode);
 ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv);
 #define ss_expr (*_ss_expr)
 #define ss_eval(X) _ss_eval(ss_env, &(X), 0)
-#define ss_callv(P,ARGS) _ss_eval(ss_env, &(P), ARGS)
-ss ss_apply(ss_s_env *ss_env, ss func, ss args);
 
 ss_INLINE
 ss ss_cons(ss a, ss d);
@@ -28,14 +26,14 @@ ss ss_typecheck(ss t, ss v)
   return v;
 }
 
-void _ss_min_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_argc, int MINARGS)
+ss _ss_min_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_argc, int MINARGS)
 {
-  ss_error(ss_env, "not-enough-args", op, "(%s) given %d expected at least %d", DOCSTRING, ss_argc, MINARGS);
+  return ss_error(ss_env, "not-enough-args", op, "(%s) given %d expected at least %d", DOCSTRING, ss_argc, MINARGS);
 }
 
-void _ss_max_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_argc, int MAXARGS)
+ss _ss_max_args_error(ss_s_env *ss_env, ss op, const char *DOCSTRING, int ss_argc, int MAXARGS)
 {
-  ss_error(ss_env, "too-many-args", op, "(%s) given %d expected %d", DOCSTRING, ss_argc, MAXARGS);
+  return ss_error(ss_env, "too-many-args", op, "(%s) given %d expected %d", DOCSTRING, ss_argc, MAXARGS);
 }
 
 #include "src/memory.c"

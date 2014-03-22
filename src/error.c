@@ -11,7 +11,7 @@ ss ss_error_raise(ss_s_env *ss_env, ss error)
     fprintf(*ss_stderr, "\n");
     abort();
   }
-  return ss_throw(ss_env, e->error_catch, error);
+  return ss_throw(ss_env, e->error_catch, ss_m_throwable(error));
 }
 
 #define FP(port) (*(FILE**) (port))
@@ -30,23 +30,29 @@ ss ss_error(ss_s_env *ss_env, const char *code, ss obj, const char *format, ...)
   // Move this to ss_write for ss_t_error.
   fprintf(FP(ss_stderr), "\n  ;; ss: error: %s ", code);
   ss_write(obj, ss_stderr);
-  fprintf(FP(ss_stderr), ": %s\n", msg);
+  fprintf(FP(ss_stderr), " : %s\n", msg);
 
   fprintf(FP(ss_stderr), ";; ss: backtrace:: \n");
   { ss_s_env *env; for ( env = ss_env; env; env = env->parent ) {
     fprintf(FP(ss_stderr), "  ;; %-3d ", (int) env->depth);
-    ss_write(env->expr, ss_stderr);
+    ss_write_3(env->expr, ss_stderr, ss_sym(internal));
     fprintf(FP(ss_stderr), "\n");
   } }
 
   {
-    void *bt[16]; int bt_size = 16; char **bts;
+    void *bt[50]; int bt_size = 50; char **bts;
     bt_size = backtrace(bt, bt_size);
     bts = backtrace_symbols(bt, bt_size);
     fprintf(FP(ss_stderr), ";; ss: C backtrace:: \n");
-    { int i; for ( i = 0; i < bt_size; ++ i ) {
-      fprintf(FP(ss_stderr), "  ;; %s\n", bts[i]);
-    } }
+    {
+      int i;
+      for ( i = 0; i < bt_size; ++ i ) {
+        fprintf(FP(ss_stderr), "  ;; %s\n", bts[i]);
+      }
+      if ( i >= 50 ) {
+        fprintf(FP(ss_stderr), "  ;; ... more not shown.\n");
+      }
+    }
     free(bts);
   }
 

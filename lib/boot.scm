@@ -2,7 +2,7 @@
   (C:ss_error &env (symbol->string code) other C:%NULL))
 
 (define (apply func args) ;; FIXME
-  (C:ss_apply &env func args))
+  (C:ss_applyv &env func args))
 
 ;; ss_ADD has arity checks, while C:ss_ADD does not.
 (define + ss_ADD)
@@ -28,6 +28,8 @@
 
 (define (%type x) (C:ss_type x))
 (C:ss_make_constant '%type)
+(define %<type> (%type (%type #t)))
+(C:ss_make_constant '%<type>)
 
 (define %<null> (%type '()))
 (C:ss_make_constant '%<null>)
@@ -91,8 +93,13 @@
   (C:ss_C c))
 (define (integer->char i)
   (C:ss_c i))
+
 (define %eos (integer->char -1))
 (C:ss_make_constant '%eos)
+(define %<eos> (%type %eos))
+(C:ss_make_constant '%<eos>)
+(define (eof-object? x) (eq? x %eos))
+(C:ss_make_constant 'eof-object?)
 
 (define %<vector> (%type '#(1 2)))
 (C:ss_make_constant '%<vector>)
@@ -241,7 +248,7 @@
 
 (define (%open-file func file mode)
   (let ((port (C:ss_m_port
-                (C:fopen file mode)
+                (C:%fopen (C:%ss_S file) (C:%ss_S mode))
                 file mode)))
     (if port port
       (error func "cannot open" file (C:ss_errstr #f)))))
@@ -254,8 +261,6 @@
 (define (%write-port port str)
   (C:fwrite str (string-length str) 1 port))
 
-(define (read . port)
-  (C:ss_read &env (if (null? port) ss_stdout (car port))))
 (define (write obj . port)
   (C:ss_write_3 obj (if (null? port) ss_stdout (car port)) 'write))
 (define (display obj . port)
@@ -264,7 +269,7 @@
 (define *load-verbose* #f)
 (define (load-file file)
   (let ((port (open-read-file file)))
-    (let ((result (C:ss_repl &env port (if *load-verbose* ss_stderr #f) #f #f)))
+    (let ((result (C:ss_repl_run (C:ss_m_repl &env port (if *load-verbose* ss_stderr #f)))))
       (close-port port)
       result)))
 (define load load-file)
@@ -274,6 +279,12 @@
     (list 'C:ss_make_syntax (list 'quote (car name)) (list 'lambda (cdr name) (cons 'begin form)))
     (list 'C:ss_make_syntax (list 'quote name) (car form))))
 (C:ss_make_syntax 'define-macro %define-macro)
+
+(define (%string-truncate! str len)
+  (C:%ss_set str 1 (C:%ss_I len)))
+(define (%string-to-number str radix)
+  (C:%ss_string_TO_number str (C:%ss_I radix)))
+(load "lib/string.scm")
 
 (load "lib/cxr.scm")
 (load "lib/quasiquote.scm")
@@ -384,6 +395,6 @@
 
 (load "lib/each.scm")
 
-(display ";; ss - boot.scm loaded.")(newline)
+(display "  ;; ss: boot.scm loaded." ss_stderr)(newline ss_stderr)
 
 ;; (load "t/test.scm")
