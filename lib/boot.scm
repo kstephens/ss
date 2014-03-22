@@ -280,6 +280,12 @@
     (list 'C:ss_make_syntax (list 'quote name) (car form))))
 (C:ss_make_syntax 'define-macro %define-macro)
 
+(define (%string-truncate! str len)
+  (C:%ss_set str 1 (C:%ss_I len)))
+(define (%string-to-number str radix)
+  (C:%ss_string_TO_number str (C:%ss_I radix)))
+(load "lib/string.scm")
+
 (load "lib/cxr.scm")
 (load "lib/quasiquote.scm")
 (define-macro quasiquote %quasiquote)
