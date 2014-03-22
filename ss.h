@@ -1,10 +1,15 @@
 #ifndef _ss_h_
 #define _ss_h_
 
-#if 1
+#if 0
 #define __USE_SVID 1
 #endif
+#ifdef __linux__
+#define _FINITE_MATH_ONLY__ 9
+#endif
 #include <stddef.h>
+#include <sys/types.h>
+#include <unistd.h> /* ssize_t? */
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -12,19 +17,20 @@
 #include <errno.h>
 #include <string.h> /* memcpy(), strerror(), strcasecmp() */
 #include <strings.h> /* strcasecmp() alt. */
-#ifdef __APPLE__
-#define _DONT_USE_CTYPE_INLINE_ 1
-#define _ANSI_SOURCE 1
-#endif
-#include <ctype.h>
-#include <sys/types.h>
 #include <sys/time.h>
-#include <unistd.h> /* ssize_t? */
 #include <dlfcn.h> /* dlopen() */
 #include <assert.h>
 #ifndef __APPLE__
 #include <alloca.h>
 #endif
+#ifdef __APPLE__
+#define _DONT_USE_CTYPE_INLINE_ 1
+#define _ANSI_SOURCE 1
+#endif
+#ifdef __linux__
+#undef __USE_XOPEN2K8
+#endif
+#include <ctype.h>
 #include <jit/jit.h>
 
 #ifdef NO_GC
