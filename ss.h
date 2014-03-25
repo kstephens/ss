@@ -88,7 +88,7 @@ typedef enum ss_te {
 #define ss_te_def(N) ss_te_##N,
 #include "te.def"
   ss_te_LITERAL_MIN = ss_te_undef,
-  ss_te_LAST,
+  ss_te_LAST
 } ss_te;
 
 typedef struct ss_s_type {

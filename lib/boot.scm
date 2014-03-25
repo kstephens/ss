@@ -255,6 +255,8 @@
 
 (define (open-input-file file)
   (%open-file 'open-input-file file "r"))
+(define (open-output-file file)
+  (%open-file 'open-output-file file "w"))
 (define (close-port port)
   (C:ss_port_close port))
 
