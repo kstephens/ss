@@ -79,6 +79,7 @@ ggrt_type *ggrt_m_array_type(ggrt_type *t, size_t len);
 
 /* Make enum type. */
 ggrt_type *ggrt_m_enum_type(const char *name, int nelem, const char **names, long *elem_values);
+ggrt_type *ggrt_m_enum_type_define(ggrt_type *ct, int nelems, const char **names, long *values);
 
 /* Make function type. */
 ggrt_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **elem_types);

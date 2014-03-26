@@ -88,15 +88,27 @@ ggrt_type *ggrt_m_enum_type(const char *name, int nelems, const char **names, lo
   ggrt_type *ct = ggrt_m_type(name, sizeof(enum ggrt_enum), &ffi_type_sint);
   assert(sizeof(enum ggrt_enum) == sizeof(int));
   ct->type = "enum";
+  if ( nelems && names ) {
+    ggrt_m_enum_type_define(ct, nelems, names, values);
+  }
+  return ct;
+}
+
+ggrt_type *ggrt_m_enum_type_define(ggrt_type *ct, int nelems, const char **names, long *values)
+{
+  assert(ct);
+  assert(nelems);
+  assert(names);
   ct->nelems = nelems;
   ct->elems = ggrt_malloc(sizeof(ct->elems[0]) * ct->nelems);
   {
     int i;
+    int default_value = 0;
     for ( i = 0; i < ct->nelems; ++ i ) {
       ggrt_elem *e = ct->elems[i] = ggrt_m_elem(names[i], ct);
       e->parent = ct;
       e->parent_i = i;
-      e->enum_val = values ? values[i] : 0;
+      e->enum_val = values ? values[i] : default_value ++;
     }
   }
   return ct;
