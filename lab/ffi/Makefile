@@ -4,16 +4,18 @@ CFLAGS += -O3
 endif
 CPPFLAGS += -I.
 
-CPPFLAGS += -I/opt/local/lib/libffi-3.0.13/include
+CPPFLAGS += -I/opt/local/lib/libffi-3.0.13/include # MacPorts
+CPPFLAGS += -I/usr/include/x86_64-linux-gnu # Linux
 
-LIBS += -L/opt/local/lib
+LIBS += -L/opt/local/lib # MacPorts
+LIBS += -L/usr/lib/x86_64-linux-gnu # Linux libffi.a
 # LIBS += -L/opt/local/lib/x86_64 -ljit -ljitdynamic -ljitplus
 LIBS += -lffi
 LIBS += -lm
 
 CPP = $(CC) $(CPPFLAGS) -E 
 
-LDFLAGS += $(LIBS)
+LDLIBS += $(LIBS)
 
 CFILES = \
   ffi-ex0.t.c \
