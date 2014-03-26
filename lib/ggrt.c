@@ -11,6 +11,8 @@ ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type)
   memset(ct, 0, sizeof(*ct));
   ct->name = name ? ggrt_strdup(name) : name;
   ct->c_size = c_size;
+  ct->c_alignof = c_size; /* guess. */
+  ct->c_vararg_size = c_size; /* can be overridden. */
   ct->f_type = f_type;
   ct->param_type = ct;
   return ct;

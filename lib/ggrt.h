@@ -19,6 +19,7 @@ typedef struct ggrt_type {
   const char *name;
   size_t c_size;    /* C sizeof() */
   size_t c_alignof; /* C __alignof__() */
+  size_t c_vararg_size;
   ffi_type *f_type;
   struct ggrt_type *param_type; /* as an function parameter. */
   struct ggrt_type *alias_of;
