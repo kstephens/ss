@@ -11,8 +11,10 @@ typedef void *ss;
 typedef struct ss_s_c_type {
     const char *name;
     size_t c_size;    /* C sizeof() */
+  size_t c_alignof;   /* C __alignof__() */
     ffi_type *f_type;
     struct ss_s_c_type *param_type; /* as an function parameter. */
+  struct ss_s_c_type *alias_of;
 
     /* struct, union, func type */
     struct ss_s_c_type *rtn_type;
@@ -39,18 +41,24 @@ ss_s_c_type *ss_m_c_type(const char *name, size_t c_size, void *f_type)
     return ct;
 }
 
-#define TYPE(N,T) ss_s_c_type *ss_c_type_##N;
+#define TYPE(N,T,AN) ss_s_c_type *ss_c_type_##AN;
+#include "type.def"
+
+#define TYPE(N,T,AN) ss_s_c_type *ss_c_type_##N;
 #include "type.def"
 
 void ss_init_c_type()
 {
-#define TYPE(N,T) ss_c_type_##N = ss_m_c_type(#T, sizeof(T), &ffi_type_##N);
+#define TYPE(N,T,AN) ss_c_type_##N = ss_m_c_type(#T, sizeof(T), &ffi_type_##N); ss_c_type_##N->c_alignof = __alignof__(T);
 #include "type.def"
 
     /* Coerce args to int */
-#define ITYPE(N,T) if ( sizeof(T) < sizeof(int) ) ss_c_type_##N->param_type = ss_c_type_sint;
-#define TYPE(N,T)
+#define ITYPE(N,T,AN) if ( sizeof(T) < sizeof(int) ) ss_c_type_##N->param_type = ss_c_type_sint;
+#define TYPE(N,T,AN)
 #include "type.def"
+
+  /* Aliased types */
+#define A_TYPE(N,T,AN) ss_c_type_##->alias_of = ss_c_type_##AN;
 }
 
 typedef ss_s_c_type ss_s_c_func_type;
