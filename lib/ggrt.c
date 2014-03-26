@@ -2,6 +2,7 @@
 #include <string.h>
 #include <alloca.h>
 #include <string.h> /* memset, memcpy */
+#include <assert.h>
 
 #include "ggrt.h"
 
@@ -10,6 +11,7 @@ ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type)
   ggrt_type *ct = ggrt_malloc(sizeof(*ct));
   memset(ct, 0, sizeof(*ct));
   ct->name = name ? ggrt_strdup(name) : name;
+  ct->type = name;
   ct->c_sizeof = c_size;
   ct->c_alignof = c_size; /* guess. */
   ct->c_vararg_size = c_size; /* can be overridden. */
@@ -38,9 +40,35 @@ void ggrt_init()
 #define A_TYPE(N,T,AN) ggrt_type_##->alias_of = ggrt_type_##AN;
 }
 
-enum ggrt_enum {
-  x, y, z
-};
+ggrt_type *ggrt_m_pointer_type(ggrt_type *t)
+{
+  ggrt_type *pt;
+  if ( t->pointer_to )
+    return t->pointer_to;
+
+  pt = ggrt_m_type(0, sizeof(void*), &ffi_type_pointer);
+  pt->type = "pointer";
+  pt->rtn_type = t;
+  pt->c_sizeof = sizeof(void*);
+  pt->c_alignof = ggrt_type_pointer->c_alignof;
+  pt->c_vararg_size = sizeof(void*);
+
+  t->pointer_to = pt;
+  return pt;
+}
+
+ggrt_type *ggrt_m_array_type(ggrt_type *t, size_t len)
+{
+  ggrt_type *pt;
+  pt = ggrt_m_type(0, sizeof(void*), &ffi_type_pointer);
+  pt->type = "array";
+  pt->rtn_type = t;
+  pt->nelems = len;
+  // int a[10];
+  // typeof(&a) == typeof(&a[0]);
+  pt->pointer_to = ggrt_m_pointer_type(t);
+  return pt;
+}
 
 ggrt_elem *ggrt_m_elem(const char *name, ggrt_type *t)
 {
@@ -51,9 +79,15 @@ ggrt_elem *ggrt_m_elem(const char *name, ggrt_type *t)
   return e;
 }
 
+enum ggrt_enum {
+  x, y, z
+};
+
 ggrt_type *ggrt_m_enum_type(const char *name, int nelems, const char **names, long *values)
 {
   ggrt_type *ct = ggrt_m_type(name, sizeof(enum ggrt_enum), &ffi_type_sint);
+  assert(sizeof(enum ggrt_enum) == sizeof(int));
+  ct->type = "enum";
   ct->nelems = nelems;
   ct->elems = ggrt_malloc(sizeof(ct->elems[0]) * ct->nelems);
   {
@@ -72,6 +106,7 @@ static ggrt_type *current_st; /* NOT THREAD SAFE! */
 ggrt_type *ggrt_m_struct_type(const char *s_or_u, const char *name)
 {
   ggrt_type *st = ggrt_m_type(name, 0, 0);
+  st->type = s_or_u;
   st->struct_scope = current_st;
 
   st->elems = ggrt_malloc(sizeof(st->elems[0]) * st->nelems);
@@ -97,22 +132,40 @@ int ggrt_m_struct_elem(ggrt_type *st, const char *name, ggrt_type *t)
   return st->nelems;
 }
 
+ggrt_type *ggrt_m_struct_type_end(ggrt_type *st)
+{
+  if ( ! st )
+    st = current_st;
+
+  current_st = st->struct_scope;
+  return st;
+}
+
 size_t ggrt_type_sizeof(ggrt_type *st)
 {
   if ( st->c_sizeof )
     return st->c_sizeof;
+  switch ( st->type[0] ) {
+  case 'a': // array
+    if ( st->nelems != (size_t) -1 ) {
+      st->c_sizeof = ggrt_type_sizeof(st->rtn_type) * st->nelems;
+    }
+    break;
+  case 's': case 'u':
   if ( st->nelems ) {
-    size_t offset = 0;
+    size_t offset = 0, size = 0;
     int i;
     size_t adjust_alignof;
     ggrt_elem *e;
     for ( i = 0; i < st->nelems; ++ i ) {
       e = st->elems[i];
+      // FIXME: handle union.
       if ( (adjust_alignof = offset % ggrt_type_alignof(e->type)) )
         offset += ggrt_type_alignof(e->type) - adjust_alignof;
       e->offset = offset;
       offset += ggrt_type_sizeof(e->type);
     }
+    // FIXME: handle union.
     e = st->elems[0];
     if ( (adjust_alignof = offset % ggrt_type_alignof(e->type)) )
       offset += ggrt_type_alignof(e->type) - adjust_alignof;
@@ -120,6 +173,9 @@ size_t ggrt_type_sizeof(ggrt_type *st)
     st->c_sizeof = offset;
     st->c_alignof = ggrt_type_alignof(e->type);
     st->c_vararg_size = st->c_sizeof; // ???
+  }
+  break;
+  default: abort();
   }
   return st->c_sizeof;
 }
@@ -132,18 +188,10 @@ size_t ggrt_type_alignof(ggrt_type *st)
   return st->c_alignof;
 }
 
-ggrt_type *ggrt_m_struct_type_end(ggrt_type *st)
-{
-  if ( ! st )
-    st = current_st;
-
-  current_st = st->struct_scope;
-  return st;
-}
-
 ggrt_type *ggrt_m_func_type(void *rtn_type, int nelems, ggrt_type **param_types)
 {
   ggrt_type *ct = ggrt_m_type(0, 0, 0);
+  ct->type = "function";
   ct->param_type = ggrt_type_pointer;
   ct->rtn_type = rtn_type;
   ct->nelems = nelems;

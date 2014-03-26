@@ -26,10 +26,11 @@ typedef struct ggrt_type {
   ffi_type *f_type;
   struct ggrt_type *param_type; /* as an function parameter. */
   struct ggrt_type *alias_of;
+  struct ggrt_type *pointer_to; /* this type. */
 
   /* struct, union, enum, func type */
-  struct ggrt_type *rtn_type; /* AND pointer to type. */
-  int nelems;
+  struct ggrt_type *rtn_type; /* AND array, pointer element type. */
+  size_t nelems;
   struct ggrt_elem **elems;
   struct ggrt_type *struct_scope;
 
@@ -67,6 +68,9 @@ size_t ggrt_type_alignof(ggrt_type *st);
 
 /* Make intrinsic type. */
 ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type);
+
+ggrt_type *ggrt_m_pointer_type(ggrt_type *t);
+ggrt_type *ggrt_m_array_type(ggrt_type *t, size_t len);
 
 /* Make enum type. */
 ggrt_type *ggrt_m_enum_type(const char *name, int nelem, const char **names, long *elem_values);
