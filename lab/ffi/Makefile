@@ -17,9 +17,11 @@ LIBS += -lffi
 LIBS += -lm
 
 
-CFILES = \
-  ffi-ex0.t.c \
-  ss_ffi.t.c
+TFILES = \
+  ffi-ex0.t \
+  ss_ffi.t
+
+CFILES = $(TFILES:%.t=%.t.c)
 
 #.c.i:
 #	$(CPP) $< -o $@
@@ -27,6 +29,12 @@ CFILES = \
 all : $(CFILES:%.c=%)
 
 clean :
-	rm -f $(CFILES:%.c=%)
+	rm -f $(TFILES)
 
+test : all
+	for t in $(TFILES); \
+	do \
+	  echo "$$t" ;\
+	  ./$$t ;\
+	done
 
