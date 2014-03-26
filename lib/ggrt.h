@@ -27,9 +27,8 @@ typedef struct ggrt_type {
   /* struct, union, enum, func type */
   struct ggrt_type *rtn_type; /* AND pointer to type. */
   int nelem;
-  char **elem_names;
-  struct ggrt_type **elem_types;
-  GGRT_V *elem_values; /* enum values. */
+  struct ggrt_elem **elems;
+  struct ggrt_type *struct_scope;
 
   /* func type: generated */
   ffi_cif f_cif;
@@ -38,6 +37,17 @@ typedef struct ggrt_type {
   ffi_type **f_elem_types;
   size_t c_args_size;
 } ggrt_type;
+
+/* struct or enum element. */
+typedef struct ggrt_elem {
+  const char *name;
+  struct ggrt_type *type;
+  long enum_val;
+  size_t offset;
+  ggrt_type *parent;
+  int parent_i;
+  GGRT_V *value;
+} ggrt_elem;
 
 /* intrinsic types. */
 #define TYPE(N,T,AN) extern ggrt_type *ggrt_c_type_##AN;
@@ -52,7 +62,7 @@ void ggrt_init();
 ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type);
 
 /* Make enum type. */
-ggrt_type *ggrt_m_enum_type(const char *name, int nelem, const char **names, GGRT_V *elem_values);
+ggrt_type *ggrt_m_enum_type(const char *name, int nelem, const char **names, long *elem_values);
 
 /* Make function type. */
 ggrt_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **elem_types);

@@ -42,27 +42,77 @@ enum ggrt_enum {
   x, y, z
 };
 
-ggrt_type *ggrt_m_enum_type(const char *name, int nelem, const char **names, GGRT_V *elem_values)
+ggrt_elem *ggrt_m_elem(const char *name, ggrt_type *t)
+{
+  ggrt_elem *e = ggrt_malloc(sizeof(*e));
+  memset(e, 0, sizeof(*e));
+  e->name = name ? ggrt_strdup(name) : name;
+  e->type = t;
+  return e;
+}
+
+ggrt_type *ggrt_m_enum_type(const char *name, int nelem, const char **names, long *values)
 {
   ggrt_type *ct = ggrt_m_type(name, sizeof(enum ggrt_enum), &ffi_type_sint);
   ct->nelem = nelem;
-  ct->elem_names = ggrt_malloc(sizeof(ct->elem_names[0]) * ct->nelem);
+  ct->elems = ggrt_malloc(sizeof(ct->elems[0]) * ct->nelem);
   {
     int i;
-    for ( i = 0; i < nelem; ++ i )
-      ct->elem_names[i] = ggrt_strdup(ct->elem_names[i]);
+    for ( i = 0; i < nelem; ++ i ) {
+      ggrt_elem *e = ct->elems[i] = ggrt_m_elem(names[i], ct);
+      e->parent = ct;
+      e->parent_i = i;
+      e->enum_val = values ? values[i] : 0;
+    }
   }
-  ct->elem_values = elem_values;
   return ct;
 }
 
-ggrt_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **elem_types)
+static ggrt_type *current_st; /* NOT THREAD SAFE! */
+ggrt_type *ggrt_m_struct_type(const char *s_or_u, const char *name)
+{
+  ggrt_type *st = ggrt_m_type(name, 0, 0);
+  st->struct_scope = current_st;
+
+  current_st = st;
+  return st;
+}
+
+int ggrt_m_struct_elem(ggrt_type *st, const char *name, ggrt_type *t)
+{
+  if ( ! st )
+    st = current_st;
+
+  return st->nelem;
+}
+
+ggrt_type *ggrt_m_struct_type_end(ggrt_type *st)
+{
+  if ( ! st )
+    st = current_st;
+
+  current_st = st->struct_scope;
+  return st;
+}
+
+ggrt_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **param_types)
 {
   ggrt_type *ct = ggrt_m_type(0, 0, 0);
+  ct->param_type = ggrt_type_pointer;
   ct->rtn_type = rtn_type;
   ct->nelem = nelem;
-  ct->elem_types = elem_types;
-  ct->param_type = ggrt_type_pointer;
+  ct->elems = ggrt_malloc(sizeof(ct->elems[0]) * ct->nelem);
+  {
+    int i; size_t offset = 0;
+    for ( i = 0; i < nelem; ++ i ) {
+      ggrt_type *pt = param_types[i];
+      ggrt_elem *e = ct->elems[i] = ggrt_m_elem(0, pt);
+      e->parent = ct;
+      e->parent_i = i;
+      e->offset = offset;
+      offset += pt->param_type->c_size;
+    }
+  }
   return ct;
 }
 
@@ -75,8 +125,8 @@ ggrt_type *ggrt_ffi_prepare(ggrt_type *ft)
       ft->f_elem_types = ggrt_malloc(sizeof(ft->f_elem_types) * ft->nelem);
       ft->c_args_size = 0;
       for ( i = 0; i < ft->nelem; ++ i ) {
-        ft->f_elem_types[i] = ft->elem_types[i]->f_type;
-        ft->c_args_size += ft->elem_types[i]->c_size;
+        ft->f_elem_types[i] = ft->elems[i]->type->f_type;
+        ft->c_args_size += ft->elems[i]->type->c_size;
       }
     }
     if ( ffi_prep_cif(&ft->f_cif, FFI_DEFAULT_ABI, ft->nelem, ft->f_rtn_type, ft->f_elem_types) != FFI_OK )
@@ -120,7 +170,7 @@ void ggrt_ffi_call(ggrt_type *ft, GGRT_V *rtn_valp, void *cfunc, int argc, GGRT_
     int i;
     for ( i = 0; i < argc; ++ i ) {
       f_args[i] = arg_p;
-      arg_p += ggrt_ffi_unbox_arg(ft->elem_types[i], &argv[i], arg_p);
+      arg_p += ggrt_ffi_unbox_arg(ft->elems[i]->type, &argv[i], arg_p);
     }
   }
 
