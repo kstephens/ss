@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include <string.h>
 
 typedef void *GGRT_V;
 #define GGRT_V GGRT_V
+#define ggrt_malloc malloc
+#define ggrt_strdup strdup
 #include "ggrt.h"
 #define GGRT_V_type ggrt_type_pointer
 
