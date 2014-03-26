@@ -5,9 +5,9 @@
 
 #include "ggrt.h"
 
-ggrt_s_c_type *ggrt_m_c_type(const char *name, size_t c_size, void *f_type)
+ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type)
 {
-  ggrt_s_c_type *ct = ggrt_malloc(sizeof(*ct));
+  ggrt_type *ct = ggrt_malloc(sizeof(*ct));
   memset(ct, 0, sizeof(*ct));
   ct->name = name ? ggrt_strdup(name) : name;
   ct->c_size = c_size;
@@ -17,36 +17,36 @@ ggrt_s_c_type *ggrt_m_c_type(const char *name, size_t c_size, void *f_type)
 }
 
 /* intrinsic types. */
-#define TYPE(N,T,AN) ggrt_s_c_type *ggrt_c_type_##AN;
+#define TYPE(N,T,AN) ggrt_type *ggrt_type_##AN;
 #include "type.def"
-#define TYPE(N,T,AN) ggrt_s_c_type *ggrt_c_type_##N;
+#define TYPE(N,T,AN) ggrt_type *ggrt_type_##N;
 #include "type.def"
 
 void ggrt_init()
 {
-#define TYPE(N,T,AN) ggrt_c_type_##N = ggrt_m_c_type(#T, sizeof(T), &ffi_type_##N); ggrt_c_type_##N->c_alignof = __alignof__(T);
+#define TYPE(N,T,AN) ggrt_type_##N = ggrt_m_type(#T, sizeof(T), &ffi_type_##N); ggrt_type_##N->c_alignof = __alignof__(T);
 #include "type.def"
 
   /* Coerce args to int */
-#define ITYPE(N,T,AN) if ( sizeof(T) < sizeof(int) ) ggrt_c_type_##N->param_type = ggrt_c_type_sint;
+#define ITYPE(N,T,AN) if ( sizeof(T) < sizeof(int) ) ggrt_type_##N->param_type = ggrt_type_sint;
 #define TYPE(N,T,AN)
 #include "type.def"
 
   /* Aliased types */
-#define A_TYPE(N,T,AN) ggrt_c_type_##->alias_of = ggrt_c_type_##AN;
+#define A_TYPE(N,T,AN) ggrt_type_##->alias_of = ggrt_type_##AN;
 }
 
-ggrt_s_c_func_type *ggrt_m_c_func_type(void *rtn_type, int nelem, ggrt_s_c_type **elem_types)
+ggrt_func_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **elem_types)
 {
-  ggrt_s_c_func_type *ct = ggrt_m_c_type(0, 0, 0);
+  ggrt_func_type *ct = ggrt_m_type(0, 0, 0);
   ct->rtn_type = rtn_type;
   ct->nelem = nelem;
   ct->elem_types = elem_types;
-  ct->param_type = ggrt_c_type_pointer;
+  ct->param_type = ggrt_type_pointer;
   return ct;
 }
 
-ggrt_s_c_func_type *ggrt_ffi_prepare(ggrt_s_c_func_type *ft)
+ggrt_func_type *ggrt_ffi_prepare(ggrt_func_type *ft)
 {
   if ( ! ft->f_cif_inited ) {
     ft->f_rtn_type = ft->rtn_type->f_type;
@@ -68,26 +68,26 @@ ggrt_s_c_func_type *ggrt_ffi_prepare(ggrt_s_c_func_type *ft)
 
 #ifndef ggrt_BOX_DEFINED
 
-size_t ggrt_ffi_unbox(ggrt_s_c_type *ct, GGRT_V *valp, void *dst)
+size_t ggrt_ffi_unbox(ggrt_type *ct, GGRT_V *valp, void *dst)
 {
   memset(dst, 0, ct->c_size);
   memcpy(dst, valp, sizeof(*valp)); // dummy
   return ct->c_size;
 }
 
-size_t ggrt_ffi_unbox_arg(ggrt_s_c_type *ct, GGRT_V *valp, void *dst)
+size_t ggrt_ffi_unbox_arg(ggrt_type *ct, GGRT_V *valp, void *dst)
 {
   return ggrt_ffi_unbox(ct, valp, dst);
 }
 
-void ggrt_ffi_box(ggrt_s_c_type *ct, void *src, GGRT_V *dstp)
+void ggrt_ffi_box(ggrt_type *ct, void *src, GGRT_V *dstp)
 {
   memcpy(dstp, src, sizeof(*dstp)); // dummy
 }
 
 #endif
 
-void ggrt_ffi_call(ggrt_s_c_func_type *ft, GGRT_V *rtn_valp, void *cfunc, int argc, GGRT_V *argv)
+void ggrt_ffi_call(ggrt_func_type *ft, GGRT_V *rtn_valp, void *cfunc, int argc, GGRT_V *argv)
 {
   void **f_args   = alloca(sizeof(*f_args) * ggrt_ffi_prepare(ft)->nelem);
   void *arg_space = alloca(ft->c_args_size);

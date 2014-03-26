@@ -3,20 +3,21 @@
 typedef void *GGRT_V;
 #define GGRT_V GGRT_V
 #include "ggrt.h"
+#define GGRT_V_type ggrt_type_pointer
 
-size_t ggrt_ffi_unbox(ggrt_s_c_type *ct, GGRT_V *valp, void *dst)
+size_t ggrt_ffi_unbox(ggrt_type *ct, GGRT_V *valp, void *dst)
 {
   memset(dst, 0, ct->c_size);
   memcpy(dst, valp, sizeof(*valp)); // dummy
   return ct->c_size;
 }
 
-size_t ggrt_ffi_unbox_arg(ggrt_s_c_type *ct, GGRT_V *valp, void *dst)
+size_t ggrt_ffi_unbox_arg(ggrt_type *ct, GGRT_V *valp, void *dst)
 {
   return ggrt_ffi_unbox(ct, valp, dst);
 }
 
-void ggrt_ffi_box(ggrt_s_c_type *ct, void *src, GGRT_V *dstp)
+void ggrt_ffi_box(ggrt_type *ct, void *src, GGRT_V *dstp)
 {
   memcpy(dstp, src, sizeof(*dstp)); // dummy
 }
@@ -30,10 +31,9 @@ int main()
 {
   ggrt_init();
 
-  ggrt_s_c_type *ct_GGRT_V   = ggrt_c_type_pointer;
-  ggrt_s_c_type *ct_rtn  = ct_GGRT_V;
-  ggrt_s_c_type *ct_params[1] = { ct_GGRT_V };
-  ggrt_s_c_func_type *ft = ggrt_m_c_func_type(ct_rtn, 1, ct_params);
+  ggrt_type *ct_rtn  = GGRT_V_type;
+  ggrt_type *ct_params[1] = { GGRT_V_type };
+  ggrt_func_type *ft = ggrt_m_func_type(ct_rtn, 1, ct_params);
 
   GGRT_V rtn, args[10];
 
