@@ -1,7 +1,7 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <alloca.h>
+#include <string.h> /* memset, memcpy */
 
 #include "ggrt.h"
 
@@ -66,6 +66,8 @@ gghcrt_s_c_func_type *gghcrt_ffi_prepare(gghcrt_s_c_func_type *ft)
   return ft;
 }
 
+#ifndef ggrt_BOX_DEFINED
+
 size_t gghcrt_ffi_unbox(gghcrt_s_c_type *ct, GGHCRT_V *valp, void *dst)
 {
   memset(dst, 0, ct->c_size);
@@ -82,6 +84,8 @@ void gghcrt_ffi_box(gghcrt_s_c_type *ct, void *src, GGHCRT_V *dstp)
 {
   memcpy(dstp, src, sizeof(*dstp)); // dummy
 }
+
+#endif
 
 void gghcrt_ffi_call(gghcrt_s_c_func_type *ft, GGHCRT_V *rtn_valp, void *cfunc, int argc, GGHCRT_V *argv)
 {

@@ -1,11 +1,8 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <alloca.h>
 
 typedef void *GGHCRT_V;
 #define GGHCRT_V GGHCRT_V
-#include "ggrt.c"
+#include "ggrt.h"
 
 size_t gghcrt_ffi_unbox(gghcrt_s_c_type *ct, GGHCRT_V *valp, void *dst)
 {
@@ -23,6 +20,9 @@ void gghcrt_ffi_box(gghcrt_s_c_type *ct, void *src, GGHCRT_V *dstp)
 {
   memcpy(dstp, src, sizeof(*dstp)); // dummy
 }
+
+#define ggrt_BOX_DEFINED 1
+#include "ggrt.c"
 
 static GGHCRT_V identity(GGHCRT_V x) { return x; }
 
