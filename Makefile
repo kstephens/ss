@@ -47,8 +47,6 @@ HFILES = \
   lispread/lispread.c \
   include/ss/*.h \
   $(OTHER_C_FILES)
-<<<<<<< HEAD
-=======
 
 OTHER_C_FILES = \
   src/*.c \
@@ -65,63 +63,9 @@ boot/cdefine.def \
 boot/cwrap.def
 
 SILENT=@
->>>>>>> 59f90b31b1e143abb5939e4771566fdb20a66a54
-
-OTHER_C_FILES = \
-  src/*.c \
-  src/*.h \
-  src/*.def
-
-<<<<<<< HEAD
-EARLY_FILES = \
-boot/t.def \
-boot/sym.def    \
-boot/prim.def   \
-boot/syntax.def \
-boot/cdefine.def \
-boot/cwrap.def
-
-SILENT=@
 
 all : ss
 
-boot/t.def      : gen/t.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-boot/sym.def    : gen/sym.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-boot/prim.def   : gen/prim.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-boot/syntax.def : gen/syntax.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-boot/cwrap.def  : gen/cwrap.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-boot/cdefine.def  : gen/cdefine.def.gen
-	@echo "GEN $@"
-	$(SILENT)$< </dev/null >$@
-
-gen/t.def : Makefile gen/t.def.gen $(CFILES) $(OTHER_C_FILES) gen/cwrap.def
-	@echo "GEN $@"
-	$(SILENT)$(CPP) $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@
-gen/sym.def : Makefile gen/sym.def.gen $(CFILES) $(OTHER_C_FILES) gen/prim.def gen/syntax.def
-	@echo "GEN $@"
-	$(SILENT)$(CPP) -Dss_sym=ss_sym $(CFILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
-gen/prim.def : Makefile gen/prim.def.gen $(CFILES)
-	@echo "GEN $@"
-	$(SILENT)$(CPP) -D_ss_prim=_ss_prim $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
-gen/syntax.def : Makefile gen/syntax.def.gen $(CFILES)
-	@echo "GEN $@"
-	$(SILENT)$(CPP) -Dss_syntax=ss_syntax $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
-gen/cwrap.def : Makefile gen/cwrap.def.gen $(CFILES) $(OTHER_C_FILES)
-	@echo "GEN $@"
-	$(SILENT)$(CPP) $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
-gen/cdefine.def : Makefile gen/cdefine.def.gen $(CFILES) $(OTHER_C_FILES)
-	$(SILENT)$(CPP) -dM $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
-=======
 boot/%.def : gen/%.def.gen
 	@echo "GEN $@"
 	$(SILENT)$< </dev/null >$@
@@ -134,7 +78,6 @@ gen/*.def : Makefile $(CFILES) $(OTHER_C_FILES)
 
 gen/t.def   : gen/cwrap.def
 gen/sym.def : gen/prim.def gen/syntax.def
->>>>>>> 59f90b31b1e143abb5939e4771566fdb20a66a54
 
 lispread/lispread.c:
 	git submodule init
