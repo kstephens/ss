@@ -17,6 +17,7 @@ typedef struct ss_s_c_type {
     /* struct, union, func type */
     struct ss_s_c_type *rtn_type;
     int nelem;
+    char **elem_names;
     struct ss_s_c_type **elem_types;
 
     /* func type: generated */
