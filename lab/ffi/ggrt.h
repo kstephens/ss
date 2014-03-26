@@ -38,8 +38,6 @@ typedef struct ggrt_type {
   size_t c_args_size;
 } ggrt_type;
 
-typedef ggrt_type ggrt_func_type;
-
 /* intrinsic types. */
 #define TYPE(N,T,AN) extern ggrt_type *ggrt_c_type_##AN;
 #include "type.def"
@@ -53,10 +51,10 @@ void ggrt_init();
 ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type);
 
 /* Define function type. */
-ggrt_func_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **elem_types);
+ggrt_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **elem_types);
 
 /* Func call. */
-void ggrt_ffi_call(ggrt_func_type *ft, GGRT_V *rtn_valp, void *cfunc, int argc, GGRT_V *argv);
+void ggrt_ffi_call(ggrt_type *ft, GGRT_V *rtn_valp, void *cfunc, int argc, GGRT_V *argv);
 
 /* Users must define these functions. */
 size_t ggrt_ffi_unbox(ggrt_type *ct, GGRT_V *valp, void *dst);
@@ -64,6 +62,6 @@ size_t ggrt_ffi_unbox_arg(ggrt_type *ct, GGRT_V *valp, void *dst);
 void   ggrt_ffi_box(ggrt_type *ct, void *src, GGRT_V *dstp);
 
 /* Internal */
-ggrt_func_type *ggrt_ffi_prepare(ggrt_func_type *ft);
+ggrt_type *ggrt_ffi_prepare(ggrt_type *ft);
 
 #endif

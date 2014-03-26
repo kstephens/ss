@@ -33,7 +33,7 @@ int main()
 
   ggrt_type *ct_rtn  = GGRT_V_type;
   ggrt_type *ct_params[1] = { GGRT_V_type };
-  ggrt_func_type *ft = ggrt_m_func_type(ct_rtn, 1, ct_params);
+  ggrt_type *ft = ggrt_m_func_type(ct_rtn, 1, ct_params);
 
   GGRT_V rtn, args[10];
 
