@@ -20,16 +20,11 @@ LIBS += -lm
 
 CPPFLAGS += -DUNIT_TEST
 
-TFILES = \
-  ffi-ex0.t \
-  ss_ffi.t
+CFILES := $(shell ls *.t.c)
 
-CFILES = $(TFILES:%.t=%.t.c)
+TFILES = $(CFILES:%.c=%)
 
-#.c.i:
-#	$(CPP) $< -o $@
-
-all : $(CFILES:%.c=%)
+all : $(TFILES)
 
 clean :
 	rm -f $(TFILES)
