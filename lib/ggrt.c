@@ -42,10 +42,16 @@ enum ggrt_enum {
   x, y, z
 };
 
-ggrt_type *ggrt_m_enum_type(const char *name, int nelem, GGRT_V *elem_values)
+ggrt_type *ggrt_m_enum_type(const char *name, int nelem, const char **names, GGRT_V *elem_values)
 {
   ggrt_type *ct = ggrt_m_type(name, sizeof(enum ggrt_enum), &ffi_type_sint);
   ct->nelem = nelem;
+  ct->elem_names = ggrt_malloc(sizeof(ct->elem_names[0]) * ct->nelem);
+  {
+    int i;
+    for ( i = 0; i < nelem; ++ i )
+      ct->elem_names[i] = ggrt_strdup(ct->elem_names[i]);
+  }
   ct->elem_values = elem_values;
   return ct;
 }

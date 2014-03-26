@@ -52,7 +52,7 @@ void ggrt_init();
 ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type);
 
 /* Make enum type. */
-ggrt_type *ggrt_m_enum_type(const char *name, int nelem, GGRT_V *elem_values);
+ggrt_type *ggrt_m_enum_type(const char *name, int nelem, const char **names, GGRT_V *elem_values);
 
 /* Make function type. */
 ggrt_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **elem_types);
