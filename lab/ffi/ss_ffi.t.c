@@ -95,23 +95,21 @@ gghcrt_s_c_func_type *gghcrt_ffi_prepare(gghcrt_s_c_func_type *ft)
   return ft;
 }
 
-size_t gghcrt_ffi_unbox(gghcrt_s_c_type *ct, GGHCRT_V val, void *dst)
+size_t gghcrt_ffi_unbox(gghcrt_s_c_type *ct, GGHCRT_V *valp, void *dst)
 {
   memset(dst, 0, ct->c_size);
-  memcpy(dst, &val, sizeof(val)); // dummy
+  memcpy(dst, valp, sizeof(*valp)); // dummy
   return ct->c_size;
 }
 
-size_t gghcrt_ffi_unbox_arg(gghcrt_s_c_type *ct, GGHCRT_V val, void *dst)
+size_t gghcrt_ffi_unbox_arg(gghcrt_s_c_type *ct, GGHCRT_V *valp, void *dst)
 {
-  return gghcrt_ffi_unbox(ct, val, dst);
+  return gghcrt_ffi_unbox(ct, valp, dst);
 }
 
-GGHCRT_V gghcrt_ffi_box(gghcrt_s_c_type *ct, void *src)
+void gghcrt_ffi_box(gghcrt_s_c_type *ct, void *src, GGHCRT_V *dstp)
 {
-  GGHCRT_V result = 0;
-  memcpy(&result, src, sizeof(result)); // dummy
-  return result;
+  memcpy(dstp, src, sizeof(*dstp)); // dummy
 }
 
 GGHCRT_V gghcrt_ffi_call(gghcrt_s_c_func_type *ft, void *cfunc, int argc, GGHCRT_V *argv)
@@ -119,20 +117,23 @@ GGHCRT_V gghcrt_ffi_call(gghcrt_s_c_func_type *ft, void *cfunc, int argc, GGHCRT
   void **f_args   = alloca(sizeof(*f_args) * gghcrt_ffi_prepare(ft)->nelem);
   void *arg_space = alloca(ft->c_args_size);
   void *rtn_space = alloca(ft->rtn_type->c_size);
-  
+  GGHCRT_V rtn_val;
+
   memset(arg_space, 0, ft->c_args_size);
   {
     void *arg_p = arg_space;
     int i;
     for ( i = 0; i < argc; ++ i ) {
       f_args[i] = arg_p;
-      arg_p += gghcrt_ffi_unbox_arg(ft->elem_types[i], argv[i], arg_p);
+      arg_p += gghcrt_ffi_unbox_arg(ft->elem_types[i], &argv[i], arg_p);
     }
   }
 
   ffi_call(&ft->f_cif, cfunc, rtn_space, f_args);
    
-  return gghcrt_ffi_box(ft->rtn_type, rtn_space);
+  gghcrt_ffi_box(ft->rtn_type, rtn_space, &rtn_val);
+
+  return rtn_val;
 }
 
 static GGHCRT_V identity(GGHCRT_V x) { return x; }
