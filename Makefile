@@ -3,35 +3,48 @@ CFLAGS += -g
 ifneq "$(NO_OPTIMIZE)" ""
 CFLAGS += -O3
 endif
-CPPFLAGS += -I.
-CPPFLAGS += -Iinclude
-CPPFLAGS += -Igen
-CPPFLAGS += -Iboot
-CPPFLAGS += -Isrc
-CPPFLAGS += -I/opt/local/include
-CPPFLAGS += -fmacro-backtrace-limit=0
-# CFLAGS += -Wall
+CPPFLAGS += $(CINCLUDES)
 CFLAGS += $(CPPFLAGS)
-CFLAGS += -Wno-deprecated-declarations
-CFLAGS += -Wno-int-to-void-pointer-cast
-CFLAGS += -Wno-unused-label
-CFLAGS += -Wno-implicit-function-declaration
-CFLAGS += -Wno-incompatible-pointer-types-discards-qualifiers
+LDLIBS += $(LIBS)
+CPP = $(CC) $(CPPFLAGS) -E
+
+CINCLUDES += -I.
+CINCLUDES += -Iinclude
+CINCLUDES += -Igen
+CINCLUDES += -Iboot
+CINCLUDES += -Isrc
 
 ifeq "$(UNAME_S)" "Linux"
 CC=colorgcc
 endif
 
-LIBS += -L/opt/local/lib
 ifneq "$(NO_GC)" ""
 CFLAGS += -DNO_GC=$(NO_GC)
 else
 LIBS += -lgc
 endif
+
+ifeq "$(UNAME_S)" "Darwin"
+CINCLUDES += -I/opt/local/include
+CINCLUDES += -I/opt/local/lib/libffi-3.0.13/include # MacPorts
+CINCLUDES += -fmacro-backtrace-limit=0
+LIBS += -L/opt/local/lib
 LIBS += -L/opt/local/lib/x86_64 -ljit -ljitdynamic -ljitplus
+endif
+ifeq "$(UNAME_S)" "Linux"
+CINCLUDES += -I/usr/include/x86_64-linux-gnu # libffi
+LIBS      += -L/usr/lib/x86_64-linux-gnu     # libffi
+endif
+LIBS += -lffi
 LIBS += -lm
 
-CPP = $(CC) $(CPPFLAGS) -E 
+# CFLAGS += -Wall
+# CLANG only?
+CFLAGS += -Wno-deprecated-declarations
+CFLAGS += -Wno-int-to-void-pointer-cast
+CFLAGS += -Wno-unused-label
+CFLAGS += -Wno-implicit-function-declaration
+CFLAGS += -Wno-incompatible-pointer-types-discards-qualifiers
 
 CFILES = \
   ss.c
@@ -64,7 +77,10 @@ boot/cwrap.def
 
 SILENT=@
 
-all : ss
+all : show-uname ss
+
+show-uname :
+	@echo "  UNAME_S=$(UNAME_S)"
 
 boot/%.def : gen/%.def.gen
 	@echo "GEN $@"
@@ -87,21 +103,21 @@ early-files : $(EARLY_FILES)
 
 ss : $(EARLY_FILES) $(CFILES) $(HFILES) $(OTHER_C_FILES)
 	@echo "LINK $@"
-	$(SILENT)$(CC) $(CFLAGS) -Dss_cwrap_c=1 -o $@ ss.c $(LIBS)
+	$(SILENT)$(CC) $(CFLAGS) -Dss_cwrap_c=1 -o $@ ss.c $(LDLIBS)
 
 ss.s : early-files $(CFILES) $(HFILES)
-	$(CC) $(CFLAGS) -Dss_cwrap_c=1 -S -o $@.tmp $(CFILES) $(LIBS)
+	$(CC) $(CFLAGS) -Dss_cwrap_c=1 -S -o $@.tmp $(CFILES) $(LDLIBS)
 	tool/asm-source $@.tmp > $@
 	rm $@.tmp
 
 ss.i : early-files $(CFILES) $(HFILES)
-	$(CC) $(CFLAGS) -E -Dss_cwrap_c=1 -o $@ $(CFILES) $(LIBS)
+	$(CPP) -Dss_cwrap_c=1 -o $@ $(CFILES) $(LDLIBS)
 
 system-defines :
-	$(CC) $(CFLAGS) -E -dM - < /dev/null | sort
+	$(CPP) -dM - < /dev/null | sort
 
 prog-defines :
-	$(CC) $(CFLAGS) -E -dM $(CFILES) | sort
+	$(CPP) -dM $(CFILES) | sort
 
 test : all
 	echo '(load "t/test.scm")' | ./ss
