@@ -47,12 +47,32 @@ HFILES = \
   lispread/lispread.c \
   include/ss/*.h \
   $(OTHER_C_FILES)
+<<<<<<< HEAD
+=======
 
 OTHER_C_FILES = \
   src/*.c \
   src/*.h \
   src/*.def
 
+EARLY_FILES = \
+lispread/lispread.c \
+boot/t.def \
+boot/sym.def    \
+boot/prim.def   \
+boot/syntax.def \
+boot/cdefine.def \
+boot/cwrap.def
+
+SILENT=@
+>>>>>>> 59f90b31b1e143abb5939e4771566fdb20a66a54
+
+OTHER_C_FILES = \
+  src/*.c \
+  src/*.h \
+  src/*.def
+
+<<<<<<< HEAD
 EARLY_FILES = \
 boot/t.def \
 boot/sym.def    \
@@ -101,6 +121,20 @@ gen/cwrap.def : Makefile gen/cwrap.def.gen $(CFILES) $(OTHER_C_FILES)
 	$(SILENT)$(CPP) $(CFILES) $(OTHER_C_FILES)| tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
 gen/cdefine.def : Makefile gen/cdefine.def.gen $(CFILES) $(OTHER_C_FILES)
 	$(SILENT)$(CPP) -dM $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
+=======
+boot/%.def : gen/%.def.gen
+	@echo "GEN $@"
+	$(SILENT)$< </dev/null >$@
+
+gen/%.def : gen/%.def.gen
+	@echo "GEN $@"
+	$(SILENT) d=_ss_$(notdir $(basename $@)); $(CPP) -D$$d=$$d $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
+
+gen/*.def : Makefile $(CFILES) $(OTHER_C_FILES)
+
+gen/t.def   : gen/cwrap.def
+gen/sym.def : gen/prim.def gen/syntax.def
+>>>>>>> 59f90b31b1e143abb5939e4771566fdb20a66a54
 
 lispread/lispread.c:
 	git submodule init

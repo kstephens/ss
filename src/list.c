@@ -2,8 +2,8 @@
 ss ss_listn(int n, ...)
 {
   va_list vap;
-  va_start(vap, n);
   ss l = ss_nil, *lp = &l;
+  va_start(vap, n);
   while ( n -- ) {
     *lp = ss_cons(va_arg(vap, ss), ss_nil);
     lp = &ss_CDR(*lp);

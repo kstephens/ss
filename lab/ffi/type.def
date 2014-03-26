@@ -1,0 +1,26 @@
+#ifndef ITYPE
+#define ITYPE(N,T) TYPE(N,T)
+#endif
+TYPE(void,void)
+ITYPE(uint8,unsigned char)
+ITYPE(sint8,char)
+ITYPE(uint16,unsigned short)
+ITYPE(sint16,short)
+ITYPE(uint32,unsigned int)
+ITYPE(sint32,int)
+ITYPE(uint64,unsigned long)
+ITYPE(sint64,long)
+TYPE(float,float)
+TYPE(double,double)
+ITYPE(uchar,unsigned char)
+ITYPE(schar,char)
+ITYPE(ushort,unsigned short)
+ITYPE(sshort,short)
+ITYPE(uint,unsigned int)
+ITYPE(sint,int)
+ITYPE(ulong,unsigned long)
+ITYPE(slong,long)
+TYPE(longdouble,long double)
+TYPE(pointer,void*)
+#undef TYPE
+#undef ITYPE

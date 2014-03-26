@@ -253,8 +253,10 @@
     (if port port
       (error func "cannot open" file (C:ss_errstr #f)))))
 
-(define (open-read-file file)
-  (%open-file 'open-read-file file "r"))
+(define (open-input-file file)
+  (%open-file 'open-input-file file "r"))
+(define (open-output-file file)
+  (%open-file 'open-output-file file "w"))
 (define (close-port port)
   (C:ss_port_close port))
 
@@ -268,7 +270,7 @@
 
 (define *load-verbose* #f)
 (define (load-file file)
-  (let ((port (open-read-file file)))
+  (let ((port (open-input-file file)))
     (let ((result (C:ss_repl_run (C:ss_m_repl &env port (if *load-verbose* ss_stderr #f)))))
       (close-port port)
       result)))
