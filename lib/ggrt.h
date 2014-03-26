@@ -40,6 +40,9 @@ typedef struct ggrt_type {
   ffi_type *f_rtn_type;
   ffi_type **f_elem_types;
   size_t c_args_size;
+
+  /* user data */
+  void *user_data[4];
 } ggrt_type;
 
 /* struct or enum element. */
@@ -50,7 +53,9 @@ typedef struct ggrt_elem {
   size_t offset;
   ggrt_type *parent;
   int parent_i;
-  GGRT_V *value;
+
+  /* user data */
+  void *user_data[4];
 } ggrt_elem;
 
 /* intrinsic types. */
