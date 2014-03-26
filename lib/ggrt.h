@@ -41,6 +41,9 @@ typedef struct ggrt_type {
   ffi_type **f_elem_types;
   size_t c_args_size;
 
+  /* C declarator. */
+  const char *c_declarator; /* printf format with %s for the name. */
+
   /* user data */
   void *user_data[4];
 } ggrt_type;
@@ -60,12 +63,22 @@ typedef struct ggrt_elem {
 
 /* struct or enum element. */
 typedef struct ggrt_symbol {
-  void *addr;
   const char *name;
+  void *addr;
   ggrt_type *type;
   struct ggrt_symbol *next;
-  int i;
+  struct ggrt_symbol_table *st;
+  int st_i;
 } ggrt_symbol;
+
+typedef struct ggrt_symbol_table {
+  const char *name;
+  int nsymbs;
+  ggrt_symbol **by_name;
+  ggrt_symbol **by_addr;
+  ggrt_symbol *next;
+} ggrt_symbol_table;
+
 
 /* intrinsic types. */
 #define TYPE(N,T,AN) extern ggrt_type *ggrt_c_type_##AN;
@@ -93,19 +106,22 @@ ggrt_type *ggrt_m_enum_type_define(ggrt_type *ct, int nelems, const char **names
 /* Make function type. */
 ggrt_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **elem_types);
 
-/* Create a symbol definition. */
-typedef struct ggrt_symbol_table {
-  const char *name;
-  int nsymbs;
-  ggrt_symbol **by_name;
-  ggrt_symbol **by_addr;
-  ggrt_symbol *next;
-} ggrt_symbol_table;
+/* Typedefs */
+ggrt_type *ggrt_type_by_name(const char *name);
+ggrt_type *ggrt_typedef(const char *name, ggrt_type *type);
 
-extern ggrt_symbol_table *ggrt_sym_tab;
+/* Globals */
+ggrt_symbol *ggrt_global(const char *name, void *address, ggrt_type *type);
+ggrt_symbol *ggrt_global_get(const char *name, void *addr);
+
+/* Create a symbol definition. */
+extern ggrt_symbol_table *ggrt_st_type, *ggrt_st_global;;
 ggrt_symbol_table* ggrt_m_symbol_table(const char *name);
-int ggrt_symbol_table_add(ggrt_symbol_table *st, ggrt_symbol *sym);
-ggrt_symbol *ggrt_m_symbol(const char *name, ggrt_type *type, void *address);
+void ggrt_symbol_table_add(ggrt_symbol_table *st, ggrt_symbol *sym);
+ggrt_symbol *ggrt_symbol_table_get(ggrt_symbol_table *st, ggrt_symbol *proto);
+ggrt_symbol *ggrt_m_symbol(const char *name, void *address, ggrt_type *type);
+
+ggrt_symbol *ggrt_symbol_table_add_(ggrt_symbol_table *st, const char *name, void *address, ggrt_type *type);
 
 /* Func call. */
 void ggrt_ffi_call(ggrt_type *ft, GGRT_V *rtn_valp, void *cfunc, int argc, GGRT_V *argv);

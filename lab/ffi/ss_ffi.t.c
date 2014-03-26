@@ -42,8 +42,10 @@ int main()
 
   GGRT_V rtn, args[10];
 
+  ggrt_symbol *sym = ggrt_global("identity", &identity, ft);
+
   args[0] = (GGRT_V) 0x1234;
-  ggrt_ffi_call(ft, &rtn, identity, 1, args);
+  ggrt_ffi_call(ft, &rtn, ggrt_global_get("identity", 0)->addr, 1, args);
   printf("%p\n", rtn);
 
   return 0;

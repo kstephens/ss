@@ -6,12 +6,15 @@
 
 #include "ggrt.h"
 
+ggrt_symbol_table *ggrt_st_global;
+ggrt_symbol_table *ggrt_st_type;
+
 ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type)
 {
   ggrt_type *ct = ggrt_malloc(sizeof(*ct));
   memset(ct, 0, sizeof(*ct));
   ct->name = name ? ggrt_strdup(name) : name;
-  ct->type = name;
+  ct->type = "intrinsic";
   ct->c_sizeof = c_size;
   ct->c_alignof = c_size; /* guess. */
   ct->c_vararg_size = c_size; /* can be overridden. */
@@ -21,25 +24,40 @@ ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type)
 }
 
 /* intrinsic types. */
-#define TYPE(N,T,AN) ggrt_type *ggrt_type_##AN;
+#define TYPE(N,T,AN)  ggrt_type *ggrt_type_##AN;
+#define ATYPE(N,T,AN) ggrt_type *ggrt_type_##N;
 #include "type.def"
-#define TYPE(N,T,AN) ggrt_type *ggrt_type_##N;
-#include "type.def"
+ggrt_type *ggrt_type_pointer;
 
 void ggrt_init()
 {
-  ggrt_sym_tab = ggrt_m_symbol_table("global");
+  ggrt_st_type   = ggrt_m_symbol_table("type");
+  ggrt_st_global = ggrt_m_symbol_table("global");
 
-#define TYPE(N,T,AN) ggrt_type_##N = ggrt_m_type(#T, sizeof(T), &ffi_type_##N); ggrt_type_##N->c_alignof = __alignof__(T);
-#include "type.def"
-
-  /* Coerce args to int */
-#define ITYPE(N,T,AN) if ( sizeof(T) < sizeof(int) ) ggrt_type_##N->param_type = ggrt_type_sint;
-#define TYPE(N,T,AN)
+  // Define basic types.
+#define TYPE(N,T,AN) \
+  ggrt_type_##AN = ggrt_m_type(#T, sizeof(T), &ffi_type_##N); \
+  ggrt_type_##AN->c_alignof = __alignof__(T);
 #include "type.def"
 
   /* Aliased types */
-#define A_TYPE(N,T,AN) ggrt_type_##->alias_of = ggrt_type_##AN;
+#define TYPE(N,T,AN)
+#define ATYPE(N,T,AN) ggrt_type_##N = ggrt_type_##AN;
+#include "type.def"
+  ggrt_type_pointer = ggrt_type_voidP;
+
+  /* Coerce args to int */
+#define TYPE(N,T,AN) if ( sizeof(T) < sizeof(int) ) ggrt_type_##AN->param_type = ggrt_type_int;
+#include "type.def"
+
+  /* Declarators */
+#define TYPE(N,T,AN) ggrt_type_##AN->c_declarator = #T " %s";
+#include "type.def"
+
+  /* In symbol table */
+#define TYPE(N,T,AN) ggrt_symbol_table_add_(ggrt_st_type, #T, ggrt_type_##AN, 0);
+#include "type.def"
+
 }
 
 ggrt_type *ggrt_m_pointer_type(ggrt_type *t)
@@ -314,11 +332,35 @@ ggrt_symbol_table* ggrt_m_symbol_table(const char *name)
   return st;
 }
 
-int ggrt_symbol_table_add(ggrt_symbol_table *st, ggrt_symbol *sym)
+ggrt_symbol *ggrt_symbol_table_add_(ggrt_symbol_table *st, const char *name, void *addr, ggrt_type *type)
+{
+  ggrt_symbol *sym = ggrt_m_symbol(name, addr, type);
+  ggrt_symbol_table_add(st, sym);
+  return sym;
+}
+
+ggrt_symbol *ggrt_symbol_table_get(ggrt_symbol_table *st, ggrt_symbol *sym)
+{
+  ggrt_symbol **base = sym->name ? st->by_name : st->by_addr;
+  void *func         = sym->name ?     by_name :     by_addr;
+  ggrt_symbol **symp = bsearch(&sym, base, st->nsymbs, sizeof(symp[0]), func);
+  return symp ? *symp : 0;
+}
+
+ggrt_symbol *ggrt_global_get(const char *name, void *addr)
+{
+  ggrt_symbol proto = { name, addr };
+  return ggrt_symbol_table_get(ggrt_st_global, &proto);
+}
+
+void ggrt_symbol_table_add(ggrt_symbol_table *st, ggrt_symbol *sym)
 {
   int i;
   assert(st);
-  i = sym->i = st->nsymbs ++;
+  assert(! sym->st);
+
+  sym->st = st;
+  i = sym->st_i = st->nsymbs ++;
 
   st->by_name = ggrt_realloc(st->by_name, sizeof(st->by_name[0]) * st->nsymbs);
   st->by_addr = ggrt_realloc(st->by_addr, sizeof(st->by_addr[0]) * st->nsymbs);
@@ -329,23 +371,22 @@ int ggrt_symbol_table_add(ggrt_symbol_table *st, ggrt_symbol *sym)
 
   sym->next = st->next;
   st->next = sym;
-
-  return i;
 }
 
-ggrt_symbol_table *ggrt_sym_tab;
-ggrt_symbol *ggrt_m_symbol(const char *name, ggrt_type *type, void *addr)
+ggrt_symbol *ggrt_m_symbol(const char *name, void *addr, ggrt_type *type)
 {
   ggrt_symbol *sym = ggrt_malloc(sizeof(*sym));
   memset(sym, 0, sizeof(*sym));
   sym->name = name ? ggrt_strdup(name) : name;
   sym->type = type;
   sym->addr = addr;
-
-  if ( name && addr )
-    ggrt_symbol_table_add(ggrt_sym_tab, sym);
-
   return sym;
 }
 
+ggrt_symbol *ggrt_global(const char *name, void *addr, ggrt_type *type)
+{
+  ggrt_symbol *sym = ggrt_m_symbol(name, addr, type);
+  ggrt_symbol_table_add(ggrt_st_global, sym);
+  return sym;
+}
 

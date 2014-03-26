@@ -2,8 +2,11 @@
 #define ITYPE(N,T,AN) TYPE(N,T,AN)
 #endif
 #ifndef ATYPE
-#define ATYPE(N,T,AN) ITYPE(N,T,AN)
+#define ATYPE(N,T,AN)
 #endif
+
+/* XXX(ffi name, C type, C type w/ underscore) */
+
 TYPE(void,void,void)
 ATYPE(uint8,unsigned char,unsigned_char)
 ATYPE(sint8,char,char)
@@ -11,10 +14,13 @@ ATYPE(uint16,unsigned short,unsigned_short)
 ATYPE(sint16,short,short)
 ATYPE(uint32,unsigned int,unsigned_int)
 ATYPE(sint32,int,int)
+// int64 may be long long!!
 ATYPE(uint64,unsigned long,unsigned_long)
 ATYPE(sint64,long,long)
+
 TYPE(float,float,float)
 TYPE(double,double,double)
+
 ITYPE(uchar,unsigned char,unsigned_char)
 ITYPE(schar,char,char)
 ITYPE(ushort,unsigned short,unsigned_short)
@@ -23,9 +29,10 @@ ITYPE(uint,unsigned int,unsigned_int)
 ITYPE(sint,int,int)
 ITYPE(ulong,unsigned long,unsigned_long)
 ITYPE(slong,long,long)
+
 TYPE(longdouble,long double,long_double)
-ATYPE(pointer,void*,voidP)
+TYPE(pointer,void*,voidP)
 #undef TYPE
-#undef ITYPE
 #undef ATYPE
+#undef ITYPE
 
