@@ -17,7 +17,6 @@ LIBS += -L/usr/lib/x86_64-linux-gnu # Linux libffi.a
 LIBS += -lffi
 LIBS += -lm
 
-
 CPPFLAGS += -DUNIT_TEST
 
 CFILES := $(shell ls *.t.c)

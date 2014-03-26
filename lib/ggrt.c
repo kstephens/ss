@@ -147,7 +147,7 @@ ggrt_type *ggrt_m_struct_type(const char *s_or_u, const char *name)
   return st;
 }
 
-int ggrt_m_struct_elem(ggrt_type *st, const char *name, ggrt_type *t)
+ggrt_elem *ggrt_m_struct_elem(ggrt_type *st, const char *name, ggrt_type *t)
 {
   int i;
   ggrt_elem *e;
@@ -161,8 +161,23 @@ int ggrt_m_struct_elem(ggrt_type *st, const char *name, ggrt_type *t)
   e->parent = st;
   e->parent_i = i;
 
-  return st->nelems;
+  return e;
 }
+
+ggrt_elem *ggrt_struct_elem(ggrt_type *st, const char *name)
+{
+  int i;
+
+  assert(st);
+  assert(name && *name);
+
+  for ( i = 0; i < st->nelems; ++ i ) {
+    if ( strcmp(st->elems[i]->name, name) == 0 )
+      return st->elems[i];
+  }
+  return 0;
+}
+
 
 ggrt_type *ggrt_m_struct_type_end(ggrt_type *st)
 {
@@ -182,25 +197,35 @@ size_t ggrt_type_sizeof(ggrt_type *st)
     if ( st->nelems != (size_t) -1 ) {
       st->c_sizeof = ggrt_type_sizeof(st->rtn_type) * st->nelems;
     }
+    st->c_alignof = ggrt_type_alignof(st->rtn_type);
     break;
   case 's': case 'u':
   if ( st->nelems ) {
     size_t offset = 0, size = 0;
     int i;
-    size_t adjust_alignof;
+    size_t c_alignof, adjust_alignof;
     ggrt_elem *e;
     for ( i = 0; i < st->nelems; ++ i ) {
       e = st->elems[i];
       // FIXME: handle union.
-      if ( (adjust_alignof = offset % ggrt_type_alignof(e->type)) )
-        offset += ggrt_type_alignof(e->type) - adjust_alignof;
+      c_alignof = ggrt_type_alignof(e->type);
+      if ( (adjust_alignof = offset % c_alignof) )
+        offset += c_alignof - adjust_alignof;
       e->offset = offset;
       offset += ggrt_type_sizeof(e->type);
     }
     // FIXME: handle union.
+
+    // Align to first elem so array will align.
     e = st->elems[0];
-    if ( (adjust_alignof = offset % ggrt_type_alignof(e->type)) )
-      offset += ggrt_type_alignof(e->type) - adjust_alignof;
+    c_alignof = ggrt_type_alignof(e->type);
+    if ( (adjust_alignof = offset % c_alignof) )
+      offset += c_alignof - adjust_alignof;
+
+    // Align to 16-byte word?
+    c_alignof = 16;
+    if ( (adjust_alignof = offset % c_alignof) )
+      offset += c_alignof - adjust_alignof;
 
     st->c_sizeof = offset;
     st->c_alignof = ggrt_type_alignof(e->type);
