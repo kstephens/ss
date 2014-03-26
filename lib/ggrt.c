@@ -134,6 +134,11 @@ ggrt_type *ggrt_m_enum_type_define(ggrt_type *ct, int nelems, const char **names
   return ct;
 }
 
+ggrt_elem *ggrt_enum_elem(ggrt_type *st, const char *name)
+{
+  return ggrt_struct_elem(st, name);
+}
+
 static ggrt_type *current_st; /* NOT THREAD SAFE! */
 ggrt_type *ggrt_m_struct_type(const char *s_or_u, const char *name)
 {
@@ -177,7 +182,6 @@ ggrt_elem *ggrt_struct_elem(ggrt_type *st, const char *name)
   }
   return 0;
 }
-
 
 ggrt_type *ggrt_m_struct_type_end(ggrt_type *st)
 {
