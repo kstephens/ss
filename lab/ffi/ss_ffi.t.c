@@ -3,16 +3,18 @@
 
 typedef void *GGRT_V;
 #define GGRT_V GGRT_V
-#define ggrt_malloc malloc
-#define ggrt_strdup strdup
+#define ggrt_malloc  malloc
+#define ggrt_realloc realloc
+#define ggrt_free    free
+#define ggrt_strdup  strdup
 #include "ggrt.h"
 #define GGRT_V_type ggrt_type_pointer
 
 size_t ggrt_ffi_unbox(ggrt_type *ct, GGRT_V *valp, void *dst)
 {
-  memset(dst, 0, ct->c_size);
+  memset(dst, 0, ct->c_sizeof);
   memcpy(dst, valp, sizeof(*valp)); // dummy
-  return ct->c_size;
+  return ct->c_sizeof;
 }
 
 size_t ggrt_ffi_unbox_arg(ggrt_type *ct, GGRT_V *valp, void *dst)

@@ -11,13 +11,16 @@ typedef void *GGRT_V;
 
 #ifndef ggrt_malloc
 #warning "ggrt_malloc(size) is not defined, defaulting to malloc(size)."
-#define ggrt_malloc(x) malloc(x)
-#define ggrt_strdup(x) strdup(x)
+#define ggrt_malloc(s) malloc(s)
+#define ggrt_realloc(p,x) realloc(p,s)
+#define ggrt_free(p)   free(p)
+#define ggrt_strdup(p) strdup(p)
 #endif
 
 typedef struct ggrt_type {
   const char *name;
-  size_t c_size;    /* C sizeof() */
+  const char *type; /* "pointer", "array", "struct", "union", "function". */
+  size_t c_sizeof;  /* C sizeof() */
   size_t c_alignof; /* C __alignof__() */
   size_t c_vararg_size;
   ffi_type *f_type;
@@ -26,7 +29,7 @@ typedef struct ggrt_type {
 
   /* struct, union, enum, func type */
   struct ggrt_type *rtn_type; /* AND pointer to type. */
-  int nelem;
+  int nelems;
   struct ggrt_elem **elems;
   struct ggrt_type *struct_scope;
 
@@ -57,6 +60,10 @@ typedef struct ggrt_elem {
 
 /* Must call before use. */
 void ggrt_init();
+
+/* Queries */
+size_t ggrt_type_sizeof(ggrt_type *st);
+size_t ggrt_type_alignof(ggrt_type *st);
 
 /* Make intrinsic type. */
 ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type);
