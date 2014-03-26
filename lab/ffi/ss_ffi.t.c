@@ -88,7 +88,8 @@ gghcrt_s_c_func_type *gghcrt_ffi_prepare(gghcrt_s_c_func_type *ft)
         ft->c_args_size += ft->elem_types[i]->c_size;
       }
     }
-    ffi_prep_cif(&ft->f_cif, FFI_DEFAULT_ABI, ft->nelem, ft->f_rtn_type, ft->f_elem_types);
+    if ( ffi_prep_cif(&ft->f_cif, FFI_DEFAULT_ABI, ft->nelem, ft->f_rtn_type, ft->f_elem_types) != FFI_OK )
+      abort();
     ft->f_cif_inited = 1;
   }
   return ft;
