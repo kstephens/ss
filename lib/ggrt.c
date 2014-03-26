@@ -28,6 +28,8 @@ ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type)
 
 void ggrt_init()
 {
+  ggrt_sym_tab = ggrt_m_symbol_table("global");
+
 #define TYPE(N,T,AN) ggrt_type_##N = ggrt_m_type(#T, sizeof(T), &ffi_type_##N); ggrt_type_##N->c_alignof = __alignof__(T);
 #include "type.def"
 
@@ -286,4 +288,64 @@ void ggrt_ffi_call(ggrt_type *ft, GGRT_V *rtn_valp, void *cfunc, int argc, GGRT_
    
   ggrt_ffi_box(ft->rtn_type, rtn_space, rtn_valp);
 }
+
+/* Create a symbol definition. */
+static int by_name (const void *_a, const void *_b)
+{
+  ggrt_symbol *a = *(ggrt_symbol **)_a;
+  ggrt_symbol *b = *(ggrt_symbol **)_b;
+  return strcmp(a->name, b->name);
+}
+
+static int by_addr (const void *_a, const void *_b)
+{
+  ggrt_symbol *a = *(ggrt_symbol **)_a;
+  ggrt_symbol *b = *(ggrt_symbol **)_b;
+  return
+    a->addr <  b->addr ? -1 :
+    a->addr == b->addr ?  0 : 1;
+}
+
+ggrt_symbol_table* ggrt_m_symbol_table(const char *name)
+{
+  ggrt_symbol_table* st = ggrt_malloc(sizeof(*st));
+  memset(st, 0, sizeof(*st));
+  st->name = name ? ggrt_strdup(name) : name;
+  return st;
+}
+
+int ggrt_symbol_table_add(ggrt_symbol_table *st, ggrt_symbol *sym)
+{
+  int i;
+  assert(st);
+  i = sym->i = st->nsymbs ++;
+
+  st->by_name = ggrt_realloc(st->by_name, sizeof(st->by_name[0]) * st->nsymbs);
+  st->by_addr = ggrt_realloc(st->by_addr, sizeof(st->by_addr[0]) * st->nsymbs);
+  st->by_name[i] = st->by_addr[i] = sym;
+
+  qsort(st->by_name, st->nsymbs, sizeof(st->by_name[0]), by_name);
+  qsort(st->by_addr, st->nsymbs, sizeof(st->by_addr[0]), by_addr);
+
+  sym->next = st->next;
+  st->next = sym;
+
+  return i;
+}
+
+ggrt_symbol_table *ggrt_sym_tab;
+ggrt_symbol *ggrt_m_symbol(const char *name, ggrt_type *type, void *addr)
+{
+  ggrt_symbol *sym = ggrt_malloc(sizeof(*sym));
+  memset(sym, 0, sizeof(*sym));
+  sym->name = name ? ggrt_strdup(name) : name;
+  sym->type = type;
+  sym->addr = addr;
+
+  if ( name && addr )
+    ggrt_symbol_table_add(ggrt_sym_tab, sym);
+
+  return sym;
+}
+
 
