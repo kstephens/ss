@@ -17,6 +17,8 @@ LIBS += -lffi
 LIBS += -lm
 
 
+CPPFLAGS += -DUNIT_TEST
+
 TFILES = \
   ffi-ex0.t \
   ss_ffi.t

@@ -1,36 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <ffi.h>
 #include <string.h>
 #include <alloca.h>
 
-typedef void *GGHCRT_V;
-
-#define gghcrt_malloc(x) malloc(x)
-#define gghcrt_strdup(x) strdup(x)
-
-typedef struct gghcrt_s_c_type {
-  const char *name;
-  size_t c_size;    /* C sizeof() */
-  size_t c_alignof; /* C __alignof__() */
-  ffi_type *f_type;
-  struct gghcrt_s_c_type *param_type; /* as an function parameter. */
-  struct gghcrt_s_c_type *alias_of;
-
-  /* struct, union, enum, func type */
-  struct gghcrt_s_c_type *rtn_type; /* AND pointer to type. */
-  int nelem;
-  char **elem_names;
-  struct gghcrt_s_c_type **elem_types;
-  GGHCRT_V *elem_values; /* enum values. */
-
-  /* func type: generated */
-  ffi_cif f_cif;
-  short f_cif_inited;
-  ffi_type *f_rtn_type;
-  ffi_type **f_elem_types;
-  size_t c_args_size;
-} gghcrt_s_c_type;
+#include "ggrt.h"
 
 gghcrt_s_c_type *gghcrt_m_c_type(const char *name, size_t c_size, void *f_type)
 {
@@ -43,13 +16,13 @@ gghcrt_s_c_type *gghcrt_m_c_type(const char *name, size_t c_size, void *f_type)
   return ct;
 }
 
+/* intrinsic types. */
 #define TYPE(N,T,AN) gghcrt_s_c_type *gghcrt_c_type_##AN;
 #include "type.def"
-
 #define TYPE(N,T,AN) gghcrt_s_c_type *gghcrt_c_type_##N;
 #include "type.def"
 
-void gghcrt_init_c_type()
+void gghcrt_init()
 {
 #define TYPE(N,T,AN) gghcrt_c_type_##N = gghcrt_m_c_type(#T, sizeof(T), &ffi_type_##N); gghcrt_c_type_##N->c_alignof = __alignof__(T);
 #include "type.def"
@@ -62,8 +35,6 @@ void gghcrt_init_c_type()
   /* Aliased types */
 #define A_TYPE(N,T,AN) gghcrt_c_type_##->alias_of = gghcrt_c_type_##AN;
 }
-
-typedef gghcrt_s_c_type gghcrt_s_c_func_type;
 
 gghcrt_s_c_func_type *gghcrt_m_c_func_type(void *rtn_type, int nelem, gghcrt_s_c_type **elem_types)
 {
@@ -112,7 +83,7 @@ void gghcrt_ffi_box(gghcrt_s_c_type *ct, void *src, GGHCRT_V *dstp)
   memcpy(dstp, src, sizeof(*dstp)); // dummy
 }
 
-GGHCRT_V gghcrt_ffi_call(gghcrt_s_c_func_type *ft, void *cfunc, int argc, GGHCRT_V *argv)
+void gghcrt_ffi_call(gghcrt_s_c_func_type *ft, GGHCRT_V *rtn_valp, void *cfunc, int argc, GGHCRT_V *argv)
 {
   void **f_args   = alloca(sizeof(*f_args) * gghcrt_ffi_prepare(ft)->nelem);
   void *arg_space = alloca(ft->c_args_size);
@@ -131,16 +102,16 @@ GGHCRT_V gghcrt_ffi_call(gghcrt_s_c_func_type *ft, void *cfunc, int argc, GGHCRT
 
   ffi_call(&ft->f_cif, cfunc, rtn_space, f_args);
    
-  gghcrt_ffi_box(ft->rtn_type, rtn_space, &rtn_val);
-
-  return rtn_val;
+  gghcrt_ffi_box(ft->rtn_type, rtn_space, rtn_valp);
 }
+
+#ifdef UNIT_TEST
 
 static GGHCRT_V identity(GGHCRT_V x) { return x; }
 
 int main()
 {
-  gghcrt_init_c_type();
+  gghcrt_init();
 
   gghcrt_s_c_type *ct_GGHCRT_V   = gghcrt_c_type_pointer;
   gghcrt_s_c_type *ct_rtn  = ct_GGHCRT_V;
@@ -150,8 +121,10 @@ int main()
   GGHCRT_V rtn, args[10];
 
   args[0] = (GGHCRT_V) 0x1234;
-  rtn = gghcrt_ffi_call(ft, identity, 1, args);
+  gghcrt_ffi_call(ft, &rtn, identity, 1, args);
   printf("%p\n", rtn);
 
   return 0;
 }
+
+#endif
