@@ -2,6 +2,7 @@ CFLAGS += -g
 ifneq "$(NO_OPTIMIZE)" ""
 CFLAGS += -O3
 endif
+#CFLAGS += -v
 CPPFLAGS += -I.
 
 CPPFLAGS += -I/opt/local/lib/libffi-3.0.13/include # MacPorts
@@ -21,9 +22,12 @@ CFILES = \
   ffi-ex0.t.c \
   ss_ffi.t.c
 
+#.c.i:
+#	$(CPP) $< -o $@
+
 all : $(CFILES:%.c=%)
 
 clean :
-	echo rm -f $(CFILES:%.c=%)
+	rm -f $(CFILES:%.c=%)
 
 
