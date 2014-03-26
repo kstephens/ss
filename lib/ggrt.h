@@ -48,10 +48,13 @@ typedef struct ggrt_type {
 /* Must call before use. */
 void ggrt_init();
 
-/* Define intrinsic type. */
+/* Make intrinsic type. */
 ggrt_type *ggrt_m_type(const char *name, size_t c_size, void *f_type);
 
-/* Define function type. */
+/* Make enum type. */
+ggrt_type *ggrt_m_enum_type(const char *name, int nelem, GGRT_V *elem_values);
+
+/* Make function type. */
 ggrt_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **elem_types);
 
 /* Func call. */

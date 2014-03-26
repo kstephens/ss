@@ -38,6 +38,18 @@ void ggrt_init()
 #define A_TYPE(N,T,AN) ggrt_type_##->alias_of = ggrt_type_##AN;
 }
 
+enum ggrt_enum {
+  x, y, z
+};
+
+ggrt_type *ggrt_m_enum_type(const char *name, int nelem, GGRT_V *elem_values)
+{
+  ggrt_type *ct = ggrt_m_type(name, sizeof(enum ggrt_enum), &ffi_type_sint);
+  ct->nelem = nelem;
+  ct->elem_values = elem_values;
+  return ct;
+}
+
 ggrt_type *ggrt_m_func_type(void *rtn_type, int nelem, ggrt_type **elem_types)
 {
   ggrt_type *ct = ggrt_m_type(0, 0, 0);
