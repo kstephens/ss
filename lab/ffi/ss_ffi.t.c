@@ -1,22 +1,22 @@
 #include <stdio.h>
 
-typedef void *GGHCRT_V;
-#define GGHCRT_V GGHCRT_V
+typedef void *GGRT_V;
+#define GGRT_V GGRT_V
 #include "ggrt.h"
 
-size_t gghcrt_ffi_unbox(gghcrt_s_c_type *ct, GGHCRT_V *valp, void *dst)
+size_t ggrt_ffi_unbox(ggrt_s_c_type *ct, GGRT_V *valp, void *dst)
 {
   memset(dst, 0, ct->c_size);
   memcpy(dst, valp, sizeof(*valp)); // dummy
   return ct->c_size;
 }
 
-size_t gghcrt_ffi_unbox_arg(gghcrt_s_c_type *ct, GGHCRT_V *valp, void *dst)
+size_t ggrt_ffi_unbox_arg(ggrt_s_c_type *ct, GGRT_V *valp, void *dst)
 {
-  return gghcrt_ffi_unbox(ct, valp, dst);
+  return ggrt_ffi_unbox(ct, valp, dst);
 }
 
-void gghcrt_ffi_box(gghcrt_s_c_type *ct, void *src, GGHCRT_V *dstp)
+void ggrt_ffi_box(ggrt_s_c_type *ct, void *src, GGRT_V *dstp)
 {
   memcpy(dstp, src, sizeof(*dstp)); // dummy
 }
@@ -24,21 +24,21 @@ void gghcrt_ffi_box(gghcrt_s_c_type *ct, void *src, GGHCRT_V *dstp)
 #define ggrt_BOX_DEFINED 1
 #include "ggrt.c"
 
-static GGHCRT_V identity(GGHCRT_V x) { return x; }
+static GGRT_V identity(GGRT_V x) { return x; }
 
 int main()
 {
-  gghcrt_init();
+  ggrt_init();
 
-  gghcrt_s_c_type *ct_GGHCRT_V   = gghcrt_c_type_pointer;
-  gghcrt_s_c_type *ct_rtn  = ct_GGHCRT_V;
-  gghcrt_s_c_type *ct_params[1] = { ct_GGHCRT_V };
-  gghcrt_s_c_func_type *ft = gghcrt_m_c_func_type(ct_rtn, 1, ct_params);
+  ggrt_s_c_type *ct_GGRT_V   = ggrt_c_type_pointer;
+  ggrt_s_c_type *ct_rtn  = ct_GGRT_V;
+  ggrt_s_c_type *ct_params[1] = { ct_GGRT_V };
+  ggrt_s_c_func_type *ft = ggrt_m_c_func_type(ct_rtn, 1, ct_params);
 
-  GGHCRT_V rtn, args[10];
+  GGRT_V rtn, args[10];
 
-  args[0] = (GGHCRT_V) 0x1234;
-  gghcrt_ffi_call(ft, &rtn, identity, 1, args);
+  args[0] = (GGRT_V) 0x1234;
+  ggrt_ffi_call(ft, &rtn, identity, 1, args);
   printf("%p\n", rtn);
 
   return 0;
