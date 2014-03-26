@@ -7,6 +7,7 @@ CPP = $(CC) $(CPPFLAGS) -E
 LDLIBS += $(LIBS)
 
 CPPFLAGS += -I.
+CPPFLAGS += -I../../lib # ggrt.[hc]
 
 CPPFLAGS += -I/opt/local/lib/libffi-3.0.13/include # MacPorts
 CPPFLAGS += -I/usr/include/x86_64-linux-gnu # Linux
