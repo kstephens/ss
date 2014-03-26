@@ -16,11 +16,12 @@ typedef struct ss_s_c_type {
     struct ss_s_c_type *param_type; /* as an function parameter. */
   struct ss_s_c_type *alias_of;
 
-    /* struct, union, func type */
+    /* struct, union, enum, func type */
     struct ss_s_c_type *rtn_type;
     int nelem;
     char **elem_names;
     struct ss_s_c_type **elem_types;
+    ss *elem_values; /* enum values. */
 
     /* func type: generated */
     ffi_cif f_cif;
