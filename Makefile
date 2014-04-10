@@ -149,5 +149,5 @@ clean:
 	rm -f ss *.o *.s *.i *.tmp gen/*.def gen/*.i boot/*.def
 
 code-stats :
-	tool/code-stats *.[hc] lib src gen/*.gen
+	tool/code-stats *.[hc] lib src include gen/*.gen lispread/*.c
 
