@@ -24,6 +24,7 @@ else
 LIBS += -lgc
 endif
 
+CINCLUDES += -I../gghc/src
 ifeq "$(UNAME_S)" "Darwin"
 CINCLUDES += -I/opt/local/include
 CINCLUDES += -I/opt/local/lib/libffi-3.0.13/include # MacPorts
@@ -35,7 +36,8 @@ ifeq "$(UNAME_S)" "Linux"
 CINCLUDES += -I/usr/include/x86_64-linux-gnu # libffi
 LIBS      += -L/usr/lib/x86_64-linux-gnu     # libffi
 endif
-LIBS += -lffi
+LIBS += -L../gghc/lib
+LIBS += -lggrt -lffi
 LIBS += -lm
 
 # CFLAGS += -Wall
