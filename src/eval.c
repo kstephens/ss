@@ -195,7 +195,7 @@ ss ss_applyv(ss_s_env *ss_env, ss func, ss args)
 {
   if ( ss_type_te(args) != ss_te_vector )
     args = ss_list_to_vector(args);
-  return _ss_eval(ss_env, &ss_m_cell(func), args);
+  return _ss_eval(ss_env, ss_m_cell(func), args);
 }
 
 ss ss_eval_top_level(ss_s_env *ss_env, ss *_ss_expr)
