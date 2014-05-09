@@ -88,7 +88,9 @@ boot/%.def : gen/%.def.gen
 
 gen/%.def : gen/%.def.gen
 	@echo "GEN $@"
-	$(SILENT) d=_ss_$(notdir $(basename $@)); $(CPP) -D$$d=$$d $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
+	$(SILENT) d=_ss_$(notdir $(basename $@)); $(CPP) $($(notdir $(basename $@)_CPP_OPTS)) -D$$d=$$d $(CFILES) $(OTHER_C_FILES) | tee $@.i | $@.gen > $@.tmp; mv $@.tmp $@; wc -l $@
+
+cdefine_CPP_OPTS=-dM
 
 gen/*.def : Makefile $(CFILES) $(OTHER_C_FILES)
 
