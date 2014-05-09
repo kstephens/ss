@@ -40,15 +40,14 @@ void ss_init_main(ss_s_env *ss_env, int argc, char **argv)
   ss_define(ss_env, ss_sym(ss_lib_dir), ss_s(ss_lib_dir));
 }
 
-int main(int argc, char **argv)
+void ss_init(ss_s_env **envP, int argc, char **argv)
 {
   ss_s_env *ss_env = 0;
-  const char *file = 0;
 
   GC_INIT();
   // GC_register_displacement(sizeof(ss) * 2);
   ss_init_type(ss_env);
-  ss_top_level_env = ss_current_env = ss_env = ss_m_env(0);
+  *envP = ss_top_level_env = ss_current_env = ss_env = ss_m_env(0);
   ss_init_const(ss_env);
   ss_init_symbol(ss_env);
   ss_init_global(ss_env);
@@ -56,6 +55,14 @@ int main(int argc, char **argv)
   ss_init_prim(ss_env);
   ss_init_cwrap(ss_env);
   ss_init_port(ss_env);
+}
+
+int main(int argc, char **argv)
+{
+  ss_s_env *ss_env = 0;
+  const char *file = 0;
+
+  ss_init(&ss_env, argc, argv);
 
   if ( 1 ) {
     char fn[1024];
