@@ -1,2 +1,11 @@
 #!/bin/sh
-exec rlwrap -pYELLOW "$(dirname "$0")"/ss "$@"
+dir0="$(dirname "$0")"
+args='-pYELLOW -b \(\)\{\}\[\]\#\`\,\@'
+symbols_txt="$dir0/lib/ss/symbols.txt"
+if [ ! -f "$symbols_txt" ]
+then
+  set -x
+  "$dir0/ss" "$dir0/lib/ss/print-symbol-list.scm" 2>/dev/null > "$symbols_txt"
+fi
+args="$args -f $symbols_txt"
+exec rlwrap $args -pYELLOW "$dir0/ss" "$@"
