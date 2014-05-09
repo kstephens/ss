@@ -28,7 +28,7 @@ ss ss_memmove(ss dst, ss src, ss size)
 ss_INLINE int _ss_memcmpn(const void *s1, const void *s2, size_t n1, size_t n2)
 {
   int cmp = memcmp(s1, s2, n1 < n2 ? n1 : n2);
-  cmp = cmp < 0 ? -1 : cmp > 0 ? 1 : (n1 < n2 ? -1 : n1 > n2 ? 1 : 0);
+  cmp = cmp < 0 ? -1 : (cmp > 0 ? 1 : (n1 < n2 ? -1 : n1 > n2 ? 1 : 0));
   return cmp;
 }
 

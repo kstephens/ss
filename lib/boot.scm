@@ -286,6 +286,9 @@
   (C:%ss_set str 1 (C:%ss_I len)))
 (define (%string-to-number str radix)
   (C:%ss_string_TO_number str (C:%ss_I radix)))
+(define (%string-<=> a b)
+  (C:%ss_memcmp (C:%ss_string_V a) (C:%ss_string_V b) (string-length a) (string-length b)))
+
 (load "lib/string.scm")
 
 (load "lib/cxr.scm")
