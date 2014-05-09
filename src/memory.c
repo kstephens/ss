@@ -19,16 +19,22 @@ ss* ss_m_cell(ss v)
   return c;
 }
 
-ss ss_memmove(ss dst, ss src, ss size)
+ss_pprim(,ss,ss_memmove,ss dst, ss src, ss size)
 {
   memmove(dst, src, ss_I(size));
   return dst;
 }
 
-ss ss_memcmp(ss a, ss b, ss as, ss bs)
+ss_INLINE int _ss_memcmpn(const void *s1, const void *s2, size_t n1, size_t n2)
 {
-  int cmp = memcmp(a, b, ss_I(as) < ss_I(bs) ? ss_I(as) : ss_I(bs));
-  return ss_i(cmp ? (cmp < 0 ? -1 : 1) : (ss_I(as) == ss_I(bs) ? 0 : (ss_I(as) < ss_I(bs) ? -1 : 1)));
+  int cmp = memcmp(s1, s2, n1 < n2 ? n1 : n2);
+  cmp = cmp < 0 ? -1 : cmp > 0 ? 1 : (n1 < n2 ? -1 : n1 > n2 ? 1 : 0);
+  return cmp;
+}
+
+ss_pprim(,ss,ss_memcmp,ss a, ss b, ss as, ss bs)
+{
+  return ss_i(_ss_memcmpn(a, b, ss_I(as), ss_I(bs)));
 }
 
 ss_INLINE

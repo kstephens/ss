@@ -59,6 +59,9 @@
 
 #define ss_malloc(X) GC_malloc(X)
 
+#define ss_pprim_decl(STORAGE,RTN,NAME,ARGS...) extern RTN (*NAME) (ARGS); RTN ss_PASTE2(_ss_ppb_,NAME) (ARGS)
+#define ss_pprim(STORAGE,RTN,NAME,ARGS...) RTN ss_PASTE2(_ss_ppb_,NAME) (ARGS); RTN (*NAME) (ARGS) = ss_PASTE2(_ss_ppb_,NAME); RTN ss_PASTE2(_ss_ppb_,NAME) (ARGS)
+
 typedef void *ss;
 typedef size_t  ss_word_t;
 typedef ssize_t ss_fixnum_t;

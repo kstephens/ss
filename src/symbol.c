@@ -6,26 +6,42 @@ static ss symbol_list;
 ss ss_symbol_list()
 { return symbol_list; }
 
+static ss* symbol_table;
+static size_t symbol_table_n;
+
+int _ss_symbolP_cmp(const void *_a, const void *_b)
+{
+  ss_s_string *a = (*(ss_s_symbol**)_a)->name, *b = (*(ss_s_symbol**)_b)->name;
+  int cmp = _ss_memcmpn(a->v, b->v, a->l, b->l);
+  return cmp;
+}
+
 ss ss_box_symbol(const char *name)
 {
   ss_s_symbol *sym;
+  size_t name_len;
 
   if ( name ) {
-    ss l;
-    for ( l = symbol_list; l != ss_nil; l = ss_cdr(l) ) {
-      sym = (ss_s_symbol*) ss_car(l);
-      if ( strcmp(name, ss_string_V(sym->name)) == 0 )
-        return sym;
-    }
+    ss_s_string _name = { name, name_len = strlen(name) };
+    ss_s_symbol _tmp;
+    ss *entry;
+
+    sym = &_tmp; sym->name = &_name;
+    if ( (entry = bsearch(&sym, symbol_table, symbol_table_n, sizeof(symbol_table[0]), _ss_symbolP_cmp)) )
+      return *entry;
   }
 
   sym = ss_alloc(name && name[0] == ':' ? ss_t_keyword : ss_t_symbol, sizeof(*sym));
-  sym->name = name ? ss_strnv(strlen(name), name) : ss_f;
+  sym->name = name ? ss_strnv(name_len, name) : ss_f;
   sym->docstring = ss_f;
   sym->syntax = ss_f;
   sym->is_const = 0;
-  if ( name )
+  if ( name ) {
     symbol_list = ss_cons(sym, symbol_list);
+    symbol_table = GC_realloc(symbol_table, sizeof(symbol_table[0]) * (symbol_table_n + 1));
+    symbol_table[symbol_table_n ++] = sym;
+    mergesort(symbol_table, symbol_table_n, sizeof(symbol_table[0]), _ss_symbolP_cmp);
+  }
   return sym;
 }
 
