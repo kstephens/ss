@@ -84,11 +84,11 @@ ss _ss_eval(ss_s_env *ss_env, ss *_ss_expr, ss *ss_argv)
     expr = ss_list_to_vector(expr);
     /* FALL THROUGH */
   case ss_te_vector: /* FIXME: Some syntaxes expand into vectors. */
+    if ( ss_vector_L(expr) < 1 ) return(ss_error(ss_env, "apply-empty", expr, 0));
     ss_set_type(ss_t_app, expr);
     ss_rewrite_expr(expr, "application vector");
     /* FALL THROUGH */
   case ss_te_app: {
-    if ( ss_vector_L(expr) < 1 ) return(ss_error(ss_env, "apply-empty", expr, 0));
     ss_argc = ss_vector_L(expr) - 1;
 
     rtn = ss_eval(ss_vector_V(expr)[0]);
