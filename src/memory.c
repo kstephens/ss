@@ -1,16 +1,4 @@
 
-size_t ss_malloc_bytes, ss_malloc_objects;
-#if 0
-#undef ss_malloc
-ss_INLINE
-void* ss_malloc(size_t s)
-{
-  ss_malloc_bytes += s;
-  ss_malloc_objects ++;
-  return GC_malloc(s);
-}
-#endif
-
 ss_INLINE
 ss* ss_m_cell(ss v)
 {
