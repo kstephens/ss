@@ -1,12 +1,4 @@
 
-ss_INLINE
-ss* ss_m_cell(ss v)
-{
-  ss *c = ss_malloc(sizeof(*c));
-  *c = v;
-  return c;
-}
-
 ss ss_memmove(ss dst, ss src, ss size)
 {
   memmove(dst, src, ss_I(size));
@@ -48,5 +40,13 @@ ss ss_set_type(ss type, ss obj)
 {
   ((ss*) obj)[-1] = type;
   return obj;
+}
+
+ss_INLINE
+ss* ss_m_cell(ss v)
+{
+  ss *c = ss_alloc(ss_t_cell, sizeof(*c));
+  *c = v;
+  return c;
 }
 
