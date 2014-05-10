@@ -22,16 +22,21 @@ ss_end
 #undef A
 #undef R
 
-ss ss_m_cfunc(void *ptr, const char *name, const char *docstr)
+ss ss_m_cfuncPP(void **ptrP, const char *name, const char *docstr)
 {
   ss_s_prim *self = ss_alloc(ss_t_prim, sizeof(*self));
-  self->c_func = ptr;
+  self->c_funcPP = ptrP;
   self->prim = _ss_pf_ss_call_cfunc;
   self->min_args = 0; self->max_args = 10;
   self->no_side_effect = 0;
   self->name = name;
   self->docstring = docstr ? docstr : name;
   return self;
+}
+
+ss ss_m_cfunc(void *c_func, const char *name, const char *docstr)
+{
+  return ss_m_cfuncPP((void**) ss_m_cell(c_func), name, docstr);
 }
 
 ss ss_c_sym(const char *name)

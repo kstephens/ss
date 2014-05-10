@@ -95,7 +95,7 @@ typedef enum ss_te {
 } ss_te;
 
 typedef struct ss_s_type {
-  void *c_func;
+  void **c_funcPP;
   ss_PRIM_DECL((*prim));
   const char *name;
   ss_word_t e; // ss_te
@@ -287,7 +287,7 @@ ss ss_applyv(ss_s_env *ss_env, ss func, ss args);
 #include "ss/catch.h"
 
 typedef struct ss_s_prim {
-  void *c_func;
+  void **c_funcPP;
   ss_PRIM_DECL((*prim));
   const char *name;
   ss_fixnum_t min_args, max_args, no_side_effect;
@@ -351,7 +351,7 @@ typedef struct ss_s_lambda {
 } ss_s_lambda;
 
 typedef struct ss_s_closure {
-  void *c_func;
+  void **c_funcPP;
   ss_PRIM_DECL((*prim));
   ss_s_lambda *lambda;
   ss_s_env *env;
